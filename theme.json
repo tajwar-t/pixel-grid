@@ -1,0 +1,192 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/theme.json",
+	"version": 3,
+	"settings": {
+		"appearanceTools": true,
+		"useRootPaddingAwareAlignments": true,
+		"layout": {
+			"contentSize": "calc(var(--pixelgrid-u) * 22)",
+			"wideSize": "calc(var(--pixelgrid-u) * 22)"
+		},
+		"color": {
+			"defaultPalette": false,
+			"defaultGradients": false,
+			"defaultDuotone": false,
+			"palette": [
+				{ "slug": "base", "color": "#FFFFFF", "name": "Base" },
+				{ "slug": "contrast", "color": "#101014", "name": "Contrast" },
+				{ "slug": "accent", "color": "#2440FF", "name": "Accent" },
+				{ "slug": "sun", "color": "#FFD60A", "name": "Sun" },
+				{ "slug": "mint", "color": "#36E39A", "name": "Mint" },
+				{ "slug": "fog", "color": "#E9E9EF", "name": "Fog" },
+				{ "slug": "tomato", "color": "#FF4F2E", "name": "Tomato" }
+			]
+		},
+		"typography": {
+			"fluid": false,
+			"defaultFontSizes": false,
+			"fontFamilies": [
+				{
+					"slug": "body",
+					"name": "Body",
+					"fontFamily": "\"Instrument Sans\", system-ui, -apple-system, \"Segoe UI\", sans-serif",
+					"fontFace": [
+						{
+							"fontFamily": "Instrument Sans",
+							"fontStyle": "normal",
+							"fontWeight": "400 700",
+							"src": [ "file:./assets/fonts/instrument-sans-400-700-latin.woff2" ],
+							"unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+						},
+						{
+							"fontFamily": "Instrument Sans",
+							"fontStyle": "normal",
+							"fontWeight": "400 700",
+							"src": [ "file:./assets/fonts/instrument-sans-400-700-latin-ext.woff2" ],
+							"unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF"
+						}
+					]
+				},
+				{
+					"slug": "heading",
+					"name": "Heading",
+					"fontFamily": "\"Sofia Sans Extra Condensed\", \"Arial Narrow\", Impact, sans-serif",
+					"fontFace": [
+						{
+							"fontFamily": "Sofia Sans Extra Condensed",
+							"fontStyle": "normal",
+							"fontWeight": "800",
+							"src": [ "file:./assets/fonts/sofia-sans-extra-condensed-800-latin.woff2" ],
+							"unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+						},
+						{
+							"fontFamily": "Sofia Sans Extra Condensed",
+							"fontStyle": "normal",
+							"fontWeight": "800",
+							"src": [ "file:./assets/fonts/sofia-sans-extra-condensed-800-latin-ext.woff2" ],
+							"unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF"
+						}
+					]
+				},
+				{
+					"slug": "serif",
+					"name": "Serif",
+					"fontFamily": "\"Instrument Serif\", Georgia, serif",
+					"fontFace": [
+						{
+							"fontFamily": "Instrument Serif",
+							"fontStyle": "normal",
+							"fontWeight": "400",
+							"src": [ "file:./assets/fonts/instrument-serif-400-latin.woff2" ],
+							"unicodeRange": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+						},
+						{
+							"fontFamily": "Instrument Serif",
+							"fontStyle": "normal",
+							"fontWeight": "400",
+							"src": [ "file:./assets/fonts/instrument-serif-400-latin-ext.woff2" ],
+							"unicodeRange": "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF"
+						}
+					]
+				}
+			],
+			"fontSizes": [
+				{ "slug": "small", "size": "0.95rem", "name": "Small" },
+				{ "slug": "medium", "size": "1.125rem", "name": "Medium" },
+				{ "slug": "large", "size": "clamp(1.45rem, 2.1vw, 2rem)", "name": "Large" },
+				{ "slug": "x-large", "size": "clamp(1.8rem, 2.7vw, 2.6rem)", "name": "Extra Large" },
+				{ "slug": "xx-large", "size": "calc(var(--pixelgrid-u) * 2.1)", "name": "Headline" },
+				{ "slug": "display", "size": "calc(var(--pixelgrid-u) * 2.7)", "name": "Display" },
+				{ "slug": "huge", "size": "calc(var(--pixelgrid-u) * 3)", "name": "Huge" }
+			]
+		},
+		"spacing": {
+			"defaultSpacingSizes": false,
+			"units": [ "px", "rem", "em", "%", "vh", "vw" ],
+			"spacingSizes": [
+				{ "slug": "20", "size": "0.5rem", "name": "Tiny" },
+				{ "slug": "30", "size": "1rem", "name": "Small" },
+				{ "slug": "40", "size": "1.5rem", "name": "Medium" },
+				{ "slug": "50", "size": "calc(var(--pixelgrid-u) * 0.6)", "name": "Half cell" },
+				{ "slug": "60", "size": "var(--pixelgrid-u)", "name": "One cell" },
+				{ "slug": "70", "size": "calc(var(--pixelgrid-u) * 1.6)", "name": "Section" },
+				{ "slug": "80", "size": "calc(var(--pixelgrid-u) * 2)", "name": "Two cells" }
+			]
+		}
+	},
+	"styles": {
+		"color": {
+			"background": "var:preset|color|base",
+			"text": "var:preset|color|contrast"
+		},
+		"typography": {
+			"fontFamily": "var:preset|font-family|body",
+			"fontSize": "var:preset|font-size|medium",
+			"lineHeight": "1.5"
+		},
+		"spacing": {
+			"blockGap": "1.5rem",
+			"padding": {
+				"top": "0",
+				"right": "var(--pixelgrid-pad)",
+				"bottom": "0",
+				"left": "var(--pixelgrid-pad)"
+			}
+		},
+		"elements": {
+			"heading": {
+				"typography": {
+					"fontFamily": "var:preset|font-family|heading",
+					"fontWeight": "800",
+					"lineHeight": "0.9",
+					"textTransform": "uppercase"
+				}
+			},
+			"h1": { "typography": { "fontSize": "var:preset|font-size|display", "lineHeight": "0.86" } },
+			"h2": { "typography": { "fontSize": "var:preset|font-size|xx-large", "lineHeight": "0.86" } },
+			"h3": { "typography": { "fontSize": "var:preset|font-size|x-large", "lineHeight": "0.95" } },
+			"h4": { "typography": { "fontSize": "1.5rem", "lineHeight": "1" } },
+			"h5": { "typography": { "fontSize": "1.3rem", "lineHeight": "1" } },
+			"h6": { "typography": { "fontSize": "1.125rem", "lineHeight": "1.1" } },
+			"link": {
+				"typography": { "textDecoration": "underline" },
+				":hover": { "typography": { "textDecoration": "none" } }
+			},
+			"button": {
+				"border": { "radius": "0" },
+				"typography": { "fontFamily": "var:preset|font-family|body", "fontSize": "1.1rem", "fontWeight": "600", "lineHeight": "1.2" },
+				"spacing": { "padding": { "top": "18px", "right": "28px", "bottom": "18px", "left": "28px" } }
+			},
+			"caption": { "typography": { "fontSize": "var:preset|font-size|small" } }
+		},
+		"blocks": {
+			"core/site-title": {
+				"typography": { "fontFamily": "var:preset|font-family|heading", "fontSize": "2rem", "fontWeight": "800", "lineHeight": "1", "textTransform": "uppercase" },
+				"elements": { "link": { "typography": { "textDecoration": "none" } } }
+			},
+			"core/navigation": {
+				"typography": { "fontSize": "1rem" },
+				"elements": { "link": { "typography": { "textDecoration": "none" } } }
+			},
+			"core/post-title": {
+				"elements": { "link": { "typography": { "textDecoration": "none" }, ":hover": { "typography": { "textDecoration": "underline" } } } }
+			},
+			"core/pullquote": {
+				"typography": { "fontFamily": "var:preset|font-family|serif", "fontSize": "clamp(1.9rem, 3.6vw, 3.4rem)", "lineHeight": "1.12" }
+			},
+			"core/quote": {
+				"typography": { "fontFamily": "var:preset|font-family|serif", "fontSize": "1.7rem", "lineHeight": "1.25" }
+			},
+			"core/post-date": { "typography": { "fontSize": "var:preset|font-size|small" } },
+			"core/post-terms": { "typography": { "fontSize": "var:preset|font-size|small" } },
+			"core/post-author-name": { "typography": { "fontSize": "var:preset|font-size|small" } }
+		}
+	},
+	"templateParts": [
+		{ "name": "header", "title": "Header", "area": "header" },
+		{ "name": "footer", "title": "Footer", "area": "footer" }
+	],
+	"customTemplates": [
+		{ "name": "page-sections", "title": "Sections, no title", "postTypes": [ "page" ] }
+	]
+}

@@ -1,0 +1,1308 @@
+/*
+Theme Name: Pixelgrid
+Theme URI: https://github.com/tajwar-t/pixel-grid
+Author: bitBirds Solutions
+Author URI: https://bitbirds.com/
+Description: Pixelgrid is a block theme for IT and technology companies. Every page sits on one pixel grid: bold condensed headlines, full-page colour sections that change as you scroll, and photos shown through pixel icons.
+Requires at least: 6.6
+Tested up to: 7.1
+Requires PHP: 7.4
+Version: 1.0.0
+License: GNU General Public License v2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: pixelgrid
+Tags: one-column, three-columns, grid-layout, wide-blocks, custom-colors, custom-menu, editor-style, featured-images, full-site-editing, block-patterns, block-styles, threaded-comments, translation-ready
+*/
+
+/*
+ * Design tokens (colours, fonts, sizes, spacing) live in theme.json.
+ * This file holds what theme.json cannot express: the grid unit, the
+ * colour tones, the pixel mosaic and the layout helpers used by patterns.
+ *
+ * Contents
+ * 1. Grid unit and tones      5. Mosaic               9. Posts, prose, comments
+ * 2. Base                     6. Cards and rows      10. Forms, search, pagination
+ * 3. Header and navigation    7. Content blocks      11. Footer
+ * 4. Sections and layout      8. Plans and FAQ       12. Motion
+ */
+
+/* 1. Grid unit and tones ---------------------------------------------- */
+
+/* --pixelgrid-u is one grid cell: 24 across on wide screens, 12 on narrow. The script refines it to whole pixels. */
+:root {
+	--pixelgrid-u: calc(100vw / 24);
+	--pixelgrid-pad: var(--pixelgrid-u);
+}
+
+@media (max-width: 781px) {
+	:root {
+		--pixelgrid-u: calc(100vw / 12);
+		--pixelgrid-pad: calc(var(--pixelgrid-u) / 2);
+	}
+}
+
+/* A tone is a set of four colours. Sections carry one as a block style; the script fades the whole page to it. */
+body,
+.is-style-tone-paper,
+body.pixelgrid-tone-paper {
+	--pixelgrid-bg: var(--wp--preset--color--base);
+	--pixelgrid-fg: var(--wp--preset--color--contrast);
+	--pixelgrid-ac: var(--wp--preset--color--accent);
+	--pixelgrid-on-ac: var(--wp--preset--color--base);
+}
+
+.is-style-tone-blue,
+body.pixelgrid-tone-blue {
+	--pixelgrid-bg: var(--wp--preset--color--accent);
+	--pixelgrid-fg: var(--wp--preset--color--base);
+	--pixelgrid-ac: var(--wp--preset--color--sun);
+	--pixelgrid-on-ac: var(--wp--preset--color--contrast);
+}
+
+.is-style-tone-sun,
+body.pixelgrid-tone-sun {
+	--pixelgrid-bg: var(--wp--preset--color--sun);
+	--pixelgrid-fg: var(--wp--preset--color--contrast);
+	--pixelgrid-ac: var(--wp--preset--color--accent);
+	--pixelgrid-on-ac: var(--wp--preset--color--base);
+}
+
+.is-style-tone-night,
+body.pixelgrid-tone-night {
+	--pixelgrid-bg: var(--wp--preset--color--contrast);
+	--pixelgrid-fg: var(--wp--preset--color--base);
+	--pixelgrid-ac: var(--wp--preset--color--mint);
+	--pixelgrid-on-ac: var(--wp--preset--color--contrast);
+}
+
+.is-style-tone-fog,
+body.pixelgrid-tone-fog {
+	--pixelgrid-bg: var(--wp--preset--color--fog);
+	--pixelgrid-fg: var(--wp--preset--color--contrast);
+	--pixelgrid-ac: var(--wp--preset--color--accent);
+	--pixelgrid-on-ac: var(--wp--preset--color--base);
+}
+
+.is-style-tone-red,
+body.pixelgrid-tone-red {
+	--pixelgrid-bg: var(--wp--preset--color--tomato);
+	--pixelgrid-fg: var(--wp--preset--color--contrast);
+	--pixelgrid-ac: var(--wp--preset--color--base);
+	--pixelgrid-on-ac: var(--wp--preset--color--contrast);
+}
+
+/* 2. Base ------------------------------------------------------------- */
+body {
+	background-color: var(--pixelgrid-bg);
+	color: var(--pixelgrid-fg);
+	-webkit-font-smoothing: antialiased;
+	overflow-x: hidden;
+	transition: background-color 0.7s ease, color 0.7s ease;
+}
+
+a {
+	color: inherit;
+	text-underline-offset: 4px;
+}
+
+:where(h1, h2, h3, h4, h5, h6) {
+	text-wrap: balance;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+	outline: 3px solid var(--pixelgrid-ac);
+	outline-offset: 4px;
+}
+
+#pixelgrid-canvas {
+	position: fixed;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 0;
+	pointer-events: none;
+}
+
+.wp-site-blocks {
+	position: relative;
+	z-index: 1;
+}
+
+.wp-element-button,
+.wp-block-button__link {
+	background-color: var(--pixelgrid-fg);
+	color: var(--pixelgrid-bg);
+	border: 2px solid var(--pixelgrid-fg);
+	text-decoration: none;
+	transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.wp-element-button:hover,
+.wp-block-button__link:hover,
+.wp-element-button:focus-visible,
+.wp-block-button__link:focus-visible {
+	background-color: var(--pixelgrid-ac);
+	border-color: var(--pixelgrid-ac);
+	color: var(--pixelgrid-on-ac);
+}
+
+.wp-block-button.is-style-outline > .wp-block-button__link {
+	background-color: transparent;
+	color: var(--pixelgrid-fg);
+	border: 2px solid var(--pixelgrid-fg);
+	padding: 18px 28px;
+}
+
+.wp-block-button.is-style-outline > .wp-block-button__link:hover,
+.wp-block-button.is-style-outline > .wp-block-button__link:focus-visible {
+	background-color: var(--pixelgrid-fg);
+	color: var(--pixelgrid-bg);
+}
+
+p.is-style-lead {
+	font-family: var(--wp--preset--font-family--serif);
+	font-size: var(--wp--preset--font-size--large);
+	line-height: 1.22;
+	max-width: 24em;
+}
+
+p.is-style-stat {
+	font-family: var(--wp--preset--font-family--heading);
+	font-weight: 800;
+	font-size: calc(var(--pixelgrid-u) * 1.4);
+	line-height: 0.9;
+	margin-bottom: 0;
+	white-space: nowrap;
+}
+
+p.is-style-stat + p {
+	margin-top: 8px;
+	max-width: 14em;
+}
+
+/* 3. Header and navigation -------------------------------------------- */
+header.wp-block-template-part {
+	position: relative;
+	z-index: 20;
+}
+
+.pixelgrid-header {
+	padding-top: 18px;
+	padding-bottom: 18px;
+}
+
+.wp-block-site-title a::before {
+	content: "";
+	display: inline-block;
+	width: 22px;
+	height: 22px;
+	margin-inline-end: 10px;
+	vertical-align: -2px;
+	background: conic-gradient(currentColor 25%, transparent 0 50%, currentColor 0 75%, transparent 0);
+}
+
+.wp-block-navigation .wp-block-navigation-item__content {
+	padding-block: 6px;
+	border-bottom: 2px solid transparent;
+}
+
+.wp-block-navigation .wp-block-navigation-item__content:hover,
+.wp-block-navigation .current-menu-item > .wp-block-navigation-item__content {
+	border-bottom-color: currentColor;
+}
+
+.wp-block-navigation:not(.has-background) .wp-block-navigation__submenu-container.wp-block-navigation__submenu-container {
+	background-color: var(--pixelgrid-fg);
+	color: var(--pixelgrid-bg);
+	border: 0;
+	min-width: 230px;
+	padding: 8px 0;
+}
+
+.wp-block-navigation .wp-block-navigation__submenu-container .wp-block-navigation-item__content {
+	padding: 9px 16px;
+	border: 0;
+}
+
+.wp-block-navigation .wp-block-navigation__submenu-container .wp-block-navigation-item__content:hover {
+	background-color: var(--pixelgrid-ac);
+	color: var(--pixelgrid-on-ac);
+}
+
+/* Full-screen menu on small screens */
+body .wp-block-navigation:not(.has-background) .wp-block-navigation__responsive-container.is-menu-open,
+body .wp-block-navigation:not(.has-text-color) .wp-block-navigation__responsive-container.is-menu-open {
+	background-color: var(--pixelgrid-fg);
+	color: var(--pixelgrid-bg);
+}
+
+.wp-block-navigation__responsive-container.is-menu-open .wp-block-navigation__responsive-container-content .wp-block-navigation-item__content {
+	font-family: var(--wp--preset--font-family--heading);
+	font-weight: 800;
+	font-size: 2.4rem;
+	line-height: 1.05;
+	text-transform: uppercase;
+}
+
+.wp-block-navigation__responsive-container.is-menu-open .wp-block-navigation__submenu-container .wp-block-navigation-item__content {
+	font-family: var(--wp--preset--font-family--body);
+	font-weight: 400;
+	font-size: 1.1rem;
+	text-transform: none;
+	background: none;
+	color: inherit;
+}
+
+.wp-block-navigation__responsive-container-open,
+.wp-block-navigation__responsive-container-close {
+	border: 2px solid currentColor;
+	padding: 6px;
+}
+
+@media (max-width: 599px) {
+	.pixelgrid-header .wp-block-buttons {
+		display: none;
+	}
+}
+
+/* Section index: one pixel per section, built by the script */
+.pixelgrid-index {
+	position: fixed;
+	right: 14px;
+	top: 50%;
+	transform: translateY(-50%);
+	z-index: 6;
+	display: grid;
+	gap: 8px;
+}
+
+.pixelgrid-index a {
+	width: 14px;
+	height: 14px;
+	border: 2px solid var(--pixelgrid-fg);
+	display: block;
+	position: relative;
+	transition: background-color 0.2s;
+}
+
+.pixelgrid-index a[aria-current="true"],
+.pixelgrid-index a:hover {
+	background-color: var(--pixelgrid-fg);
+}
+
+.pixelgrid-index a span {
+	position: absolute;
+	right: 24px;
+	top: 50%;
+	transform: translateY(-50%);
+	background-color: var(--pixelgrid-fg);
+	color: var(--pixelgrid-bg);
+	padding: 3px 9px;
+	font-size: 0.85rem;
+	white-space: nowrap;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.pixelgrid-index a:hover span,
+.pixelgrid-index a:focus-visible span {
+	opacity: 1;
+}
+
+@media (max-width: 781px) {
+	.pixelgrid-index {
+		display: none;
+	}
+}
+
+/* 4. Sections and layout ---------------------------------------------- */
+.wp-block-group[class*="is-style-tone-"] {
+	background-color: var(--pixelgrid-bg);
+	color: var(--pixelgrid-fg);
+	padding-top: calc(var(--pixelgrid-u) * 1.6);
+	padding-bottom: calc(var(--pixelgrid-u) * 1.6);
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+/* With the script running, sections go see-through and the page itself carries the colour. */
+.pixelgrid-js .wp-block-group[class*="is-style-tone-"] {
+	--pixelgrid-bg: inherit;
+	--pixelgrid-fg: inherit;
+	--pixelgrid-ac: inherit;
+	--pixelgrid-on-ac: inherit;
+	background-color: transparent;
+	color: inherit;
+}
+
+.wp-block-group.pixelgrid-tall {
+	min-height: 92vh;
+	min-height: 92svh;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.pixelgrid-main {
+	padding-top: calc(var(--pixelgrid-u) * 0.8);
+	padding-bottom: calc(var(--pixelgrid-u) * 2);
+}
+
+.pixelgrid-stack > * + * {
+	margin-block-start: calc(var(--pixelgrid-u) * 1.2);
+}
+
+/* Split: text beside an 11-cell picture */
+.wp-block-columns.pixelgrid-split {
+	gap: var(--pixelgrid-u);
+	align-items: center;
+	margin-bottom: 0;
+}
+
+.pixelgrid-split > .wp-block-column:has(> .wp-block-image[class*="is-style-mosaic-"]) {
+	flex: 0 0 calc(var(--pixelgrid-u) * 11);
+}
+
+.pixelgrid-split > .wp-block-column > * + * {
+	margin-block-start: calc(var(--pixelgrid-u) * 0.6);
+}
+
+ul.is-style-pixel {
+	list-style: none;
+	padding-left: 0;
+}
+
+ul.is-style-pixel li {
+	display: flex;
+	gap: 14px;
+	align-items: baseline;
+}
+
+ul.is-style-pixel li + li {
+	margin-top: 10px;
+}
+
+ul.is-style-pixel li::before {
+	content: "";
+	flex: none;
+	width: 10px;
+	height: 10px;
+	background-color: var(--pixelgrid-ac);
+	transform: translateY(-1px);
+}
+
+@media (max-width: 781px) {
+	.wp-block-group[class*="is-style-tone-"] {
+		padding-top: calc(var(--pixelgrid-u) * 1.5);
+		padding-bottom: calc(var(--pixelgrid-u) * 1.5);
+	}
+
+	.wp-block-columns.pixelgrid-split {
+		gap: calc(var(--pixelgrid-u) * 1.2);
+	}
+
+	.pixelgrid-split > .wp-block-column > * + * {
+		margin-block-start: 22px;
+	}
+
+	/* Picture goes under the text when a split stacks. */
+	.pixelgrid-split > .wp-block-column:has(> .wp-block-image[class*="is-style-mosaic-"]) {
+		order: 2;
+	}
+}
+
+/* 5. Mosaic: a photo seen through an 11 by 11 pixel icon -------------- */
+
+/* Without the script (and in the editor) the image is a plain black and white square. */
+.wp-block-image[class*="is-style-mosaic-"] {
+	margin: 0;
+}
+
+.wp-block-image[class*="is-style-mosaic-"] img {
+	width: calc(var(--pixelgrid-u) * 11);
+	aspect-ratio: 1;
+	object-fit: cover;
+	filter: grayscale(1) contrast(1.08);
+}
+
+.wp-block-image.pixelgrid-has-mosaic img {
+	display: none;
+}
+
+.pixelgrid-mosaic {
+	display: grid;
+	grid-template-columns: repeat(11, var(--pixelgrid-u));
+	width: calc(var(--pixelgrid-u) * 11);
+	height: calc(var(--pixelgrid-u) * 11);
+	cursor: crosshair;
+}
+
+.pixelgrid-cell {
+	width: var(--pixelgrid-u);
+	height: var(--pixelgrid-u);
+}
+
+/* luminosity blend: grey backdrop gives a black and white photo, accent backdrop a tinted one */
+.pixelgrid-cell i {
+	display: block;
+	width: 100%;
+	height: 100%;
+	transform: scale(0);
+	transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+	background-color: #8a8a8a;
+	background-image: var(--pixelgrid-img);
+	background-blend-mode: luminosity;
+	background-size: calc(var(--pixelgrid-u) * 11) calc(var(--pixelgrid-u) * 11);
+	background-repeat: no-repeat;
+}
+
+.pixelgrid-mosaic.is-in .pixelgrid-cell.is-on i {
+	transform: scale(1);
+}
+
+.pixelgrid-mosaic.is-in .pixelgrid-cell.is-on.is-wash i {
+	background-color: var(--pixelgrid-ac);
+}
+
+.pixelgrid-mosaic.is-in .pixelgrid-cell.is-tint i {
+	transform: scale(1);
+	background-image: none;
+	background-color: var(--pixelgrid-ac);
+}
+
+.pixelgrid-mosaic.is-in .pixelgrid-cell:hover i {
+	transform: scale(0.82);
+	background-image: none;
+	background-color: var(--pixelgrid-ac);
+	transition-delay: 0s !important;
+}
+
+/* 6. Cards and rows --------------------------------------------------- */
+
+/* Three columns of 6 cells with 2-cell gutters: 6 + 2 + 6 + 2 + 6 = 22 cells. */
+.wp-block-columns.pixelgrid-cards,
+.pixelgrid-cards .wp-block-post-template.is-layout-grid {
+	gap: calc(var(--pixelgrid-u) * 1.2) calc(var(--pixelgrid-u) * 2);
+}
+
+.pixelgrid-cards .wp-block-column > * + *,
+.pixelgrid-cards .wp-block-post > * + * {
+	margin-block-start: 12px;
+}
+
+.pixelgrid-cards .wp-block-post-title,
+.pixelgrid-cards h3 {
+	font-size: var(--wp--preset--font-size--x-large);
+	line-height: 0.95;
+}
+
+.pixelgrid-cards p,
+.pixelgrid-cards .wp-block-post-excerpt {
+	font-size: 1.05rem;
+}
+
+.pixelgrid-cards .wp-block-post-excerpt__more-text {
+	display: none;
+}
+
+/* Thumbnail: black and white photo, one pixel knocked out, one pixel of accent */
+.wp-block-post-featured-image,
+.wp-block-image.is-style-notch {
+	position: relative;
+	overflow: hidden;
+	background-color: #8a8a8a;
+	margin-left: 0;
+	margin-right: 0;
+}
+
+.wp-block-post-featured-image img,
+.wp-block-image.is-style-notch img {
+	display: block;
+	width: 100%;
+	filter: grayscale(1) contrast(1.08);
+}
+
+.wp-block-post-featured-image::before,
+.wp-block-post-featured-image::after,
+.wp-block-image.is-style-notch::before,
+.wp-block-image.is-style-notch::after {
+	content: "";
+	position: absolute;
+	width: var(--pixelgrid-u);
+	height: var(--pixelgrid-u);
+	z-index: 1;
+	pointer-events: none;
+}
+
+.wp-block-post-featured-image::before,
+.wp-block-image.is-style-notch::before {
+	right: 0;
+	top: 0;
+	background-color: var(--pixelgrid-bg);
+	transition: background-color 0.7s ease;
+}
+
+.wp-block-post-featured-image::after,
+.wp-block-image.is-style-notch::after {
+	left: 0;
+	bottom: 0;
+	background-color: var(--pixelgrid-ac);
+	transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.7s ease;
+}
+
+.wp-block-post:hover .wp-block-post-featured-image::after,
+.wp-block-column:hover > .wp-block-image.is-style-notch::after {
+	width: 100%;
+}
+
+.wp-block-post-featured-image.pixelgrid-hero-image::before,
+.wp-block-post-featured-image.pixelgrid-hero-image::after {
+	width: calc(var(--pixelgrid-u) * 2);
+}
+
+/* Rows: a list of posts as full-width lines */
+.pixelgrid-rows .wp-block-post-template {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: block;
+}
+
+.pixelgrid-rows .wp-block-post-template > li {
+	margin: 0;
+	position: relative;
+	border-top: 2px solid var(--pixelgrid-fg);
+	transition: background-color 0.15s, color 0.15s;
+}
+
+.pixelgrid-rows .wp-block-post-template > li:last-child {
+	border-bottom: 2px solid var(--pixelgrid-fg);
+}
+
+.pixelgrid-rows .wp-block-post-template > li:hover,
+.pixelgrid-rows .wp-block-post-template > li:focus-within {
+	background-color: var(--pixelgrid-fg);
+	color: var(--pixelgrid-bg);
+}
+
+.wp-block-group.pixelgrid-row {
+	display: grid;
+	grid-template-columns: 9em minmax(0, 1fr) auto;
+	gap: 20px;
+	align-items: center;
+	padding: 18px 14px;
+}
+
+.wp-block-group.pixelgrid-row > * {
+	margin: 0;
+}
+
+.pixelgrid-row .wp-block-post-title {
+	font-size: clamp(1.6rem, 3vw, 2.6rem);
+	line-height: 0.95;
+}
+
+/* The title link covers the whole row. */
+.pixelgrid-row .wp-block-post-title a::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+}
+
+.pixelgrid-row .wp-block-post-terms {
+	position: relative;
+	z-index: 1;
+}
+
+@media (max-width: 781px) {
+	.wp-block-group.pixelgrid-row {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 4px;
+	}
+
+	.pixelgrid-row .wp-block-post-date {
+		display: none;
+	}
+}
+
+/* 7. Content blocks --------------------------------------------------- */
+.wp-block-columns.pixelgrid-stats,
+.wp-block-columns.pixelgrid-steps {
+	gap: var(--pixelgrid-u) calc(var(--pixelgrid-u) * 2);
+}
+
+.pixelgrid-steps {
+	counter-reset: pixelgrid-step;
+}
+
+.pixelgrid-steps > .wp-block-column {
+	counter-increment: pixelgrid-step;
+	border-top: 2px solid var(--pixelgrid-fg);
+	padding-top: 14px;
+}
+
+.pixelgrid-steps > .wp-block-column::before {
+	content: counter(pixelgrid-step);
+	display: block;
+	font-family: var(--wp--preset--font-family--heading);
+	font-weight: 800;
+	font-size: calc(var(--pixelgrid-u) * 1.2);
+	line-height: 0.9;
+	color: var(--pixelgrid-ac);
+	margin-bottom: 8px;
+}
+
+.pixelgrid-steps .wp-block-column > * + * {
+	margin-block-start: 8px;
+}
+
+.wp-block-pullquote {
+	padding: 0;
+	margin-left: 0;
+	margin-right: 0;
+	text-align: left;
+	max-width: calc(var(--pixelgrid-u) * 18);
+}
+
+.wp-block-pullquote blockquote {
+	margin: 0;
+}
+
+.wp-block-pullquote p {
+	margin: 0;
+}
+
+.wp-block-pullquote cite {
+	display: flex;
+	gap: 14px;
+	align-items: center;
+	margin-top: 22px;
+	font-family: var(--wp--preset--font-family--body);
+	font-size: 1rem;
+	font-style: normal;
+	text-transform: none;
+}
+
+.wp-block-pullquote cite::before {
+	content: "";
+	flex: none;
+	width: var(--pixelgrid-u);
+	height: 10px;
+	background-color: var(--pixelgrid-ac);
+}
+
+ul.is-style-wordmarks {
+	list-style: none;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	border-top: 2px solid var(--pixelgrid-fg);
+	border-bottom: 2px solid var(--pixelgrid-fg);
+}
+
+ul.is-style-wordmarks li {
+	padding: 26px 8px;
+	text-align: center;
+	font-family: var(--wp--preset--font-family--heading);
+	font-weight: 800;
+	font-size: clamp(1.2rem, 2vw, 1.9rem);
+	line-height: 1;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+}
+
+.wp-block-separator {
+	border: 0;
+	height: 10px;
+	width: var(--pixelgrid-u);
+	background-color: var(--pixelgrid-ac);
+	margin-left: 0;
+	opacity: 1;
+}
+
+@media (max-width: 781px) {
+	p.is-style-stat {
+		font-size: calc(var(--pixelgrid-u) * 2.2);
+	}
+
+	.pixelgrid-steps > .wp-block-column::before {
+		font-size: calc(var(--pixelgrid-u) * 1.6);
+	}
+}
+
+/* 8. Plans and FAQ ---------------------------------------------------- */
+.wp-block-columns.pixelgrid-plans {
+	gap: var(--pixelgrid-u) calc(var(--pixelgrid-u) * 2);
+	align-items: stretch;
+}
+
+.pixelgrid-plans > .wp-block-column {
+	display: flex;
+}
+
+.wp-block-group.is-style-plan,
+.wp-block-group.is-style-plan-featured {
+	border: 2px solid var(--pixelgrid-fg);
+	padding: clamp(20px, 2.4vw, 34px);
+	background-color: var(--pixelgrid-bg);
+	width: 100%;
+	transition: background-color 0.7s ease;
+}
+
+.wp-block-group.is-style-plan-featured {
+	background-color: var(--pixelgrid-fg);
+	color: var(--pixelgrid-bg);
+}
+
+.is-style-plan-featured .wp-block-button__link {
+	background-color: var(--pixelgrid-bg);
+	color: var(--pixelgrid-fg);
+	border-color: var(--pixelgrid-bg);
+}
+
+.is-style-plan p.is-style-stat,
+.is-style-plan-featured p.is-style-stat {
+	font-size: clamp(3rem, 5vw, 4.6rem);
+}
+
+.wp-block-details {
+	border-top: 2px solid var(--pixelgrid-fg);
+	max-width: calc(var(--pixelgrid-u) * 16);
+	margin-top: 0;
+	margin-bottom: 0;
+}
+
+.wp-block-details:last-of-type {
+	border-bottom: 2px solid var(--pixelgrid-fg);
+}
+
+.wp-block-details summary {
+	list-style: none;
+	cursor: pointer;
+	padding: 18px 44px 18px 0;
+	position: relative;
+	font-family: var(--wp--preset--font-family--heading);
+	font-weight: 800;
+	font-size: clamp(1.5rem, 2.4vw, 2.2rem);
+	line-height: 1;
+	text-transform: uppercase;
+}
+
+.wp-block-details summary::-webkit-details-marker {
+	display: none;
+}
+
+.wp-block-details summary::after {
+	content: "";
+	position: absolute;
+	right: 6px;
+	top: 50%;
+	width: 18px;
+	height: 18px;
+	margin-top: -9px;
+	background: linear-gradient(currentColor 0 0) center / 100% 4px no-repeat, linear-gradient(currentColor 0 0) center / 4px 100% no-repeat;
+}
+
+.wp-block-details[open] summary::after {
+	background: linear-gradient(currentColor 0 0) center / 100% 4px no-repeat;
+}
+
+.wp-block-details > :not(summary) {
+	margin-top: 0;
+	padding-bottom: 22px;
+	max-width: 40em;
+}
+
+/* 9. Posts, prose, comments ------------------------------------------- */
+.pixelgrid-prose {
+	font-size: 1.2rem;
+	line-height: 1.6;
+}
+
+.pixelgrid-prose > * {
+	max-width: calc(var(--pixelgrid-u) * 13);
+}
+
+.pixelgrid-prose > .alignwide,
+.pixelgrid-prose > .alignfull {
+	max-width: none;
+}
+
+.pixelgrid-prose h1,
+.pixelgrid-prose h2 {
+	font-size: clamp(2.2rem, 3.6vw, 3.4rem);
+	line-height: 0.92;
+	margin-top: 1.3em;
+}
+
+.pixelgrid-prose h3,
+.pixelgrid-prose h4 {
+	margin-top: 1.4em;
+}
+
+.pixelgrid-prose ul:not([class*="is-style-"]) {
+	list-style: square;
+}
+
+.pixelgrid-prose li::marker {
+	color: var(--pixelgrid-ac);
+}
+
+.pixelgrid-prose li + li {
+	margin-top: 0.4em;
+}
+
+.wp-block-quote {
+	margin-left: 0;
+	margin-right: 0;
+	padding-left: var(--pixelgrid-u);
+	border-left: 10px solid var(--pixelgrid-ac);
+}
+
+.wp-block-quote cite {
+	display: block;
+	margin-top: 12px;
+	font-family: var(--wp--preset--font-family--body);
+	font-size: 1rem;
+	font-style: normal;
+}
+
+:where(.pixelgrid-prose) code,
+.wp-block-code {
+	font-family: ui-monospace, Consolas, monospace;
+	font-size: 0.9em;
+}
+
+:where(.pixelgrid-prose) :not(pre) > code {
+	background-color: var(--pixelgrid-fg);
+	color: var(--pixelgrid-bg);
+	padding: 2px 6px;
+}
+
+.wp-block-code,
+.wp-block-preformatted {
+	background-color: var(--wp--preset--color--contrast);
+	color: var(--wp--preset--color--base);
+	padding: 22px;
+	overflow: auto;
+	font-size: 1rem;
+	line-height: 1.5;
+}
+
+.wp-block-table table {
+	border-collapse: collapse;
+	width: 100%;
+	font-size: 1.05rem;
+}
+
+.wp-block-table th,
+.wp-block-table td {
+	text-align: left;
+	padding: 12px 10px;
+	border: 0;
+	border-bottom: 2px solid var(--pixelgrid-fg);
+	vertical-align: top;
+}
+
+.wp-block-table th {
+	font-family: var(--wp--preset--font-family--heading);
+	font-weight: 800;
+	font-size: 1.3rem;
+	line-height: 1;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+}
+
+/* Single post: content column beside a 7-cell aside */
+.wp-block-columns.pixelgrid-post-layout {
+	gap: calc(var(--pixelgrid-u) * 2);
+	align-items: flex-start;
+}
+
+.pixelgrid-post-layout > .wp-block-column.pixelgrid-aside {
+	flex: 0 0 calc(var(--pixelgrid-u) * 7);
+	font-size: 1rem;
+}
+
+.pixelgrid-aside > * + * {
+	margin-block-start: 10px;
+}
+
+.pixelgrid-aside h2 {
+	font-size: 1.5rem;
+	line-height: 1;
+	border-top: 2px solid var(--pixelgrid-fg);
+	padding-top: 14px;
+	margin-top: var(--pixelgrid-u);
+}
+
+.pixelgrid-aside h2:first-child {
+	margin-top: 0;
+}
+
+.pixelgrid-aside ul {
+	list-style: none;
+	padding: 0;
+}
+
+.pixelgrid-aside li + li {
+	margin-top: 8px;
+}
+
+.pixelgrid-meta {
+	font-size: var(--wp--preset--font-size--small);
+}
+
+.wp-block-post-terms.is-style-chips,
+ul.wp-block-categories.is-style-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	list-style: none;
+	padding: 0;
+}
+
+.wp-block-post-terms.is-style-chips .wp-block-post-terms__separator {
+	display: none;
+}
+
+.wp-block-post-terms.is-style-chips a,
+ul.wp-block-categories.is-style-chips a {
+	display: block;
+	padding: 7px 14px;
+	border: 2px solid var(--pixelgrid-fg);
+	text-decoration: none;
+	font-size: 1rem;
+}
+
+.wp-block-post-terms.is-style-chips a:hover,
+ul.wp-block-categories.is-style-chips a:hover,
+ul.wp-block-categories.is-style-chips .current-cat > a {
+	background-color: var(--pixelgrid-fg);
+	color: var(--pixelgrid-bg);
+}
+
+.pixelgrid-author {
+	border-top: 2px solid var(--pixelgrid-fg);
+	padding-top: var(--pixelgrid-u);
+	max-width: calc(var(--pixelgrid-u) * 13);
+}
+
+.pixelgrid-author .wp-block-avatar img {
+	border-radius: 0;
+	filter: grayscale(1);
+}
+
+.wp-block-group.pixelgrid-post-nav.pixelgrid-post-nav {
+	border-top: 2px solid var(--pixelgrid-fg);
+	border-bottom: 2px solid var(--pixelgrid-fg);
+	gap: 0;
+}
+
+.pixelgrid-post-nav .wp-block-post-navigation-link {
+	flex: 1 1 0;
+	min-width: 0;
+	padding: 22px 14px;
+	font-family: var(--wp--preset--font-family--heading);
+	font-weight: 800;
+	font-size: clamp(1.4rem, 2.4vw, 2.2rem);
+	line-height: 1;
+	text-transform: uppercase;
+}
+
+.pixelgrid-post-nav .wp-block-post-navigation-link a {
+	text-decoration: none;
+}
+
+.pixelgrid-post-nav .wp-block-post-navigation-link a:hover {
+	text-decoration: underline;
+}
+
+.pixelgrid-post-nav .post-navigation-link-next {
+	text-align: right;
+	border-left: 2px solid var(--pixelgrid-fg);
+}
+
+.pixelgrid-post-nav .post-navigation-link__label {
+	display: block;
+	font-family: var(--wp--preset--font-family--body);
+	font-weight: 400;
+	font-size: 0.95rem;
+	text-transform: none;
+	margin-bottom: 6px;
+}
+
+.wp-block-comments {
+	max-width: calc(var(--pixelgrid-u) * 13);
+}
+
+.wp-block-comments-title,
+.comment-reply-title {
+	font-size: clamp(2.2rem, 3.6vw, 3.4rem);
+	line-height: 0.92;
+}
+
+.wp-block-comment-template,
+.wp-block-comment-template ol {
+	list-style: none;
+	padding: 0;
+}
+
+.wp-block-comment-template ol {
+	margin-left: var(--pixelgrid-u);
+}
+
+.wp-block-comment-template li {
+	margin-top: 22px;
+}
+
+.pixelgrid-comment {
+	border-top: 2px solid var(--pixelgrid-fg);
+	padding-top: 14px;
+}
+
+.pixelgrid-comment > * + * {
+	margin-block-start: 8px;
+}
+
+.pixelgrid-comment .wp-block-comment-author-name {
+	font-weight: 700;
+}
+
+.pixelgrid-comment .wp-block-comment-date,
+.pixelgrid-comment .wp-block-comment-reply-link {
+	font-size: 0.95rem;
+}
+
+@media (max-width: 781px) {
+	.pixelgrid-prose {
+		font-size: 1.1rem;
+	}
+
+	.wp-block-quote {
+		padding-left: 18px;
+	}
+
+	.pixelgrid-post-nav .post-navigation-link-next {
+		border-left: 0;
+		border-top: 2px solid var(--pixelgrid-fg);
+		text-align: left;
+	}
+
+	.pixelgrid-post-nav .wp-block-post-navigation-link {
+		flex-basis: 100%;
+	}
+}
+
+/* 10. Forms, search, pagination --------------------------------------- */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="url"],
+input[type="search"],
+input[type="password"],
+input[type="number"],
+select,
+textarea {
+	font: inherit;
+	color: var(--pixelgrid-fg);
+	background-color: var(--pixelgrid-bg);
+	border: 2px solid var(--pixelgrid-fg);
+	border-radius: 0;
+	padding: 13px 14px;
+	max-width: 100%;
+	box-sizing: border-box;
+	transition: background-color 0.7s ease;
+}
+
+textarea {
+	width: 100%;
+	min-height: 160px;
+	resize: vertical;
+}
+
+label {
+	font-weight: 600;
+}
+
+.comment-form > p {
+	margin: 0 0 18px;
+}
+
+.comment-form label {
+	display: block;
+	margin-bottom: 6px;
+}
+
+.comment-form input[type="text"],
+.comment-form input[type="email"],
+.comment-form input[type="url"] {
+	width: 100%;
+}
+
+.comment-form-cookies-consent {
+	display: flex;
+	gap: 12px;
+	align-items: flex-start;
+}
+
+.comment-form-cookies-consent label {
+	font-weight: 400;
+	margin: 0;
+}
+
+.comment-form-cookies-consent input {
+	width: 22px;
+	height: 22px;
+	flex: none;
+	accent-color: var(--pixelgrid-ac);
+}
+
+.wp-block-search {
+	max-width: calc(var(--pixelgrid-u) * 12);
+}
+
+.wp-block-search__inside-wrapper {
+	gap: 0;
+}
+
+.wp-block-search .wp-block-search__input {
+	border: 2px solid var(--pixelgrid-fg);
+	border-right: 0;
+	border-radius: 0;
+	padding: 13px 14px;
+	min-width: 0;
+}
+
+.wp-block-search .wp-block-search__button {
+	margin: 0;
+	padding: 13px 22px;
+	border-radius: 0;
+}
+
+.wp-block-query-pagination {
+	margin-top: calc(var(--pixelgrid-u) * 1.2);
+	gap: 8px;
+}
+
+.wp-block-query-pagination-numbers {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.wp-block-query-pagination .page-numbers,
+.wp-block-query-pagination-previous,
+.wp-block-query-pagination-next {
+	display: grid;
+	place-items: center;
+	min-width: 48px;
+	height: 48px;
+	padding: 0 12px;
+	border: 2px solid var(--pixelgrid-fg);
+	text-decoration: none;
+	font-weight: 600;
+	box-sizing: border-box;
+}
+
+.wp-block-query-pagination a:hover,
+.wp-block-query-pagination .page-numbers.current {
+	background-color: var(--pixelgrid-fg);
+	color: var(--pixelgrid-bg);
+}
+
+.wp-block-query-pagination .page-numbers.dots {
+	border-color: transparent;
+}
+
+/* 11. Footer ---------------------------------------------------------- */
+footer.wp-block-template-part {
+	position: relative;
+	z-index: 2;
+	margin-top: 0;
+}
+
+.wp-block-group.pixelgrid-footer {
+	background-color: var(--wp--preset--color--contrast);
+	color: var(--wp--preset--color--base);
+	padding-top: 56px;
+	padding-bottom: 28px;
+	font-size: 1rem;
+	--pixelgrid-fg: var(--wp--preset--color--base);
+	--pixelgrid-bg: var(--wp--preset--color--contrast);
+	--pixelgrid-ac: var(--wp--preset--color--sun);
+	--pixelgrid-on-ac: var(--wp--preset--color--contrast);
+}
+
+.pixelgrid-footer h2 {
+	font-size: 1.4rem;
+	line-height: 1;
+	letter-spacing: 0.03em;
+}
+
+.pixelgrid-footer ul {
+	list-style: none;
+	padding: 0;
+}
+
+.pixelgrid-footer li + li {
+	margin-top: 8px;
+}
+
+.pixelgrid-footer a:hover {
+	color: var(--wp--preset--color--sun);
+}
+
+.wp-block-group.pixelgrid-footer-bottom {
+	margin-top: 44px;
+	padding-top: 18px;
+	border-top: 2px solid rgba(255, 255, 255, 0.25);
+	font-size: 0.95rem;
+}
+
+.pixelgrid-footer-bottom p {
+	margin: 0;
+}
+
+/* 12. Motion ---------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
+	body,
+	.pixelgrid-cell i,
+	.wp-block-post-featured-image::before,
+	.wp-block-post-featured-image::after,
+	.wp-block-image.is-style-notch::before,
+	.wp-block-image.is-style-notch::after,
+	.wp-block-group.is-style-plan,
+	input,
+	select,
+	textarea {
+		transition: none !important;
+	}
+}
+
+.pixelgrid-author .pixelgrid-author-name {
+	font-family: var(--wp--preset--font-family--heading);
+	font-weight: 800;
+	font-size: var(--wp--preset--font-size--x-large);
+	line-height: 1;
+	text-transform: uppercase;
+}
+
+/* Content sits on the left edge of the grid, never centred in a narrower column. */
+body .is-layout-constrained > :where(:not(.alignleft):not(.alignright):not(.alignfull)) {
+	margin-left: 0 !important;
+}
+
+.pixelgrid-footer .wp-block-navigation__container {
+	gap: 8px;
+}
