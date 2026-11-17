@@ -24,6 +24,7 @@ Copy this folder into `wp-content/themes/pixelgrid`, then activate **Pixelgrid**
 | Area | Details |
 |---|---|
 | Section colours | Group block styles: Paper, Blue, Sun, Night, Fog, Red. The page fades to the colour of the section in view. |
+| Editable colours | Every section and the footer have four palette colours (background, text, hover, text on hover), changed in Appearance, Editor, Styles, Colours, Palette. Hover covers the cursor squares, button and link hover, and highlighted pixels. |
 | Pixel mosaics | Image block styles that draw the photo through an 11 by 11 pixel icon: screen, cloud, padlock, speech bubble, chart, people, envelope, note, 404, or one that changes. Visitors can click pixels to redraw. |
 | Other block styles | Lead and Big number paragraphs, Pixel bullets and Wordmarks lists, Pixel notch images, Price plan groups, Chips for categories and tags. |
 | Templates | Blog, single post with sidebar, page, archive, search, 404, and Sections, no title. |

@@ -7,7 +7,7 @@ Description: Pixelgrid is a block theme for IT and technology companies. Every p
 Requires at least: 6.6
 Tested up to: 7.1
 Requires PHP: 7.4
-Version: 1.0.0
+Version: 1.1.0
 License: GNU General Public License v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Text Domain: pixelgrid
@@ -42,53 +42,55 @@ Tags: one-column, three-columns, grid-layout, wide-blocks, custom-colors, custom
 }
 
 /* A tone is a set of four colours. Sections carry one as a block style; the script fades the whole page to it. */
+/* Each tone reads four palette colours, all editable in Styles, Colours, Palette:
+   background, text, hover (cursor squares, button hover, pixel highlights) and text on hover. */
 body,
 .is-style-tone-paper,
 body.pixelgrid-tone-paper {
-	--pixelgrid-bg: var(--wp--preset--color--base);
-	--pixelgrid-fg: var(--wp--preset--color--contrast);
-	--pixelgrid-ac: var(--wp--preset--color--accent);
-	--pixelgrid-on-ac: var(--wp--preset--color--base);
+	--pixelgrid-bg: var(--wp--preset--color--paper-background);
+	--pixelgrid-fg: var(--wp--preset--color--paper-text);
+	--pixelgrid-ac: var(--wp--preset--color--paper-hover);
+	--pixelgrid-on-ac: var(--wp--preset--color--paper-on-hover);
 }
 
 .is-style-tone-blue,
 body.pixelgrid-tone-blue {
-	--pixelgrid-bg: var(--wp--preset--color--accent);
-	--pixelgrid-fg: var(--wp--preset--color--base);
-	--pixelgrid-ac: var(--wp--preset--color--sun);
-	--pixelgrid-on-ac: var(--wp--preset--color--contrast);
+	--pixelgrid-bg: var(--wp--preset--color--blue-background);
+	--pixelgrid-fg: var(--wp--preset--color--blue-text);
+	--pixelgrid-ac: var(--wp--preset--color--blue-hover);
+	--pixelgrid-on-ac: var(--wp--preset--color--blue-on-hover);
 }
 
 .is-style-tone-sun,
 body.pixelgrid-tone-sun {
-	--pixelgrid-bg: var(--wp--preset--color--sun);
-	--pixelgrid-fg: var(--wp--preset--color--contrast);
-	--pixelgrid-ac: var(--wp--preset--color--accent);
-	--pixelgrid-on-ac: var(--wp--preset--color--base);
+	--pixelgrid-bg: var(--wp--preset--color--sun-background);
+	--pixelgrid-fg: var(--wp--preset--color--sun-text);
+	--pixelgrid-ac: var(--wp--preset--color--sun-hover);
+	--pixelgrid-on-ac: var(--wp--preset--color--sun-on-hover);
 }
 
 .is-style-tone-night,
 body.pixelgrid-tone-night {
-	--pixelgrid-bg: var(--wp--preset--color--contrast);
-	--pixelgrid-fg: var(--wp--preset--color--base);
-	--pixelgrid-ac: var(--wp--preset--color--mint);
-	--pixelgrid-on-ac: var(--wp--preset--color--contrast);
+	--pixelgrid-bg: var(--wp--preset--color--night-background);
+	--pixelgrid-fg: var(--wp--preset--color--night-text);
+	--pixelgrid-ac: var(--wp--preset--color--night-hover);
+	--pixelgrid-on-ac: var(--wp--preset--color--night-on-hover);
 }
 
 .is-style-tone-fog,
 body.pixelgrid-tone-fog {
-	--pixelgrid-bg: var(--wp--preset--color--fog);
-	--pixelgrid-fg: var(--wp--preset--color--contrast);
-	--pixelgrid-ac: var(--wp--preset--color--accent);
-	--pixelgrid-on-ac: var(--wp--preset--color--base);
+	--pixelgrid-bg: var(--wp--preset--color--fog-background);
+	--pixelgrid-fg: var(--wp--preset--color--fog-text);
+	--pixelgrid-ac: var(--wp--preset--color--fog-hover);
+	--pixelgrid-on-ac: var(--wp--preset--color--fog-on-hover);
 }
 
 .is-style-tone-red,
 body.pixelgrid-tone-red {
-	--pixelgrid-bg: var(--wp--preset--color--tomato);
-	--pixelgrid-fg: var(--wp--preset--color--contrast);
-	--pixelgrid-ac: var(--wp--preset--color--base);
-	--pixelgrid-on-ac: var(--wp--preset--color--contrast);
+	--pixelgrid-bg: var(--wp--preset--color--red-background);
+	--pixelgrid-fg: var(--wp--preset--color--red-text);
+	--pixelgrid-ac: var(--wp--preset--color--red-hover);
+	--pixelgrid-on-ac: var(--wp--preset--color--red-on-hover);
 }
 
 /* 2. Base ------------------------------------------------------------- */
@@ -887,8 +889,8 @@ ul.is-style-wordmarks li {
 
 .wp-block-code,
 .wp-block-preformatted {
-	background-color: var(--wp--preset--color--contrast);
-	color: var(--wp--preset--color--base);
+	background-color: var(--wp--preset--color--night-background);
+	color: var(--wp--preset--color--night-text);
 	padding: 22px;
 	overflow: auto;
 	font-size: 1rem;
@@ -1229,15 +1231,15 @@ footer.wp-block-template-part {
 }
 
 .wp-block-group.pixelgrid-footer {
-	background-color: var(--wp--preset--color--contrast);
-	color: var(--wp--preset--color--base);
+	--pixelgrid-bg: var(--wp--preset--color--footer-background);
+	--pixelgrid-fg: var(--wp--preset--color--footer-text);
+	--pixelgrid-ac: var(--wp--preset--color--footer-hover);
+	--pixelgrid-on-ac: var(--wp--preset--color--footer-on-hover);
+	background-color: var(--pixelgrid-bg);
+	color: var(--pixelgrid-fg);
 	padding-top: 56px;
 	padding-bottom: 28px;
 	font-size: 1rem;
-	--pixelgrid-fg: var(--wp--preset--color--base);
-	--pixelgrid-bg: var(--wp--preset--color--contrast);
-	--pixelgrid-ac: var(--wp--preset--color--sun);
-	--pixelgrid-on-ac: var(--wp--preset--color--contrast);
 }
 
 .pixelgrid-footer h2 {
@@ -1256,13 +1258,13 @@ footer.wp-block-template-part {
 }
 
 .pixelgrid-footer a:hover {
-	color: var(--wp--preset--color--sun);
+	color: var(--pixelgrid-ac);
 }
 
 .wp-block-group.pixelgrid-footer-bottom {
 	margin-top: 44px;
 	padding-top: 18px;
-	border-top: 2px solid rgba(255, 255, 255, 0.25);
+	border-top: 2px solid color-mix(in srgb, var(--pixelgrid-fg) 25%, transparent);
 	font-size: 0.95rem;
 }
 

@@ -42,9 +42,25 @@ Pixelgrid works with plugins that follow WordPress standards. For a contact form
 
 = How do I change a section's colour? =
 
-Select the Group block that wraps the section, open the Styles panel and pick one of the section styles.
+To switch a section to another colour set, select the Group block that wraps it, open the Styles panel and pick one of the section styles.
+
+= How do I change the colours themselves? =
+
+Go to Appearance, Editor, Styles, Colours, Palette. Open the menu next to Theme and choose "Show details" to see each colour by name. Every section (Paper, Blue, Sun, Night, Fog, Red) and the footer has four colours:
+
+* background
+* text
+* hover: the squares that light up under the cursor, button and link hover, and the highlighted pixels in pictures
+* text on hover: text shown on top of the hover colour, such as a hovered button label
+
+Changes apply to the whole site. Keep enough contrast between each background and its text, and between each hover colour and its text on hover.
 
 == Changelog ==
+
+= 1.1.0 =
+* Released: November 17, 2026
+
+Every section colour, including its hover colour, and the footer colours can now be changed in Styles, Colours, Palette.
 
 = 1.0.0 =
 * Released: November 17, 2026

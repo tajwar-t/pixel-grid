@@ -13,13 +13,34 @@
 			"defaultGradients": false,
 			"defaultDuotone": false,
 			"palette": [
-				{ "slug": "base", "color": "#FFFFFF", "name": "Base" },
-				{ "slug": "contrast", "color": "#101014", "name": "Contrast" },
-				{ "slug": "accent", "color": "#2440FF", "name": "Accent" },
-				{ "slug": "sun", "color": "#FFD60A", "name": "Sun" },
-				{ "slug": "mint", "color": "#36E39A", "name": "Mint" },
-				{ "slug": "fog", "color": "#E9E9EF", "name": "Fog" },
-				{ "slug": "tomato", "color": "#FF4F2E", "name": "Tomato" }
+				{"slug": "paper-background", "color": "#FFFFFF", "name": "Paper section: background"},
+				{"slug": "paper-text", "color": "#101014", "name": "Paper section: text"},
+				{"slug": "paper-hover", "color": "#2440FF", "name": "Paper section: hover"},
+				{"slug": "paper-on-hover", "color": "#FFFFFF", "name": "Paper section: text on hover"},
+				{"slug": "blue-background", "color": "#2440FF", "name": "Blue section: background"},
+				{"slug": "blue-text", "color": "#FFFFFF", "name": "Blue section: text"},
+				{"slug": "blue-hover", "color": "#FFD60A", "name": "Blue section: hover"},
+				{"slug": "blue-on-hover", "color": "#101014", "name": "Blue section: text on hover"},
+				{"slug": "sun-background", "color": "#FFD60A", "name": "Sun section: background"},
+				{"slug": "sun-text", "color": "#101014", "name": "Sun section: text"},
+				{"slug": "sun-hover", "color": "#2440FF", "name": "Sun section: hover"},
+				{"slug": "sun-on-hover", "color": "#FFFFFF", "name": "Sun section: text on hover"},
+				{"slug": "night-background", "color": "#101014", "name": "Night section: background"},
+				{"slug": "night-text", "color": "#FFFFFF", "name": "Night section: text"},
+				{"slug": "night-hover", "color": "#36E39A", "name": "Night section: hover"},
+				{"slug": "night-on-hover", "color": "#101014", "name": "Night section: text on hover"},
+				{"slug": "fog-background", "color": "#E9E9EF", "name": "Fog section: background"},
+				{"slug": "fog-text", "color": "#101014", "name": "Fog section: text"},
+				{"slug": "fog-hover", "color": "#2440FF", "name": "Fog section: hover"},
+				{"slug": "fog-on-hover", "color": "#FFFFFF", "name": "Fog section: text on hover"},
+				{"slug": "red-background", "color": "#FF4F2E", "name": "Red section: background"},
+				{"slug": "red-text", "color": "#101014", "name": "Red section: text"},
+				{"slug": "red-hover", "color": "#FFFFFF", "name": "Red section: hover"},
+				{"slug": "red-on-hover", "color": "#101014", "name": "Red section: text on hover"},
+				{"slug": "footer-background", "color": "#101014", "name": "Footer: background"},
+				{"slug": "footer-text", "color": "#FFFFFF", "name": "Footer: text"},
+				{"slug": "footer-hover", "color": "#FFD60A", "name": "Footer: hover"},
+				{"slug": "footer-on-hover", "color": "#101014", "name": "Footer: text on hover"}
 			]
 		},
 		"typography": {
@@ -116,8 +137,8 @@
 	},
 	"styles": {
 		"color": {
-			"background": "var:preset|color|base",
-			"text": "var:preset|color|contrast"
+			"background": "var:preset|color|paper-background",
+			"text": "var:preset|color|paper-text"
 		},
 		"typography": {
 			"fontFamily": "var:preset|font-family|body",
