@@ -264,7 +264,7 @@ function pixelgrid_starter_create( $options ) {
 		}
 		update_option( 'pixelgrid_starter_terms', array_values( array_unique( $terms ) ), false );
 
-		$sample = require get_parent_theme_file_path( 'inc/starter-posts.php' );
+		$sample = pixelgrid_variant( 'it' )['posts'];
 		$step   = 0;
 		foreach ( $sample as $item ) {
 			$before = pixelgrid_starter_find( 'post', 'post-' . $item['key'] );
