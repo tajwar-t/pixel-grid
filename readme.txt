@@ -23,14 +23,15 @@ Features:
 
 = Starter content =
 
-On a new site, a notice on the Dashboard offers to set up the pages shown in the theme preview. You can also go to Appearance, Pixelgrid setup at any time. Tick what you want and click "Add starter content":
+On a new site, a notice on the Dashboard offers to set up the pages shown in the theme preview. You can also go to Appearance, Pixelgrid setup at any time. Choose a starting point (IT services is the first; more come in later versions), tick what you want and click "Add starter content":
 
 * Pages: Home, Services, About, Pricing, Contact and Notes, built from the theme's patterns
 * Six sample notes (posts) with categories, tags and images
 * A menu linking the new pages
 * Optionally, the new Home page as the homepage and Notes as the posts page
+* Optionally, the starting point's design: its styles, header, footer and templates
 
-Nothing is added until you click the button, and nothing is downloaded: the content is built from the theme's own patterns and images. Clicking again does not create duplicates. The same screen lists what was added and has a "Remove starter content" button, which moves the starter pages, notes and menu to the trash, deletes the starter images, removes empty starter categories and puts your homepage setting back.
+Nothing is added until you click the button, and nothing is downloaded: the content is built from the theme's own patterns and images. Clicking again does not create duplicates. When you apply a design, your current styles, header, footer and templates are backed up first. The same screen lists what was added and has a "Remove starter content" button, which moves the starter pages, notes and menu to the trash, deletes the starter images, removes empty starter categories, puts your homepage setting back and restores the backed-up design. Edits you made to the design after applying it are kept.
 
 = Setting up a page like the demo by hand =
 
@@ -67,6 +68,11 @@ Go to Appearance, Editor, Styles, Colours, Palette. Open the menu next to Theme 
 Changes apply to the whole site. Keep enough contrast between each background and its text, and between each hover colour and its text on hover.
 
 == Changelog ==
+
+= 1.3.0 =
+* Released: November 18, 2026
+
+Setup now asks for a starting point. IT services is the first; more come in later versions. You can also apply a starting point's design (styles, header, footer and templates). Your own versions are backed up first and restored when you remove the starter content, while your later edits are kept. The section colours are renamed Light, Bold, Bright, Dark, Soft and Alert (the colours are the same).
 
 = 1.2.0 =
 * Released: November 18, 2026

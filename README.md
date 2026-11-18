@@ -15,7 +15,7 @@ Copy this folder into `wp-content/themes/pixelgrid`, then activate **Pixelgrid**
 
 ## Starter content
 
-On a new site the Dashboard shows a one-time notice. Click **Set up starter content**, or go to **Appearance, Pixelgrid setup** at any time, tick what you want (pages, sample notes, menu, homepage setting) and click **Add starter content**. Nothing is added until you click, nothing is downloaded, and running it twice makes no duplicates. The same screen can remove everything it added.
+On a new site the Dashboard shows a one-time notice. Click **Set up starter content**, or go to **Appearance, Pixelgrid setup** at any time, choose a starting point (IT services for now, more later), tick what you want (pages, sample notes, menu, homepage setting, and optionally the starting point's design: styles, header, footer, templates) and click **Add starter content**. Nothing is added until you click, nothing is downloaded, and running it twice makes no duplicates. Applying a design backs up your current styles, header, footer and templates first. The same screen can remove everything it added, restoring the backups and keeping your later edits.
 
 The setup follows the WordPress.org theme rules: core admin UI only, user consent before any content is created, no external calls, and a dismissible notice limited to the Dashboard and Themes screens.
 
