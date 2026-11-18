@@ -96,4 +96,42 @@ $removed = pixelgrid_starter_remove();
 pg_assert_same( 1, $removed['removed'], 'remove deletes the upgraded page' );
 pg_assert_same( 'trash', get_post_status( $old ), 'upgraded page is in the trash' );
 
+// A create that makes nothing must not mark the site busy.
+$none = array(
+	'design'  => false,
+	'pages'   => false,
+	'posts'   => false,
+	'menu'    => false,
+	'reading' => false,
+);
+$made = pixelgrid_starter_create( 'it', $none );
+pg_assert( is_array( $made ), 'create with nothing ticked returns counts' );
+pg_assert_same( '', pixelgrid_starter_active_variant(), 'create with nothing ticked sets no active variant' );
+pg_assert( ! is_wp_error( pixelgrid_starter_create( 'agency', $none ) ), 'second variant is not busy after an empty create' );
+
+// Starter content trashed by hand leaves no stale busy state.
+pixelgrid_starter_create(
+	'it',
+	array(
+		'design'  => false,
+		'pages'   => true,
+		'posts'   => true,
+		'menu'    => true,
+		'reading' => false,
+	)
+);
+pg_assert_same( 'it', pixelgrid_starter_active_variant(), 'active variant is it after creating content again' );
+foreach ( pixelgrid_starter_created() as $type => $ids ) {
+	foreach ( $ids as $id ) {
+		if ( 'attachment' === $type ) {
+			wp_delete_attachment( $id, true );
+		} else {
+			wp_trash_post( $id );
+		}
+	}
+}
+pg_assert_same( '', pixelgrid_starter_active_variant(), 'active variant is empty once every starter item is trashed by hand' );
+pg_assert_same( false, get_option( 'pixelgrid_starter_variant' ), 'stale variant option is cleared' );
+pg_assert( ! is_wp_error( pixelgrid_starter_create( 'agency', $none ) ), 'second variant is not busy after starter content was trashed by hand' );
+
 pg_done();

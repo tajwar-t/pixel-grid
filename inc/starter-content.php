@@ -39,7 +39,33 @@ function pixelgrid_starter_key( string $variant, string $key ): string {
  * @return string Variant slug, or an empty string when there is none.
  */
 function pixelgrid_starter_active_variant(): string {
-	return (string) get_option( 'pixelgrid_starter_variant', '' );
+	$variant = (string) get_option( 'pixelgrid_starter_variant', '' );
+	if ( '' === $variant ) {
+		return '';
+	}
+	if ( pixelgrid_starter_exists() || false !== get_option( 'pixelgrid_starter_design', false ) ) {
+		return $variant;
+	}
+	// Nothing setup made is left (for example, it was all trashed by hand): the variant is stale.
+	delete_option( 'pixelgrid_starter_variant' );
+	return '';
+}
+
+/**
+ * Whether any post of any type that is not in the trash carries a starter marker.
+ *
+ * @return bool
+ */
+function pixelgrid_starter_exists(): bool {
+	global $wpdb;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- runs only on the setup page and setup actions.
+	$found = $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT pm.post_id FROM {$wpdb->postmeta} pm INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id WHERE pm.meta_key = %s AND p.post_status NOT IN ( 'trash', 'auto-draft' ) LIMIT 1",
+			'_pixelgrid_starter'
+		)
+	);
+	return ! empty( $found );
 }
 
 /**
@@ -234,10 +260,12 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 		)
 	);
 
-	update_option( 'pixelgrid_starter_variant', $variant, false );
+	// True once an item was made or found, or the design applied; only then is the variant recorded.
+	$any = false;
 
 	if ( $options['design'] && function_exists( 'pixelgrid_design_apply' ) ) {
 		pixelgrid_design_apply( $def );
+		$any = true;
 	}
 
 	$made  = array(
@@ -263,6 +291,9 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 				$args['page_template'] = $template;
 			}
 			$pages[ $slug ] = pixelgrid_starter_insert( $key, $args );
+			if ( $pages[ $slug ] ) {
+				$any = true;
+			}
 			if ( $pages[ $slug ] && ! $before ) {
 				++$made['pages'];
 			}
@@ -304,6 +335,9 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 				)
 			);
 			++$step;
+			if ( $id ) {
+				$any = true;
+			}
 			if ( ! $id || $before ) {
 				continue;
 			}
@@ -336,14 +370,18 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 		}
 		$key    = pixelgrid_starter_key( $variant, 'menu' );
 		$before = pixelgrid_starter_find( 'wp_navigation', $key );
-		if ( $links && pixelgrid_starter_insert(
+		$menu   = $links ? pixelgrid_starter_insert(
 			$key,
 			array(
 				'post_type'    => 'wp_navigation',
 				'post_title'   => __( 'Pixelgrid menu', 'pixelgrid' ),
 				'post_content' => implode( "\n", $links ),
 			)
-		) && ! $before ) {
+		) : 0;
+		if ( $menu ) {
+			$any = true;
+		}
+		if ( $menu && ! $before ) {
 			$made['menu'] = 1;
 		}
 	}
@@ -367,6 +405,9 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 		update_option( 'page_for_posts', $posts_page );
 	}
 
+	if ( $any ) {
+		update_option( 'pixelgrid_starter_variant', $variant, false );
+	}
 	update_option( 'pixelgrid_starter_done', 1, false );
 	return $made;
 }
