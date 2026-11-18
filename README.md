@@ -13,7 +13,13 @@ A WordPress block theme for IT and technology companies. Every page sits on one 
 
 Copy this folder into `wp-content/themes/pixelgrid`, then activate **Pixelgrid** under Appearance, Themes.
 
-## Build a page like the demo
+## Starter content
+
+On a new site the Dashboard shows a one-time notice. Click **Set up starter content**, or go to **Appearance, Pixelgrid setup** at any time, tick what you want (pages, sample notes, menu, homepage setting) and click **Add starter content**. Nothing is added until you click, nothing is downloaded, and running it twice makes no duplicates. The same screen can remove everything it added.
+
+The setup follows the WordPress.org theme rules: core admin UI only, user consent before any content is created, no external calls, and a dismissible notice limited to the Dashboard and Themes screens.
+
+## Build a page like the demo by hand
 
 1. Create a page and pick the **Sections, no title** template.
 2. In the block inserter, open Patterns, then **Pixelgrid pages**, and insert a layout (Home, About, Services, Pricing, Contact). Or build your own from **Pixelgrid sections**.
@@ -39,6 +45,7 @@ The colour change, mosaics, background grid and section index need JavaScript. W
 theme.json          colours, fonts, sizes, spacing, block styles
 style.css           theme header, grid unit, tones, mosaic and layout rules
 functions.php       asset loading, block styles, pattern categories
+inc/                starter content setup page and sample notes
 assets/js/          pixelgrid.js (grid, mosaics, tones, section index)
 assets/fonts/       bundled woff2 files
 assets/images/      original abstract images used by the patterns

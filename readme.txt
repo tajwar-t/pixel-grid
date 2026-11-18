@@ -21,7 +21,18 @@ Features:
 * Ready-made section and page patterns: hero, service sections, recent work, client quote, numbers, steps, principles, team, pricing plans, questions and answers, contact and call to action.
 * Templates for the blog, single posts with a sidebar, pages, archives, search and 404, plus a "Sections, no title" page template for landing pages.
 
-= Setting up a page like the demo =
+= Starter content =
+
+On a new site, a notice on the Dashboard offers to set up the pages shown in the theme preview. You can also go to Appearance, Pixelgrid setup at any time. Tick what you want and click "Add starter content":
+
+* Pages: Home, Services, About, Pricing, Contact and Notes, built from the theme's patterns
+* Six sample notes (posts) with categories, tags and images
+* A menu linking the new pages
+* Optionally, the new Home page as the homepage and Notes as the posts page
+
+Nothing is added until you click the button, and nothing is downloaded: the content is built from the theme's own patterns and images. Clicking again does not create duplicates. The same screen lists what was added and has a "Remove starter content" button, which moves the starter pages, notes and menu to the trash, deletes the starter images, removes empty starter categories and puts your homepage setting back.
+
+= Setting up a page like the demo by hand =
 
 1. Create a page and choose the "Sections, no title" template.
 2. Open the block inserter, go to Patterns, then "Pixelgrid pages", and insert a page layout. Or build the page from the "Pixelgrid sections" category.
@@ -56,6 +67,11 @@ Go to Appearance, Editor, Styles, Colours, Palette. Open the menu next to Theme 
 Changes apply to the whole site. Keep enough contrast between each background and its text, and between each hover colour and its text on hover.
 
 == Changelog ==
+
+= 1.2.0 =
+* Released: November 18, 2026
+
+Added Appearance, Pixelgrid setup: optional starter pages, notes and menu, added only when you choose, with a one-time notice on new sites. Pattern links now work with every permalink setting.
 
 = 1.1.0 =
 * Released: November 17, 2026

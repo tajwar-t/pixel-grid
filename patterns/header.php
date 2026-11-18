@@ -19,7 +19,7 @@
 
 <!-- wp:buttons -->
 <div class="wp-block-buttons"><!-- wp:button {"className":"pixelgrid-header-button"} -->
-<div class="wp-block-button pixelgrid-header-button"><a class="wp-block-button__link wp-element-button" href="<?php echo esc_url( home_url( '/contact/' ) ); ?>"><?php echo esc_html_x( 'Get a quote', 'Header button', 'pixelgrid' ); ?></a></div>
+<div class="wp-block-button pixelgrid-header-button"><a class="wp-block-button__link wp-element-button" href="<?php echo esc_url( add_query_arg( 'pagename', 'contact', home_url( '/' ) ) ); ?>"><?php echo esc_html_x( 'Get a quote', 'Header button', 'pixelgrid' ); ?></a></div>
 <!-- /wp:button --></div>
 <!-- /wp:buttons --></div>
 <!-- /wp:group --></div>

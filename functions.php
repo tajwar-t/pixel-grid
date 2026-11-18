@@ -179,3 +179,7 @@ if ( ! function_exists( 'pixelgrid_pattern_categories' ) ) :
 	}
 endif;
 add_action( 'init', 'pixelgrid_pattern_categories' );
+
+if ( is_admin() ) {
+	require get_parent_theme_file_path( 'inc/starter-content.php' );
+}
