@@ -134,4 +134,41 @@ pg_assert_same( '', pixelgrid_starter_active_variant(), 'active variant is empty
 pg_assert_same( false, get_option( 'pixelgrid_starter_variant' ), 'stale variant option is cleared' );
 pg_assert( ! is_wp_error( pixelgrid_starter_create( 'agency', $none ) ), 'second variant is not busy after starter content was trashed by hand' );
 
+// A full 1.2.0 site: markers without a variant prefix, schema 1 and no variant option.
+pixelgrid_starter_remove();
+$no_design = array(
+	'design'  => false,
+	'pages'   => true,
+	'posts'   => true,
+	'menu'    => true,
+	'reading' => true,
+);
+pixelgrid_starter_create( 'it', $no_design );
+global $wpdb;
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->postmeta} SET meta_value = SUBSTRING( meta_value, 4 ) WHERE meta_key = %s AND meta_value LIKE %s", '_pixelgrid_starter', 'it:%' ) );
+wp_cache_flush();
+delete_option( 'pixelgrid_starter_variant' );
+update_option( 'pixelgrid_starter_schema', 1 );
+$old_markers = $wpdb->get_col( $wpdb->prepare( "SELECT meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s ORDER BY meta_value", '_pixelgrid_starter' ) );
+pg_assert( in_array( 'page-home', $old_markers, true ) && in_array( 'post-password-clean-up', $old_markers, true ) && in_array( 'image-1', $old_markers, true ) && in_array( 'menu', $old_markers, true ), '1.2.0 site carries old markers page-, post-, image- and menu' );
+pg_assert_same( array(), array_values( array_filter( $old_markers, function ( $v ) { return false !== strpos( $v, ':' ); } ) ), '1.2.0 site has no prefixed markers' );
+$attachments = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'attachment'" );
+pg_assert( $attachments > 0, '1.2.0 site has starter images' );
+pixelgrid_starter_upgrade();
+pg_assert_same( 'it', pixelgrid_starter_active_variant(), 'upgraded 1.2.0 site has it as the active variant' );
+$made = pixelgrid_starter_create( 'it', $no_design );
+pg_assert_same(
+	array(
+		'pages' => 0,
+		'posts' => 0,
+		'menu'  => 0,
+	),
+	$made,
+	'create on an upgraded 1.2.0 site makes no duplicates'
+);
+pg_assert_same( $attachments, (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->posts} WHERE post_type = 'attachment'" ), 'create on an upgraded 1.2.0 site adds no images' );
+$removed = pixelgrid_starter_remove();
+pg_assert( $removed['removed'] >= 19, 'upgraded 1.2.0 content is removed' );
+
 pg_done();

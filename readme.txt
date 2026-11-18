@@ -31,7 +31,7 @@ On a new site, a notice on the Dashboard offers to set up the pages shown in the
 * Optionally, the new Home page as the homepage and Notes as the posts page
 * Optionally, the starting point's design: its styles, header, footer and templates
 
-Nothing is added until you click the button, and nothing is downloaded: the content is built from the theme's own patterns and images. Clicking again does not create duplicates. When you apply a design, your current styles, header, footer and templates are backed up first. The same screen lists what was added and has a "Remove starter content" button, which moves the starter pages, notes and menu to the trash, deletes the starter images, removes empty starter categories, puts your homepage setting back and restores the backed-up design. Edits you made to the design after applying it are kept.
+Nothing is added until you click the button, and nothing is downloaded: the content is built from the theme's own patterns and images. Clicking again does not create duplicates. When you apply a design, your current styles, header, footer and templates are backed up first. The IT services starting point uses the theme's default design, so applying its design does not change your Styles. Applying a design again only changes the styles, header, footer and templates you have not edited since setup. The same screen shows the starting point in use, lists what was added and has a "Remove starter content" button, which moves the starter pages, notes and menu to the trash, deletes the starter images, removes empty starter categories, puts your homepage setting back and restores the backed-up design. Edits you made to the design after setup are kept; if your styles are kept, the styles you had before setup can still be found in Styles, Revisions.
 
 = Setting up a page like the demo by hand =
 
@@ -72,7 +72,7 @@ Changes apply to the whole site. Keep enough contrast between each background an
 = 1.3.0 =
 * Released: November 18, 2026
 
-Setup now asks for a starting point. IT services is the first; more come in later versions. You can also apply a starting point's design (styles, header, footer and templates). Your own versions are backed up first and restored when you remove the starter content, while your later edits are kept. The section colours are renamed Light, Bold, Bright, Dark, Soft and Alert (the colours are the same).
+Setup now asks for a starting point. IT services is the first; more come in later versions. You can also apply a starting point's design (styles, header, footer and templates). Your own versions are backed up first and restored when you remove the starter content, while edits you make after setup are kept, also when you apply the design again. Applying the IT services design does not change your Styles. The section colours are renamed Light, Bold, Bright, Dark, Soft and Alert (the colours are the same).
 
 = 1.2.0 =
 * Released: November 18, 2026

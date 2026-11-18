@@ -85,13 +85,13 @@ function pixelgrid_starter_handle() {
 		exit;
 	}
 	if ( 'remove' === $task && pixelgrid_starter_ticked( 'pixelgrid_confirm' ) ) {
-		$had_design = false !== get_option( 'pixelgrid_starter_design', false );
-		$result     = pixelgrid_starter_remove();
-		$args       = array( 'pixelgrid_removed' => $result['removed'] );
+		$result = pixelgrid_starter_remove();
+		$args   = array( 'pixelgrid_removed' => $result['removed'] );
 		if ( $result['kept'] ) {
 			$args['pixelgrid_kept'] = implode( ',', array_map( 'sanitize_key', $result['kept'] ) );
 		}
-		if ( $had_design && ! $result['styles_restored'] ) {
+		// Only when the design wrote the styles and they changed afterwards.
+		if ( $result['styles_written'] && ! $result['styles_restored'] ) {
 			$args['pixelgrid_styles'] = 'kept';
 		}
 		wp_safe_redirect( add_query_arg( $args, $back ) );
@@ -114,6 +114,7 @@ function pixelgrid_starter_screen() {
 	$can      = pixelgrid_starter_can();
 	$variants = pixelgrid_variants();
 	$active   = pixelgrid_starter_active_variant();
+	$applied  = false !== get_option( 'pixelgrid_starter_design', false );
 	?>
 	<style>
 		.pixelgrid-setup .pixelgrid-cards { display: flex; flex-wrap: wrap; gap: 12px; margin: 0; padding: 0; border: 0; }
@@ -161,7 +162,7 @@ function pixelgrid_starter_screen() {
 					}
 				}
 				if ( isset( $_GET['pixelgrid_styles'] ) && 'kept' === sanitize_key( wp_unslash( $_GET['pixelgrid_styles'] ) ) ) {
-					echo '<p>' . esc_html__( 'Your style changes were kept because they changed after setup.', 'pixelgrid' ) . '</p>';
+					echo '<p>' . esc_html__( 'Your style changes were kept because they changed after setup. The styles you had before setup can be recovered in Styles, Revisions.', 'pixelgrid' ) . '</p>';
 				}
 				echo '</div>';
 			}
@@ -227,8 +228,13 @@ function pixelgrid_starter_screen() {
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Design', 'pixelgrid' ); ?></th>
 					<td>
-						<label><input type="checkbox" name="pixelgrid_design" value="1" checked> <?php esc_html_e( 'Apply this variant\'s design', 'pixelgrid' ); ?></label>
-						<p class="description"><?php esc_html_e( 'This changes the site\'s styles, header, footer and some templates. Your current ones are saved and put back when you remove the starter content. Edits you make after setup are kept on removal.', 'pixelgrid' ); ?></p>
+						<?php if ( $applied ) : ?>
+							<label><input type="checkbox" name="pixelgrid_design" value="1"> <?php esc_html_e( 'Apply this variant\'s design again (already applied)', 'pixelgrid' ); ?></label>
+							<p class="description"><?php esc_html_e( 'The design is already applied. Applying it again only changes the styles, header, footer and templates you have not edited since setup; your edits are left as they are.', 'pixelgrid' ); ?></p>
+						<?php else : ?>
+							<label><input type="checkbox" name="pixelgrid_design" value="1" checked> <?php esc_html_e( 'Apply this variant\'s design', 'pixelgrid' ); ?></label>
+							<p class="description"><?php esc_html_e( 'This changes the site\'s header, footer and some templates, and its styles when the starting point has its own (IT services keeps your current styles). Your current ones are saved and put back when you remove the starter content. Applying again only changes what you have not edited since setup, and edits you make after setup are kept on removal.', 'pixelgrid' ); ?></p>
+						<?php endif; ?>
 					</td>
 				</tr>
 				<tr>
@@ -257,6 +263,20 @@ function pixelgrid_starter_screen() {
 
 		<?php if ( $total || $created['attachment'] || '' !== $active ) : ?>
 			<h2><?php esc_html_e( 'Starter content on this site', 'pixelgrid' ); ?></h2>
+			<?php if ( '' !== $active ) : ?>
+				<p>
+					<?php
+					printf(
+						/* translators: %s: name of the starting point, for example IT services. */
+						esc_html__( 'Starting point in use: %s.', 'pixelgrid' ),
+						esc_html( isset( $variants[ $active ] ) ? $variants[ $active ]['label'] : $active )
+					);
+					if ( $applied ) {
+						echo ' ' . esc_html__( 'Its design is applied.', 'pixelgrid' );
+					}
+					?>
+				</p>
+			<?php endif; ?>
 			<?php
 			$groups = array(
 				'page' => __( 'Pages', 'pixelgrid' ),

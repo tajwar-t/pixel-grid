@@ -416,7 +416,8 @@ function pixelgrid_starter_create( string $variant, array $options ) {
  * Removes everything the setup created, restores the reading settings it changed and
  * undoes the design change when it can.
  *
- * @return array Keys: removed (int), styles_restored (bool), kept (string[]).
+ * @return array Keys: removed (int), styles_restored (bool), kept (string[]),
+ *               styles_written (bool, whether the applied design had written the styles).
  */
 function pixelgrid_starter_remove(): array {
 	$count = 0;
@@ -452,6 +453,7 @@ function pixelgrid_starter_remove(): array {
 		'removed'         => $count,
 		'styles_restored' => (bool) $design['styles_restored'],
 		'kept'            => array_values( (array) $design['kept'] ),
+		'styles_written'  => (bool) $design['styles_written'],
 	);
 }
 

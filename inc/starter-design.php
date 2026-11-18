@@ -6,7 +6,9 @@
  * Everything needed to undo is kept in the pixelgrid_starter_design option: the user global
  * styles before and after setup, and for each part or template the post, whether setup
  * created it, its content before setup and what setup wrote. Undo only puts things back when
- * they still hold exactly what setup wrote, so edits made after setup are never lost.
+ * they still hold exactly what setup wrote, and applying again only rewrites items that still
+ * hold what setup wrote, so edits made after setup are never lost. A variant without a style
+ * variation leaves the user global styles alone.
  *
  * @package pixelgrid
  */
@@ -88,7 +90,8 @@ function pixelgrid_design_sort_keys( $data ) {
 }
 
 /**
- * The user global styles a variant writes: its style variation, or the theme default.
+ * The user global styles a variant writes: its style variation. Variants without one
+ * (style '') write nothing; see pixelgrid_design_apply().
  *
  * @param array $variant Variant.
  * @return string JSON.
@@ -172,14 +175,19 @@ function pixelgrid_design_live_post( $id ) {
  * Applies a variant's design: style variation, template parts and templates.
  *
  * Applying again while a design is applied keeps the first backups, so undo still returns
- * the site to how it was before the first apply.
+ * the site to how it was before the first apply. Styles, parts and templates changed since
+ * the earlier apply are left as they are and reported as skipped, so later edits survive.
+ * A variant without a style variation does not touch the user global styles.
  *
  * @param array $variant Variant.
+ * @return array Keys: skipped (string[]: 'styles' and the slugs of parts and templates left
+ *               alone because they changed after the earlier apply).
  */
-function pixelgrid_design_apply( array $variant ): void {
+function pixelgrid_design_apply( array $variant ): array {
 	$variant  = pixelgrid_variant_defaults( $variant );
 	$previous = get_option( 'pixelgrid_starter_design', false );
 	$previous = is_array( $previous ) ? $previous : null;
+	$skipped  = array();
 
 	$state = array(
 		'styles_before'  => '',
@@ -187,12 +195,23 @@ function pixelgrid_design_apply( array $variant ): void {
 		'entities'       => array(),
 	);
 
-	$styles = pixelgrid_design_styles_post();
+	$had_styles = $previous && '' !== (string) $previous['styles_written'];
+	if ( $had_styles ) {
+		// Keep the first backup and what was written, so undo still knows them.
+		$state['styles_before']  = (string) $previous['styles_before'];
+		$state['styles_written'] = (string) $previous['styles_written'];
+	}
+
+	$styles = '' !== (string) $variant['style'] ? pixelgrid_design_styles_post() : null;
 	if ( $styles ) {
-		$written                 = pixelgrid_design_style_json( $variant );
-		$state['styles_before']  = $previous ? (string) $previous['styles_before'] : (string) $styles->post_content;
-		pixelgrid_design_write_styles( $styles->ID, $written );
-		$state['styles_written'] = pixelgrid_design_stored( $styles->ID );
+		if ( $had_styles && pixelgrid_design_normalise( $styles->post_content ) !== pixelgrid_design_normalise( $previous['styles_written'] ) ) {
+			// Changed after the earlier apply: leave the user's styles alone.
+			$skipped[] = 'styles';
+		} else {
+			$state['styles_before'] = $had_styles ? (string) $previous['styles_before'] : (string) $styles->post_content;
+			pixelgrid_design_write_styles( $styles->ID, pixelgrid_design_style_json( $variant ) );
+			$state['styles_written'] = pixelgrid_design_stored( $styles->ID );
+		}
 	}
 
 	$old = array();
@@ -215,12 +234,19 @@ function pixelgrid_design_apply( array $variant ): void {
 			}
 			$key = $type . '|' . $slug;
 
-			if ( isset( $old[ $key ] ) && pixelgrid_design_live_post( $old[ $key ]['post_id'] ) ) {
-				// Already applied: keep the first backup and write again.
-				$entity            = $old[ $key ];
-				pixelgrid_design_set_content( $entity['post_id'], $content );
-				$entity['written'] = pixelgrid_design_stored( $entity['post_id'] );
+			$live = isset( $old[ $key ] ) ? pixelgrid_design_live_post( $old[ $key ]['post_id'] ) : null;
+			if ( $live ) {
+				$entity = $old[ $key ];
 				unset( $old[ $key ] );
+				if ( trim( $live->post_content ) !== trim( (string) $entity['written'] ) ) {
+					// Changed after the earlier apply: leave it and keep its record for undo.
+					$skipped[]           = $slug;
+					$state['entities'][] = $entity;
+					continue;
+				}
+				// Already applied and unchanged: keep the first backup and write again.
+				pixelgrid_design_set_content( $entity['post_id'], $content );
+				$entity['written']   = pixelgrid_design_stored( $entity['post_id'] );
 				$state['entities'][] = $entity;
 				continue;
 			}
@@ -267,6 +293,8 @@ function pixelgrid_design_apply( array $variant ): void {
 	} else {
 		update_option( 'pixelgrid_starter_design', $state, false );
 	}
+
+	return array( 'skipped' => array_values( array_unique( $skipped ) ) );
 }
 
 /**
@@ -303,20 +331,23 @@ function pixelgrid_design_set_content( $id, $content ) {
  * Undoes the applied design. Styles, parts and templates are put back only when they still
  * hold exactly what setup wrote; anything changed after setup is left as it is.
  *
- * @return array Keys: styles_restored (bool), kept (string[], slugs left because they changed).
+ * @return array Keys: styles_restored (bool), kept (string[], slugs left because they changed),
+ *               styles_written (bool, whether apply wrote the user global styles at all).
  */
 function pixelgrid_design_undo(): array {
 	$result = array(
 		'styles_restored' => false,
 		'kept'            => array(),
+		'styles_written'  => false,
 	);
 	$state  = get_option( 'pixelgrid_starter_design', false );
 	if ( ! is_array( $state ) ) {
 		return $result;
 	}
 
-	$styles = pixelgrid_design_styles_post();
-	if ( $styles && '' !== (string) $state['styles_written'] ) {
+	$result['styles_written'] = '' !== (string) $state['styles_written'];
+	$styles                   = $result['styles_written'] ? pixelgrid_design_styles_post() : null;
+	if ( $styles ) {
 		if ( pixelgrid_design_normalise( $styles->post_content ) === pixelgrid_design_normalise( $state['styles_written'] ) ) {
 			pixelgrid_design_write_styles( $styles->ID, (string) $state['styles_before'] );
 			$result['styles_restored'] = true;
