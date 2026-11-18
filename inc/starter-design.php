@@ -191,8 +191,8 @@ function pixelgrid_design_apply( array $variant ): void {
 	if ( $styles ) {
 		$written                 = pixelgrid_design_style_json( $variant );
 		$state['styles_before']  = $previous ? (string) $previous['styles_before'] : (string) $styles->post_content;
-		$state['styles_written'] = $written;
 		pixelgrid_design_write_styles( $styles->ID, $written );
+		$state['styles_written'] = pixelgrid_design_stored( $styles->ID );
 	}
 
 	$old = array();
@@ -218,8 +218,8 @@ function pixelgrid_design_apply( array $variant ): void {
 			if ( isset( $old[ $key ] ) && pixelgrid_design_live_post( $old[ $key ]['post_id'] ) ) {
 				// Already applied: keep the first backup and write again.
 				$entity            = $old[ $key ];
-				$entity['written'] = $content;
 				pixelgrid_design_set_content( $entity['post_id'], $content );
+				$entity['written'] = pixelgrid_design_stored( $entity['post_id'] );
 				unset( $old[ $key ] );
 				$state['entities'][] = $entity;
 				continue;
@@ -234,9 +234,10 @@ function pixelgrid_design_apply( array $variant ): void {
 					'post_id' => $existing,
 					'created' => false,
 					'before'  => (string) get_post( $existing )->post_content,
-					'written' => $content,
+					'written' => '',
 				);
 				pixelgrid_design_set_content( $existing, $content );
+				$entity['written'] = pixelgrid_design_stored( $existing );
 			} else {
 				$id = pixelgrid_design_insert( $type, $slug, $content );
 				if ( ! $id ) {
@@ -249,7 +250,7 @@ function pixelgrid_design_apply( array $variant ): void {
 					'post_id' => $id,
 					'created' => true,
 					'before'  => '',
-					'written' => $content,
+					'written' => pixelgrid_design_stored( $id ),
 				);
 			}
 			$state['entities'][] = $entity;
@@ -266,6 +267,19 @@ function pixelgrid_design_apply( array $variant ): void {
 	} else {
 		update_option( 'pixelgrid_starter_design', $state, false );
 	}
+}
+
+/**
+ * The content WordPress stored for a post, which may differ from what was sent (for example
+ * after kses for users without unfiltered_html). Undo compares against this.
+ *
+ * @param int $id Post ID.
+ * @return string
+ */
+function pixelgrid_design_stored( $id ) {
+	clean_post_cache( (int) $id );
+	$post = get_post( (int) $id );
+	return $post ? (string) $post->post_content : '';
 }
 
 /**

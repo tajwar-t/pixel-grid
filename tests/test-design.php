@@ -245,5 +245,51 @@ $removed = pixelgrid_starter_remove();
 pg_assert_same( array( 'header' ), $removed['kept'], 'starter remove passes kept through' );
 pg_assert_same( 'publish', get_post_status( $header->wp_id ), 'edited header is not trashed by starter remove' );
 pg_assert_same( 'Y', get_post( $header->wp_id )->post_content, 'edited header keeps its content after starter remove' );
+wp_delete_post( $header->wp_id, true );
+
+// A user without unfiltered_html: kses rewrites what setup sends, and undo must still match it.
+register_block_pattern(
+	'pixelgrid-test/kses',
+	array(
+		'title'   => 'Kses test',
+		'content' => '<!-- wp:html --><div onclick="alert(1)" class="pg-kses">Z</div><!-- /wp:html -->',
+	)
+);
+add_filter(
+	'pixelgrid_variants',
+	function ( $variants ) {
+		$variants['testkses'] = array(
+			'slug'  => 'testkses',
+			'label' => 'Test kses',
+			'style' => 'tests/fixtures/test-style.json',
+			'parts' => array( 'header' => 'pixelgrid-test/kses' ),
+		);
+		return $variants;
+	}
+);
+add_filter(
+	'map_meta_cap',
+	function ( $caps, $cap ) {
+		return 'unfiltered_html' === $cap ? array( 'do_not_allow' ) : $caps;
+	},
+	10,
+	2
+);
+kses_init();
+pg_assert( ! current_user_can( 'unfiltered_html' ), 'test user lacks unfiltered_html' );
+pixelgrid_design_apply( pixelgrid_variant( 'testkses' ) );
+$header = pg_test_custom( 'header', 'wp_template_part' );
+pg_assert( null !== $header && false === strpos( get_post( $header->wp_id )->post_content, 'onclick' ), 'kses stripped the onclick from the stored header' );
+$result = pixelgrid_design_undo();
+pg_assert_same(
+	array(
+		'styles_restored' => true,
+		'kept'            => array(),
+	),
+	$result,
+	'undo without unfiltered_html restores styles and keeps nothing'
+);
+pg_assert( null === pg_test_custom( 'header', 'wp_template_part' ), 'undo without unfiltered_html deletes the created header' );
+pg_assert_same( $original, pg_test_styles(), 'styles equal the original after undo without unfiltered_html' );
 
 pg_done();
