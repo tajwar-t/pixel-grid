@@ -23,49 +23,39 @@ function pixelgrid_starter_can() {
 }
 
 /**
- * Pages the setup creates, keyed by slug: title and the page pattern used for the content.
+ * Builds the marker stored in _pixelgrid_starter: the variant slug and the item key.
  *
- * @return array
+ * @param string $variant Variant slug.
+ * @param string $key     Item key, for example page-home.
+ * @return string
  */
-function pixelgrid_starter_pages() {
-	return array(
-		'home'     => array( __( 'Home', 'pixelgrid' ), 'pixelgrid/page-home' ),
-		'services' => array( __( 'Services', 'pixelgrid' ), 'pixelgrid/page-services' ),
-		'about'    => array( __( 'About', 'pixelgrid' ), 'pixelgrid/page-about' ),
-		'pricing'  => array( __( 'Pricing', 'pixelgrid' ), 'pixelgrid/page-pricing' ),
-		'contact'  => array( __( 'Contact', 'pixelgrid' ), 'pixelgrid/page-contact' ),
-		'notes'    => array( __( 'Notes', 'pixelgrid' ), '' ),
-	);
+function pixelgrid_starter_key( string $variant, string $key ): string {
+	return $variant . ':' . $key;
 }
 
 /**
- * Categories the sample notes use, keyed by slug.
+ * The variant whose starter content is on the site.
  *
- * @return array
+ * @return string Variant slug, or an empty string when there is none.
  */
-function pixelgrid_starter_categories() {
-	return array(
-		'security' => __( 'Security', 'pixelgrid' ),
-		'cloud'    => __( 'Cloud', 'pixelgrid' ),
-		'helpdesk' => __( 'Helpdesk', 'pixelgrid' ),
-		'backups'  => __( 'Backups', 'pixelgrid' ),
-	);
+function pixelgrid_starter_active_variant(): string {
+	return (string) get_option( 'pixelgrid_starter_variant', '' );
 }
 
 /**
- * Finds an item created earlier by its starter key.
+ * Finds an item created earlier by its starter marker. Trashed items are not found.
  *
  * @param string $post_type Post type.
- * @param string $key       Starter key.
+ * @param string $full_key  Starter marker, for example it:page-home.
  * @return int Post ID or 0.
  */
-function pixelgrid_starter_find( $post_type, $key ) {
+function pixelgrid_starter_find( string $post_type, string $full_key ): int {
 	$found = get_posts(
 		array(
 			'post_type'      => $post_type,
 			'post_status'    => array( 'publish', 'draft', 'private', 'inherit' ),
 			'meta_key'       => '_pixelgrid_starter', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- runs only on the setup page.
-			'meta_value'     => $key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- runs only on the setup page.
+			'meta_value'     => $full_key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- runs only on the setup page.
 			'posts_per_page' => 1,
 			'fields'         => 'ids',
 		)
@@ -125,12 +115,12 @@ function pixelgrid_starter_expand( $content, $depth = 0 ) {
 /**
  * Inserts a post once and marks it as starter content.
  *
- * @param string $key  Starter key.
- * @param array  $args wp_insert_post() arguments.
+ * @param string $full_key Starter marker, for example it:page-home.
+ * @param array  $args     wp_insert_post() arguments.
  * @return int Post ID or 0.
  */
-function pixelgrid_starter_insert( $key, $args ) {
-	$existing = pixelgrid_starter_find( $args['post_type'], $key );
+function pixelgrid_starter_insert( $full_key, $args ) {
+	$existing = pixelgrid_starter_find( $args['post_type'], $full_key );
 	if ( $existing ) {
 		return $existing;
 	}
@@ -138,18 +128,19 @@ function pixelgrid_starter_insert( $key, $args ) {
 	if ( is_wp_error( $id ) ) {
 		return 0;
 	}
-	update_post_meta( $id, '_pixelgrid_starter', $key );
+	update_post_meta( $id, '_pixelgrid_starter', $full_key );
 	return (int) $id;
 }
 
 /**
  * Copies one of the theme's bundled images into the media library.
  *
- * @param int $number Image number, 1 to 8.
+ * @param string $variant Variant slug.
+ * @param int    $number  Image number, 1 to 8.
  * @return int Attachment ID or 0.
  */
-function pixelgrid_starter_image( $number ) {
-	$key      = 'image-' . (int) $number;
+function pixelgrid_starter_image( $variant, $number ) {
+	$key      = pixelgrid_starter_key( $variant, 'image-' . (int) $number );
 	$existing = pixelgrid_starter_find( 'attachment', $key );
 	if ( $existing ) {
 		return $existing;
@@ -213,12 +204,42 @@ function pixelgrid_starter_fix_links( $pages ) {
 }
 
 /**
- * Creates the starter content the user picked.
+ * Creates the starter content the user picked for one variant.
  *
- * @param array $options Keys: pages, posts, menu, reading (booleans).
- * @return array Counts of what was created.
+ * @param string $variant Variant slug.
+ * @param array  $options Keys: design, pages, posts, menu, reading (booleans).
+ * @return array|WP_Error Counts of what was created (pages, posts, menu), or an error when
+ *                        the variant is unknown, unavailable or another variant is in use.
  */
-function pixelgrid_starter_create( $options ) {
+function pixelgrid_starter_create( string $variant, array $options ) {
+	$def = pixelgrid_variant( $variant );
+	if ( ! $def ) {
+		return new WP_Error( 'pixelgrid_variant_unknown', __( 'That variant does not exist.', 'pixelgrid' ) );
+	}
+	if ( ! pixelgrid_variant_available( $def ) ) {
+		return new WP_Error( 'pixelgrid_variant_unavailable', __( 'That variant needs a plugin that is not active.', 'pixelgrid' ) );
+	}
+	$active = pixelgrid_starter_active_variant();
+	if ( '' !== $active && $variant !== $active ) {
+		return new WP_Error( 'pixelgrid_variant_busy', __( 'Remove the current starter content to switch.', 'pixelgrid' ) );
+	}
+	$options = wp_parse_args(
+		$options,
+		array(
+			'design'  => false,
+			'pages'   => false,
+			'posts'   => false,
+			'menu'    => false,
+			'reading' => false,
+		)
+	);
+
+	update_option( 'pixelgrid_starter_variant', $variant, false );
+
+	if ( $options['design'] && function_exists( 'pixelgrid_design_apply' ) ) {
+		pixelgrid_design_apply( $def );
+	}
+
 	$made  = array(
 		'pages' => 0,
 		'posts' => 0,
@@ -227,19 +248,21 @@ function pixelgrid_starter_create( $options ) {
 	$pages = array();
 
 	if ( $options['pages'] ) {
-		foreach ( pixelgrid_starter_pages() as $slug => $page ) {
-			$before  = pixelgrid_starter_find( 'page', 'page-' . $slug );
-			$pattern = $page[1] ? WP_Block_Patterns_Registry::get_instance()->get_registered( $page[1] ) : null;
-			$args    = array(
+		foreach ( $def['pages'] as $slug => $page ) {
+			$key      = pixelgrid_starter_key( $variant, 'page-' . $slug );
+			$before   = pixelgrid_starter_find( 'page', $key );
+			$pattern  = ! empty( $page[1] ) ? WP_Block_Patterns_Registry::get_instance()->get_registered( $page[1] ) : null;
+			$template = ! empty( $page[2] ) ? $page[2] : '';
+			$args     = array(
 				'post_type'    => 'page',
 				'post_title'   => $page[0],
 				'post_name'    => $slug,
 				'post_content' => $pattern ? pixelgrid_starter_expand( $pattern['content'] ) : '',
 			);
-			if ( $pattern ) {
-				$args['page_template'] = 'page-sections';
+			if ( $template ) {
+				$args['page_template'] = $template;
 			}
-			$pages[ $slug ] = pixelgrid_starter_insert( 'page-' . $slug, $args );
+			$pages[ $slug ] = pixelgrid_starter_insert( $key, $args );
 			if ( $pages[ $slug ] && ! $before ) {
 				++$made['pages'];
 			}
@@ -250,7 +273,7 @@ function pixelgrid_starter_create( $options ) {
 	if ( $options['posts'] ) {
 		$terms = get_option( 'pixelgrid_starter_terms', array() );
 		$cats  = array();
-		foreach ( pixelgrid_starter_categories() as $slug => $name ) {
+		foreach ( $def['categories'] as $slug => $name ) {
 			$term = get_term_by( 'slug', $slug, 'category' );
 			if ( $term ) {
 				$cats[ $slug ] = (int) $term->term_id;
@@ -264,12 +287,12 @@ function pixelgrid_starter_create( $options ) {
 		}
 		update_option( 'pixelgrid_starter_terms', array_values( array_unique( $terms ) ), false );
 
-		$sample = pixelgrid_variant( 'it' )['posts'];
-		$step   = 0;
-		foreach ( $sample as $item ) {
-			$before = pixelgrid_starter_find( 'post', 'post-' . $item['key'] );
+		$step = 0;
+		foreach ( $def['posts'] as $item ) {
+			$key    = pixelgrid_starter_key( $variant, 'post-' . $item['key'] );
+			$before = pixelgrid_starter_find( 'post', $key );
 			$id     = pixelgrid_starter_insert(
-				'post-' . $item['key'],
+				$key,
 				array(
 					'post_type'     => 'post',
 					'post_title'    => $item['title'],
@@ -285,10 +308,10 @@ function pixelgrid_starter_create( $options ) {
 				continue;
 			}
 			++$made['posts'];
-			if ( $item['tags'] ) {
+			if ( ! empty( $item['tags'] ) ) {
 				wp_set_post_tags( $id, $item['tags'] );
 			}
-			$image = pixelgrid_starter_image( $item['image'] );
+			$image = ! empty( $item['image'] ) ? pixelgrid_starter_image( $variant, $item['image'] ) : 0;
 			if ( $image ) {
 				set_post_thumbnail( $id, $image );
 			}
@@ -297,7 +320,7 @@ function pixelgrid_starter_create( $options ) {
 
 	if ( $options['menu'] && $pages ) {
 		$links = array();
-		foreach ( array( 'services', 'about', 'pricing', 'notes', 'contact' ) as $slug ) {
+		foreach ( $def['menu'] as $slug ) {
 			if ( empty( $pages[ $slug ] ) ) {
 				continue;
 			}
@@ -311,9 +334,10 @@ function pixelgrid_starter_create( $options ) {
 				)
 			) . ' /-->';
 		}
-		$before = pixelgrid_starter_find( 'wp_navigation', 'menu' );
+		$key    = pixelgrid_starter_key( $variant, 'menu' );
+		$before = pixelgrid_starter_find( 'wp_navigation', $key );
 		if ( $links && pixelgrid_starter_insert(
-			'menu',
+			$key,
 			array(
 				'post_type'    => 'wp_navigation',
 				'post_title'   => __( 'Pixelgrid menu', 'pixelgrid' ),
@@ -324,7 +348,9 @@ function pixelgrid_starter_create( $options ) {
 		}
 	}
 
-	if ( $options['reading'] && ! empty( $pages['home'] ) && ! empty( $pages['notes'] ) ) {
+	$front = $def['front'];
+	if ( $options['reading'] && $front && ! empty( $pages[ $front ] ) ) {
+		$posts_page = ( $def['posts_page'] && ! empty( $pages[ $def['posts_page'] ] ) ) ? (int) $pages[ $def['posts_page'] ] : 0;
 		if ( ! get_option( 'pixelgrid_starter_reading' ) ) {
 			update_option(
 				'pixelgrid_starter_reading',
@@ -337,8 +363,8 @@ function pixelgrid_starter_create( $options ) {
 			);
 		}
 		update_option( 'show_on_front', 'page' );
-		update_option( 'page_on_front', $pages['home'] );
-		update_option( 'page_for_posts', $pages['notes'] );
+		update_option( 'page_on_front', (int) $pages[ $front ] );
+		update_option( 'page_for_posts', $posts_page );
 	}
 
 	update_option( 'pixelgrid_starter_done', 1, false );
@@ -346,11 +372,12 @@ function pixelgrid_starter_create( $options ) {
 }
 
 /**
- * Removes everything the setup created and restores the reading settings it changed.
+ * Removes everything the setup created, restores the reading settings it changed and
+ * undoes the design change when it can.
  *
- * @return int Number of items removed.
+ * @return array Keys: removed (int), styles_restored (bool), kept (string[]).
  */
-function pixelgrid_starter_remove() {
+function pixelgrid_starter_remove(): array {
 	$count = 0;
 	foreach ( pixelgrid_starter_created() as $type => $ids ) {
 		foreach ( $ids as $id ) {
@@ -372,11 +399,57 @@ function pixelgrid_starter_remove() {
 		update_option( 'page_on_front', $reading['page_on_front'] );
 		update_option( 'page_for_posts', $reading['page_for_posts'] );
 	}
+
+	$design = array(
+		'styles_restored' => false,
+		'kept'            => array(),
+	);
+	if ( function_exists( 'pixelgrid_design_undo' ) ) {
+		$design = array_merge( $design, (array) pixelgrid_design_undo() );
+	}
+
 	delete_option( 'pixelgrid_starter_terms' );
 	delete_option( 'pixelgrid_starter_reading' );
 	delete_option( 'pixelgrid_starter_done' );
-	return $count;
+	delete_option( 'pixelgrid_starter_variant' );
+
+	return array(
+		'removed'         => $count,
+		'styles_restored' => (bool) $design['styles_restored'],
+		'kept'            => array_values( (array) $design['kept'] ),
+	);
 }
+
+/**
+ * Upgrades starter content made by 1.2.0, whose markers had no variant prefix, to the IT variant.
+ * Runs once, when the stored schema is below 2, and is safe to run again.
+ */
+function pixelgrid_starter_upgrade(): void {
+	if ( (int) get_option( 'pixelgrid_starter_schema', 0 ) >= 2 ) {
+		return;
+	}
+	global $wpdb;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- one-time upgrade of the theme's own markers.
+	$rows = $wpdb->get_results(
+		$wpdb->prepare(
+			"SELECT post_id, meta_value FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value NOT LIKE %s",
+			'_pixelgrid_starter',
+			'%' . $wpdb->esc_like( ':' ) . '%'
+		)
+	);
+	foreach ( (array) $rows as $row ) {
+		update_post_meta( (int) $row->post_id, '_pixelgrid_starter', pixelgrid_starter_key( 'it', $row->meta_value ), $row->meta_value );
+	}
+
+	if ( '' === pixelgrid_starter_active_variant() ) {
+		$created = pixelgrid_starter_created();
+		if ( $created['page'] || $created['post'] || $created['attachment'] || $created['wp_navigation'] ) {
+			update_option( 'pixelgrid_starter_variant', 'it', false );
+		}
+	}
+	update_option( 'pixelgrid_starter_schema', 2 );
+}
+add_action( 'admin_init', 'pixelgrid_starter_upgrade' );
 
 /**
  * Adds Appearance > Pixelgrid setup.
@@ -416,18 +489,25 @@ function pixelgrid_starter_handle() {
 
 	if ( 'create' === $task ) {
 		$made = pixelgrid_starter_create(
+			'it',
 			array(
+				'design'  => false,
 				'pages'   => pixelgrid_starter_ticked( 'pixelgrid_pages' ),
 				'posts'   => pixelgrid_starter_ticked( 'pixelgrid_posts' ),
 				'menu'    => pixelgrid_starter_ticked( 'pixelgrid_menu' ),
 				'reading' => pixelgrid_starter_ticked( 'pixelgrid_reading' ),
 			)
 		);
+		if ( is_wp_error( $made ) ) {
+			wp_safe_redirect( add_query_arg( array( 'pixelgrid_error' => str_replace( 'pixelgrid_variant_', '', $made->get_error_code() ) ), $back ) );
+			exit;
+		}
 		wp_safe_redirect( add_query_arg( array( 'pixelgrid_created' => $made['pages'] . '-' . $made['posts'] . '-' . $made['menu'] ), $back ) );
 		exit;
 	}
 	if ( 'remove' === $task && pixelgrid_starter_ticked( 'pixelgrid_confirm' ) ) {
-		wp_safe_redirect( add_query_arg( array( 'pixelgrid_removed' => pixelgrid_starter_remove() ), $back ) );
+		$result = pixelgrid_starter_remove();
+		wp_safe_redirect( add_query_arg( array( 'pixelgrid_removed' => $result['removed'] ), $back ) );
 		exit;
 	}
 	wp_safe_redirect( add_query_arg( array( 'pixelgrid_removed' => 'unconfirmed' ), $back ) );
@@ -472,6 +552,17 @@ function pixelgrid_starter_screen() {
 				/* translators: %d: number of items removed. */
 				printf( esc_html__( 'Removed %d starter items.', 'pixelgrid' ), absint( $removed ) );
 				echo '</p></div>';
+			}
+		}
+		if ( isset( $_GET['pixelgrid_error'] ) ) {
+			$error    = sanitize_key( wp_unslash( $_GET['pixelgrid_error'] ) );
+			$messages = array(
+				'busy'        => __( 'Nothing was added. Remove the current starter content to switch.', 'pixelgrid' ),
+				'unavailable' => __( 'Nothing was added. This variant needs a plugin that is not active.', 'pixelgrid' ),
+				'unknown'     => __( 'Nothing was added. That variant does not exist.', 'pixelgrid' ),
+			);
+			if ( isset( $messages[ $error ] ) ) {
+				echo '<div class="notice notice-error"><p>' . esc_html( $messages[ $error ] ) . '</p></div>';
 			}
 		}
 		// phpcs:enable
