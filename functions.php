@@ -48,12 +48,12 @@ if ( ! function_exists( 'pixelgrid_register_block_styles' ) ) :
 	 */
 	function pixelgrid_register_block_styles() {
 		$tones = array(
-			'tone-paper' => __( 'Paper section', 'pixelgrid' ),
-			'tone-blue'  => __( 'Blue section', 'pixelgrid' ),
-			'tone-sun'   => __( 'Sun section', 'pixelgrid' ),
-			'tone-night' => __( 'Night section', 'pixelgrid' ),
-			'tone-fog'   => __( 'Fog section', 'pixelgrid' ),
-			'tone-red'   => __( 'Red section', 'pixelgrid' ),
+			'tone-paper' => __( 'Light section', 'pixelgrid' ),
+			'tone-blue'  => __( 'Bold section', 'pixelgrid' ),
+			'tone-sun'   => __( 'Bright section', 'pixelgrid' ),
+			'tone-night' => __( 'Dark section', 'pixelgrid' ),
+			'tone-fog'   => __( 'Soft section', 'pixelgrid' ),
+			'tone-red'   => __( 'Alert section', 'pixelgrid' ),
 		);
 		foreach ( $tones as $name => $label ) {
 			register_block_style(
@@ -184,4 +184,7 @@ if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
 	require get_parent_theme_file_path( 'inc/variants.php' );
 	require get_parent_theme_file_path( 'inc/starter-design.php' );
 	require get_parent_theme_file_path( 'inc/starter-content.php' );
+}
+if ( is_admin() ) {
+	require get_parent_theme_file_path( 'inc/starter-screen.php' );
 }

@@ -14,7 +14,7 @@ Pixelgrid is a block theme for IT and technology companies. Every page sits on o
 
 Features:
 
-* Six section colours (Paper, Blue, Sun, Night, Fog, Red), applied as Group block styles. As a visitor scrolls, the whole page fades to the colour of the section in view.
+* Six section colours (Light, Bold, Bright, Dark, Soft, Alert), applied as Group block styles. As a visitor scrolls, the whole page fades to the colour of the section in view.
 * Pixel mosaics: give an Image block one of the "Pixel" styles and the photo is drawn through an 11 by 11 pixel icon (screen, cloud, padlock, speech bubble, chart, people, envelope, note, 404, or one that changes). Visitors can click pixels to redraw the picture.
 * A faint background grid that lights up under the cursor.
 * A small section index on the right edge, built from the headings of the colour sections on the page.
@@ -57,7 +57,7 @@ To switch a section to another colour set, select the Group block that wraps it,
 
 = How do I change the colours themselves? =
 
-Go to Appearance, Editor, Styles, Colours, Palette. Open the menu next to Theme and choose "Show details" to see each colour by name. Every section (Paper, Blue, Sun, Night, Fog, Red) and the footer has four colours:
+Go to Appearance, Editor, Styles, Colours, Palette. Open the menu next to Theme and choose "Show details" to see each colour by name. Every section (Light, Bold, Bright, Dark, Soft, Alert) and the footer has four colours:
 
 * background
 * text
