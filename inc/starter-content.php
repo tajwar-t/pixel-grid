@@ -263,7 +263,7 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 	// True once an item was made or found, or the design applied; only then is the variant recorded.
 	$any = false;
 
-	if ( $options['design'] && function_exists( 'pixelgrid_design_apply' ) ) {
+	if ( $options['design'] ) {
 		pixelgrid_design_apply( $def );
 		$any = true;
 	}
@@ -441,13 +441,7 @@ function pixelgrid_starter_remove(): array {
 		update_option( 'page_for_posts', $reading['page_for_posts'] );
 	}
 
-	$design = array(
-		'styles_restored' => false,
-		'kept'            => array(),
-	);
-	if ( function_exists( 'pixelgrid_design_undo' ) ) {
-		$design = array_merge( $design, (array) pixelgrid_design_undo() );
-	}
+	$design = pixelgrid_design_undo();
 
 	delete_option( 'pixelgrid_starter_terms' );
 	delete_option( 'pixelgrid_starter_reading' );

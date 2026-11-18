@@ -1,0 +1,12 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/theme.json",
+	"version": 3,
+	"title": "Test style",
+	"settings": {
+		"color": {
+			"palette": [
+				{ "slug": "blue-hover", "color": "#00C2A8", "name": "Blue section: hover" }
+			]
+		}
+	}
+}
