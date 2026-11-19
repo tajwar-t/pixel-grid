@@ -14,7 +14,7 @@
 
 <!-- wp:group {"tagName":"main","className":"pixelgrid-main pixelgrid-stack","layout":{"type":"constrained"}} -->
 <main class="wp-block-group pixelgrid-main pixelgrid-stack"><!-- wp:group {"layout":{"type":"default"}} -->
-<div class="wp-block-group"><!-- wp:query-title {"type":"archive","showPrefix":false,"className":"pixelgrid-news-label pixelgrid-news-rule"} /-->
+<div class="wp-block-group"><!-- wp:query-title {"type":"archive","showPrefix":false,"className":"pixelgrid-news-label pixelgrid-news-rule","fontSize":"xx-large"} /-->
 
 <!-- wp:term-description {"className":"is-style-lead"} /--></div>
 <!-- /wp:group -->

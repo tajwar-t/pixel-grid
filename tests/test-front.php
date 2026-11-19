@@ -121,5 +121,42 @@ $vars  = array(
 );
 pg_assert_same( $vars, pixelgrid_related_query_vars( $vars, $block ), 'related filter leaves an unmarked query unchanged' );
 
+// Most read is a list, not a section: post-terms labels never show it, but the post keeps it.
+$pg_business  = (int) wp_insert_term( 'Business', 'category', array( 'slug' => 'business' ) )['term_id'];
+$pg_most_read = (int) wp_insert_term( 'Most read', 'category', array( 'slug' => 'most-read' ) )['term_id'];
+$pg_opinion   = (int) wp_insert_term( 'Opinion', 'category', array( 'slug' => 'opinion' ) )['term_id'];
+$pg_mr_post   = wp_insert_post(
+	array(
+		'post_title'    => 'Mostreadpost',
+		'post_status'   => 'publish',
+		'post_category' => array( $pg_business, $pg_most_read, $pg_opinion ),
+	)
+);
+// Inside a parent block, as in a post template: the block is rendered by WP_Block::render().
+$pg_render_terms = function () use ( $pg_mr_post ) {
+	return ( new WP_Block(
+		parse_blocks( '<!-- wp:group --><div class="wp-block-group"><!-- wp:post-terms {"term":"category"} /--></div><!-- /wp:group -->' )[0],
+		array(
+			'postId'   => $pg_mr_post,
+			'postType' => 'post',
+		)
+	) )->render();
+};
+$pg_terms_out    = $pg_render_terms();
+pg_assert( false !== strpos( $pg_terms_out, 'Business' ), 'post-terms shows Business' );
+pg_assert( false !== strpos( $pg_terms_out, 'Opinion' ), 'post-terms still shows Opinion' );
+pg_assert( false === strpos( $pg_terms_out, 'Most read' ), 'post-terms hides Most read' );
+$pg_slugs = wp_list_pluck( (array) get_the_terms( $pg_mr_post, 'category' ), 'slug' );
+sort( $pg_slugs );
+pg_assert_same( array( 'business', 'most-read', 'opinion' ), $pg_slugs, 'get_the_terms outside the block still returns Most read' );
+pg_assert( false === has_filter( 'get_the_terms', 'pixelgrid_hide_most_read_term' ), 'the Most read filter is removed after the block renders' );
+$pg_terms_out = $pg_render_terms();
+pg_assert( false !== strpos( $pg_terms_out, 'Business' ) && false === strpos( $pg_terms_out, 'Most read' ), 'a second post-terms render hides Most read too' );
+// As a top-level block, as in the single template: render_block() with the global post.
+$GLOBALS['post'] = get_post( $pg_mr_post ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- test setup.
+$pg_terms_out    = do_blocks( '<!-- wp:post-terms {"term":"category"} /-->' );
+pg_assert( false !== strpos( $pg_terms_out, 'Business' ) && false === strpos( $pg_terms_out, 'Most read' ), 'a top-level post-terms block hides Most read' );
+pg_assert( false === has_filter( 'get_the_terms', 'pixelgrid_hide_most_read_term' ), 'the Most read filter is removed after a top-level render' );
+
 wp_reset_query();
 pg_done();

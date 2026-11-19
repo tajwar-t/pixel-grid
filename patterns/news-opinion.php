@@ -15,7 +15,7 @@
 <section class="wp-block-group alignfull is-style-tone-fog pixelgrid-stack"><!-- wp:columns {"className":"pixelgrid-split"} -->
 <div class="wp-block-columns pixelgrid-split"><!-- wp:column {"width":"40%"} -->
 <div class="wp-block-column" style="flex-basis:40%"><!-- wp:image {"aspectRatio":"1","scale":"cover","sizeSlug":"full","linkDestination":"none","className":"is-style-notch"} -->
-<figure class="wp-block-image size-full is-style-notch"><img src="<?php echo esc_url( get_parent_theme_file_uri( 'assets/images/news-13.webp' ) ); ?>" alt="<?php echo esc_attr_x( 'An abstract grey picture for the opinion column', 'Image description', 'pixelgrid' ); ?>" style="aspect-ratio:1;object-fit:cover"/></figure>
+<figure class="wp-block-image size-full is-style-notch"><img src="<?php echo esc_url( get_parent_theme_file_uri( 'assets/images/news-16.webp' ) ); ?>" alt="<?php echo esc_attr_x( 'An abstract grey picture for the opinion column', 'Image description', 'pixelgrid' ); ?>" style="aspect-ratio:1;object-fit:cover"/></figure>
 <!-- /wp:image --></div>
 <!-- /wp:column -->
 

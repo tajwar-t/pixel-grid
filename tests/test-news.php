@@ -132,7 +132,7 @@ pg_assert( false !== strpos( $pg_css, '--wp--preset--font-family--news-serif' ),
 pg_assert( isset( $news['styles']['css'] ) && false !== strpos( $news['styles']['css'], 'p.is-style-lead' ) && false !== strpos( $news['styles']['css'], 'news-serif' ), 'News lead paragraphs use the News serif' );
 
 // News images: generated plates exist, are valid 1200x1200 WebP, stay small and keep mid-tone variation.
-for ( $i = 1; $i <= 15; $i++ ) {
+for ( $i = 1; $i <= 18; $i++ ) {
 	$img_rel  = sprintf( 'assets/images/news-%02d.webp', $i );
 	$img_path = get_parent_theme_file_path( $img_rel );
 	pg_assert( file_exists( $img_path ), "$img_rel exists" );
@@ -290,5 +290,22 @@ $pg_footer = $pg_registry->get_registered( 'pixelgrid/news-footer' );
 pg_assert( in_array( 'core/template-part/header', $pg_header['blockTypes'] ?? array(), true ), 'news-header is a header part pattern' );
 pg_assert( in_array( 'core/template-part/footer', $pg_footer['blockTypes'] ?? array(), true ), 'news-footer is a footer part pattern' );
 pg_assert( function_exists( 'pixelgrid_news_row' ), 'pixelgrid_news_row helper is loaded by the row patterns' );
+
+// Static pictures have their own files, never an article image (news-01 to news-15).
+foreach ( array(
+	'news-opinion'    => 'news-16',
+	'news-tips-cta'   => 'news-17',
+	'news-page-about' => 'news-18',
+) as $pg_slug => $pg_img ) {
+	pg_assert( $pg_has( $pg_slug, 'assets/images/' . $pg_img . '.webp' ), "$pg_slug uses $pg_img" );
+}
+preg_match_all( '/assets\/images\/(news-\d\d)\.webp/', $pg_news['news-page-home'] ?? '', $pg_home_imgs );
+pg_assert_same( count( $pg_home_imgs[1] ), count( array_unique( $pg_home_imgs[1] ) ), 'no static image appears twice on the News home page' );
+
+// Page titles are titles, not small labels.
+pg_assert( (bool) preg_match( '/wp:query-title \{[^}]*"fontSize":"xx-large"/', $pg_news['news-template-category'] ?? '' ), 'section front title uses the Headline size' );
+pg_assert( (bool) preg_match( '/wp:heading \{"level":1[^}]*"fontSize":"xx-large"/', $pg_news['news-template-home'] ?? '' ), 'Latest page title uses the Headline size' );
+$pg_style = (string) file_get_contents( get_parent_theme_file_path( 'style.css' ) );
+pg_assert( (bool) preg_match( '/@media \(max-width: 781px\) \{\s*\.pixelgrid-news-row \.wp-block-post-template\.is-layout-grid \{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/', $pg_style ), 'News rows drop to 2 columns below 782px' );
 
 pg_done();

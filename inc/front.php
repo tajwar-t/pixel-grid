@@ -1,7 +1,8 @@
 <?php
 /**
  * Front-end helpers for the theme's own blocks: the "today's date" binding source used by
- * mastheads, and the related-posts row under an article.
+ * mastheads, the related-posts row under an article, and hiding the Most read category from
+ * post-terms labels.
  *
  * @package pixelgrid
  */
@@ -118,3 +119,54 @@ function pixelgrid_related_query_vars( array $query, WP_Block $block ): array {
 	return $query;
 }
 add_filter( 'query_loop_block_query_vars', 'pixelgrid_related_query_vars', 10, 2 );
+
+/**
+ * Drops the Most read category from a term list. Presentation only: it is hooked to
+ * get_the_terms while a core/post-terms block renders, so the section label above a headline
+ * never says "Most read". Stored terms, queries and get_the_terms() elsewhere are unchanged.
+ *
+ * @param WP_Term[]|false|WP_Error $terms Terms of the post.
+ * @return WP_Term[]|false|WP_Error
+ */
+function pixelgrid_hide_most_read_term( $terms ) {
+	if ( ! is_array( $terms ) ) {
+		return $terms;
+	}
+	return array_values(
+		array_filter(
+			$terms,
+			function ( $term ) {
+				return ! ( $term instanceof WP_Term && 'category' === $term->taxonomy && 'most-read' === $term->slug );
+			}
+		)
+	);
+}
+
+/**
+ * Hides the Most read category while a core/post-terms block renders (presentation only).
+ * Runs late, and only when no other filter has already short-circuited the block, so the
+ * matching remove in pixelgrid_post_terms_done() always runs.
+ *
+ * @param string|null $pre_render   Short-circuit content, or null to render normally.
+ * @param array       $parsed_block Block being rendered.
+ * @return string|null
+ */
+function pixelgrid_post_terms_start( $pre_render, $parsed_block ) {
+	if ( null === $pre_render && isset( $parsed_block['blockName'] ) && 'core/post-terms' === $parsed_block['blockName'] ) {
+		add_filter( 'get_the_terms', 'pixelgrid_hide_most_read_term' );
+	}
+	return $pre_render;
+}
+add_filter( 'pre_render_block', 'pixelgrid_post_terms_start', PHP_INT_MAX, 2 );
+
+/**
+ * Removes the Most read filter once the core/post-terms block has rendered.
+ *
+ * @param string $block_content Rendered block.
+ * @return string
+ */
+function pixelgrid_post_terms_done( $block_content ) {
+	remove_filter( 'get_the_terms', 'pixelgrid_hide_most_read_term' );
+	return $block_content;
+}
+add_filter( 'render_block_core/post-terms', 'pixelgrid_post_terms_done' );

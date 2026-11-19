@@ -13,8 +13,8 @@
 <!-- wp:template-part {"slug":"header","tagName":"header"} /-->
 
 <!-- wp:group {"tagName":"main","className":"pixelgrid-main pixelgrid-stack","layout":{"type":"constrained"}} -->
-<main class="wp-block-group pixelgrid-main pixelgrid-stack"><!-- wp:heading {"level":1,"className":"pixelgrid-news-label"} -->
-<h1 class="wp-block-heading pixelgrid-news-label"><?php echo esc_html_x( 'Latest', 'News posts page label', 'pixelgrid' ); ?></h1>
+<main class="wp-block-group pixelgrid-main pixelgrid-stack"><!-- wp:heading {"level":1,"className":"pixelgrid-news-label","fontSize":"xx-large"} -->
+<h1 class="wp-block-heading pixelgrid-news-label has-xx-large-font-size"><?php echo esc_html_x( 'Latest', 'News posts page label', 'pixelgrid' ); ?></h1>
 <!-- /wp:heading -->
 
 <!-- wp:query {"queryId":51,"query":{"perPage":12,"pages":0,"offset":0,"postType":"post","order":"desc","orderBy":"date","inherit":true},"className":"pixelgrid-rows"} -->
