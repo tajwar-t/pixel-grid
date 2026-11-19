@@ -163,4 +163,132 @@ for ( $i = 1; $i <= 15; $i++ ) {
 	pg_assert( $sd >= 35, sprintf( '%s luminance stddev is at least 35 (got %.1f)', $img_rel, $sd ) );
 }
 
+// News patterns: registered, expandable, valid markup, real images, no database ids or taxQuery.
+$pg_news_cats  = array( 'world', 'business', 'technology', 'culture', 'sport' );
+$pg_news_slugs = array(
+	'news-header',
+	'news-footer',
+	'news-lead',
+	'news-top-stories',
+	'news-category-row',
+	'news-most-read',
+	'news-opinion',
+	'news-tips-cta',
+	'news-page-home',
+	'news-page-about',
+	'news-page-contact',
+	'news-page-tips',
+	'news-template-home',
+	'news-template-single',
+	'news-template-category',
+);
+foreach ( $pg_news_cats as $pg_cat ) {
+	$pg_news_slugs[] = 'news-row-' . $pg_cat;
+}
+$pg_registry  = WP_Block_Patterns_Registry::get_instance();
+$pg_theme_uri = trailingslashit( get_template_directory_uri() );
+$pg_news      = array();
+foreach ( $pg_news_slugs as $pg_slug ) {
+	$pg_pattern = $pg_registry->get_registered( 'pixelgrid/' . $pg_slug );
+	pg_assert( is_array( $pg_pattern ), "pixelgrid/$pg_slug is registered" );
+	$pg_content          = is_array( $pg_pattern ) ? pixelgrid_starter_expand( $pg_pattern['content'] ) : '';
+	$pg_news[ $pg_slug ] = $pg_content;
+	pg_assert( '' !== trim( $pg_content ), "pixelgrid/$pg_slug has expanded content" );
+	pg_assert( false === strpos( $pg_content, '<!-- wp:pattern' ), "pixelgrid/$pg_slug has no unexpanded pattern refs" );
+	pg_assert( ! preg_match( '/"(id|ref)":\s*\d/', $pg_content ), "pixelgrid/$pg_slug has no numeric id or ref attribute" );
+	pg_assert( false === strpos( $pg_content, 'taxQuery' ), "pixelgrid/$pg_slug has no taxQuery" );
+	$pg_source = (string) file_get_contents( get_parent_theme_file_path( 'patterns/' . $pg_slug . '.php' ) );
+	pg_assert( false === strpos( $pg_source, '"theme":' ), "patterns/$pg_slug.php sets no theme attribute" );
+
+	$pg_junk = array();
+	$pg_walk = function ( $blocks ) use ( &$pg_walk, &$pg_junk ) {
+		foreach ( $blocks as $block ) {
+			if ( null === $block['blockName'] && '' !== trim( $block['innerHTML'] ) ) {
+				$pg_junk[] = trim( $block['innerHTML'] );
+			}
+			$pg_walk( $block['innerBlocks'] );
+		}
+	};
+	$pg_walk( parse_blocks( $pg_content ) );
+	pg_assert( array() === $pg_junk, "pixelgrid/$pg_slug parses with no freeform text" . ( $pg_junk ? ': ' . substr( $pg_junk[0], 0, 80 ) : '' ) );
+
+	preg_match_all( '/<img[^>]+src="([^"]+)"/', $pg_content, $pg_imgs );
+	foreach ( $pg_imgs[1] as $pg_src ) {
+		$pg_rel = 0 === strpos( $pg_src, $pg_theme_uri ) ? substr( $pg_src, strlen( $pg_theme_uri ) ) : $pg_src;
+		pg_assert( 0 === strpos( $pg_rel, 'assets/images/news-' ) && file_exists( get_parent_theme_file_path( $pg_rel ) ), "pixelgrid/$pg_slug image $pg_rel is a News theme file" );
+	}
+
+	// Rendering the pattern raises no PHP notice or warning.
+	$pg_errors = array();
+	set_error_handler(
+		function ( $errno, $errstr, $errfile, $errline ) use ( &$pg_errors ) {
+			if ( in_array( $errno, array( E_WARNING, E_NOTICE, E_USER_WARNING, E_USER_NOTICE ), true ) ) {
+				$pg_errors[] = "$errstr ($errfile:$errline)";
+			}
+			return true;
+		}
+	);
+	$pg_html = '' !== $pg_content ? do_blocks( $pg_content ) : '';
+	restore_error_handler();
+	pg_assert( array() === $pg_errors, "pixelgrid/$pg_slug renders with no PHP notices" . ( $pg_errors ? ': ' . $pg_errors[0] : '' ) );
+	pg_assert( false === strpos( $pg_html, 'Warning:' ) && false === strpos( $pg_html, 'Notice:' ), "pixelgrid/$pg_slug output has no PHP messages" );
+}
+
+$pg_news_cat = WP_Block_Pattern_Categories_Registry::get_instance()->get_registered( 'pixelgrid-news' );
+pg_assert_same( 'Pixelgrid News', $pg_news_cat['label'] ?? null, 'pattern category pixelgrid-news is labelled Pixelgrid News' );
+
+$pg_has = function ( $slug, $needle ) use ( $pg_news ) {
+	return false !== strpos( $pg_news[ $slug ] ?? '', $needle );
+};
+foreach ( $pg_news_cats as $pg_cat ) {
+	$pg_cat_url = esc_url( add_query_arg( 'category_name', $pg_cat, home_url( '/' ) ) );
+	pg_assert( $pg_has( 'news-row-' . $pg_cat, 'pixelgrid-cat-' . $pg_cat ), "news-row-$pg_cat has the pixelgrid-cat-$pg_cat marker" );
+	pg_assert( $pg_has( 'news-row-' . $pg_cat, $pg_cat_url ), "news-row-$pg_cat heading links to the category" );
+	pg_assert( $pg_has( 'news-footer', $pg_cat_url ), "news footer links to $pg_cat" );
+	pg_assert( $pg_has( 'news-page-home', 'pixelgrid-cat-' . $pg_cat ), "news home page has the $pg_cat row" );
+}
+$pg_most_read = $pg_registry->get_registered( 'pixelgrid/news-most-read' );
+pg_assert( $pg_has( 'news-most-read', 'pixelgrid-cat-most-read' ), 'news-most-read has the pixelgrid-cat-most-read marker' );
+pg_assert( $pg_has( 'news-most-read', '"perPage":5' ), 'news-most-read lists 5 posts' );
+pg_assert( false !== stripos( is_array( $pg_most_read ) ? $pg_most_read['description'] : '', 'does not count views' ), 'news-most-read says the theme does not count views' );
+pg_assert( $pg_has( 'news-opinion', 'pixelgrid-cat-opinion' ) && $pg_has( 'news-opinion', '"perPage":2' ), 'news-opinion lists 2 opinion posts' );
+pg_assert( $pg_has( 'news-opinion', 'wp:pullquote' ), 'news-opinion has a pull quote' );
+pg_assert( ! $pg_has( 'news-category-row', 'pixelgrid-cat-' ) && $pg_has( 'news-category-row', '"perPage":4' ), 'news-category-row lists 4 posts with no category marker' );
+pg_assert( $pg_has( 'news-lead', '"perPage":1' ), 'news-lead lists 1 post' );
+pg_assert( $pg_has( 'news-top-stories', '"perPage":3' ) && $pg_has( 'news-top-stories', '"offset":1' ), 'news-top-stories lists posts 2 to 4' );
+pg_assert( $pg_has( 'news-tips-cta', esc_url( add_query_arg( 'pagename', 'tips', home_url( '/' ) ) ) ), 'news-tips-cta links to the tips page' );
+foreach ( array( 'pixelgrid-cat-most-read', 'pixelgrid-cat-opinion', '"offset":1', 'pagename=tips' ) as $pg_needle ) {
+	pg_assert( $pg_has( 'news-page-home', $pg_needle ), "news home page includes $pg_needle" );
+}
+pg_assert( $pg_has( 'news-header', '"source":"pixelgrid/today"' ), 'news-header has the pixelgrid/today binding' );
+pg_assert( $pg_has( 'news-header', 'wp:navigation' ) && $pg_has( 'news-header', 'wp:search' ), 'news-header has the menu and search' );
+pg_assert( $pg_has( 'news-template-single', 'pixelgrid-related' ) && $pg_has( 'news-template-single', 'wp:post-excerpt' ), 'news-template-single has the standfirst and related row' );
+pg_assert( (bool) preg_match( '/wp:query \{[^\n]*"perPage":3[^\n]*"inherit":false[^\n]*pixelgrid-related/', $pg_news['news-template-single'] ?? '' ), 'news related row is 3 posts, not inherited' );
+pg_assert( $pg_has( 'news-template-home', '"inherit":true' ) && $pg_has( 'news-template-home', 'wp:query-pagination' ), 'news-template-home is an inherited river with pagination' );
+pg_assert( $pg_has( 'news-template-category', 'wp:query-title' ) && $pg_has( 'news-template-category', '"inherit":true' ) && $pg_has( 'news-template-category', 'wp:query-pagination' ), 'news-template-category is a section front' );
+foreach ( array( 'news-template-home', 'news-template-single', 'news-template-category' ) as $pg_slug ) {
+	$pg_source = (string) file_get_contents( get_parent_theme_file_path( 'patterns/' . $pg_slug . '.php' ) );
+	pg_assert( false !== strpos( $pg_source, '<!-- wp:template-part {"slug":"header","tagName":"header"} /-->' ) && false !== strpos( $pg_source, '<!-- wp:template-part {"slug":"footer","tagName":"footer"} /-->' ), "$pg_slug has header and footer parts" );
+	pg_assert( $pg_has( $pg_slug, '"tagName":"main"' ), "$pg_slug has a main" );
+}
+foreach ( array( 'news-page-home', 'news-page-about', 'news-page-contact', 'news-page-tips' ) as $pg_slug ) {
+	$pg_pattern = $pg_registry->get_registered( 'pixelgrid/' . $pg_slug );
+	pg_assert( in_array( 'pixelgrid-pages', $pg_pattern['categories'] ?? array(), true ), "pixelgrid/$pg_slug is in Pixelgrid pages" );
+	pg_assert( in_array( 'core/post-content', $pg_pattern['blockTypes'] ?? array(), true ), "pixelgrid/$pg_slug is a post-content pattern" );
+	pg_assert_same( array( 'page' ), $pg_pattern['postTypes'] ?? null, "pixelgrid/$pg_slug is for pages" );
+}
+foreach ( array( 'news-row-world', 'news-row-sport', 'news-template-home', 'news-template-single', 'news-template-category' ) as $pg_slug ) {
+	$pg_pattern = $pg_registry->get_registered( 'pixelgrid/' . $pg_slug );
+	pg_assert( isset( $pg_pattern['inserter'] ) && false === $pg_pattern['inserter'], "pixelgrid/$pg_slug is hidden from the inserter" );
+}
+foreach ( array( 'news-lead', 'news-top-stories', 'news-category-row', 'news-most-read', 'news-opinion', 'news-tips-cta' ) as $pg_slug ) {
+	$pg_pattern = $pg_registry->get_registered( 'pixelgrid/' . $pg_slug );
+	pg_assert( in_array( 'pixelgrid-news', $pg_pattern['categories'] ?? array(), true ), "pixelgrid/$pg_slug is in Pixelgrid News" );
+}
+$pg_header = $pg_registry->get_registered( 'pixelgrid/news-header' );
+$pg_footer = $pg_registry->get_registered( 'pixelgrid/news-footer' );
+pg_assert( in_array( 'core/template-part/header', $pg_header['blockTypes'] ?? array(), true ), 'news-header is a header part pattern' );
+pg_assert( in_array( 'core/template-part/footer', $pg_footer['blockTypes'] ?? array(), true ), 'news-footer is a footer part pattern' );
+pg_assert( function_exists( 'pixelgrid_news_row' ), 'pixelgrid_news_row helper is loaded by the row patterns' );
+
 pg_done();

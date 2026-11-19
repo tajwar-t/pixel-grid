@@ -183,6 +183,13 @@ if ( ! function_exists( 'pixelgrid_pattern_categories' ) ) :
 				'description' => __( 'Sections for a design studio: work, capabilities, clients and process.', 'pixelgrid' ),
 			)
 		);
+		register_block_pattern_category(
+			'pixelgrid-news',
+			array(
+				'label'       => __( 'Pixelgrid News', 'pixelgrid' ),
+				'description' => __( 'Sections for a news site: lead story, top stories, category rows, most read and opinion.', 'pixelgrid' ),
+			)
+		);
 	}
 endif;
 add_action( 'init', 'pixelgrid_pattern_categories' );

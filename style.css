@@ -1308,3 +1308,93 @@ body .is-layout-constrained > :where(:not(.alignleft):not(.alignright):not(.alig
 .pixelgrid-footer .wp-block-navigation__container {
 	gap: 8px;
 }
+
+/* News: condensed section labels, the masthead, most read and the section front lead.
+   Used by the patterns/news-*.php patterns only. */
+:is(p, h1, h2, h3, div).pixelgrid-news-label {
+	font-family: var(--wp--preset--font-family--heading);
+	font-size: var(--wp--preset--font-size--medium);
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	line-height: 1.1;
+	text-transform: uppercase;
+}
+
+.pixelgrid-news-label a {
+	text-decoration: none;
+}
+
+.pixelgrid-news-label a:hover {
+	text-decoration: underline;
+}
+
+.pixelgrid-news-rule {
+	border-top: 2px solid var(--pixelgrid-fg);
+	padding-top: 12px;
+}
+
+.pixelgrid-news-bar {
+	border-top: 2px solid var(--pixelgrid-fg);
+	border-bottom: 2px solid var(--pixelgrid-fg);
+	padding-top: 8px;
+	padding-bottom: 8px;
+}
+
+.pixelgrid-news-most-read .wp-block-post-template {
+	counter-reset: pixelgrid-news;
+}
+
+.pixelgrid-news-most-read .wp-block-post,
+.pixelgrid-news-opinion .wp-block-post {
+	padding: 14px 0;
+	border-top: 2px solid var(--pixelgrid-fg);
+}
+
+.pixelgrid-news-most-read .wp-block-post {
+	counter-increment: pixelgrid-news;
+	display: grid;
+	grid-template-columns: 2.5ch minmax(0, 1fr);
+	column-gap: 16px;
+}
+
+.pixelgrid-news-most-read .wp-block-post::before {
+	content: counter(pixelgrid-news);
+	grid-row: 1 / span 2;
+	font-family: var(--wp--preset--font-family--heading);
+	font-size: var(--wp--preset--font-size--x-large);
+	font-weight: 800;
+	line-height: 1;
+}
+
+.pixelgrid-news-most-read .wp-block-post > * {
+	grid-column: 2;
+	margin: 0;
+}
+
+.pixelgrid-news-opinion .wp-block-post > * + * {
+	margin-block-start: 8px;
+}
+
+@media (min-width: 782px) {
+	body:not(.paged) .pixelgrid-news-front .wp-block-post-template > li:first-child {
+		grid-column: 1 / -1;
+		display: grid;
+		grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+		column-gap: var(--pixelgrid-u);
+		align-content: start;
+	}
+
+	body:not(.paged) .pixelgrid-news-front .wp-block-post-template > li:first-child > * {
+		grid-column: 2;
+	}
+
+	body:not(.paged) .pixelgrid-news-front .wp-block-post-template > li:first-child > .wp-block-post-featured-image {
+		grid-column: 1;
+		grid-row: 1 / span 4;
+		margin: 0;
+	}
+
+	body:not(.paged) .pixelgrid-news-front .wp-block-post-template > li:first-child .wp-block-post-title {
+		font-size: var(--wp--preset--font-size--xx-large);
+	}
+}
