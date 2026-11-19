@@ -176,6 +176,13 @@ if ( ! function_exists( 'pixelgrid_pattern_categories' ) ) :
 				'description' => __( 'Complete page layouts.', 'pixelgrid' ),
 			)
 		);
+		register_block_pattern_category(
+			'pixelgrid-agency',
+			array(
+				'label'       => __( 'Pixelgrid Agency', 'pixelgrid' ),
+				'description' => __( 'Sections for a design studio: work, capabilities, clients and process.', 'pixelgrid' ),
+			)
+		);
 	}
 endif;
 add_action( 'init', 'pixelgrid_pattern_categories' );

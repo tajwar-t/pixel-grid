@@ -105,4 +105,104 @@ for ( $i = 1; $i <= 12; $i++ ) {
 	pg_assert( $sd >= 35, sprintf( '%s luminance stddev is at least 35 (got %.1f)', $img_rel, $sd ) );
 }
 
+// Agency patterns: registered, expandable, valid markup, real images, no database ids.
+// The database snapshot holds a cached list of theme pattern files; read the folder afresh.
+wp_get_theme()->delete_pattern_cache();
+_register_theme_block_patterns();
+$agency_slugs = array(
+	'agency-header',
+	'agency-footer',
+	'agency-hero',
+	'agency-work-grid',
+	'agency-capabilities',
+	'agency-clients',
+	'agency-process',
+	'agency-journal-rows',
+	'agency-cta',
+	'agency-page-home',
+	'agency-page-work',
+	'agency-page-services',
+	'agency-page-studio',
+	'agency-page-contact',
+	'agency-case-study',
+	'agency-case-1',
+	'agency-case-2',
+	'agency-case-3',
+	'agency-case-4',
+	'agency-case-5',
+	'agency-case-6',
+	'agency-blog-heading',
+	'agency-template-home',
+);
+$registry     = WP_Block_Patterns_Registry::get_instance();
+$theme_uri    = trailingslashit( get_template_directory_uri() );
+$expanded     = array();
+foreach ( $agency_slugs as $slug ) {
+	$pattern = $registry->get_registered( 'pixelgrid/' . $slug );
+	pg_assert( is_array( $pattern ), "pixelgrid/$slug is registered" );
+	$content = is_array( $pattern ) ? pixelgrid_starter_expand( $pattern['content'] ) : '';
+	$expanded[ $slug ] = $content;
+	pg_assert( '' !== trim( $content ), "pixelgrid/$slug has expanded content" );
+	pg_assert( false === strpos( $content, '<!-- wp:pattern' ), "pixelgrid/$slug has no unexpanded pattern refs" );
+	pg_assert( ! preg_match( '/"(id|ref)":\s*\d/', $content ), "pixelgrid/$slug has no numeric id or ref attribute" );
+	pg_assert( false === stripos( $content, 'notes' ), "pixelgrid/$slug never says Notes" );
+
+	$junk  = array();
+	$walk  = function ( $blocks ) use ( &$walk, &$junk ) {
+		foreach ( $blocks as $block ) {
+			if ( null === $block['blockName'] && '' !== trim( $block['innerHTML'] ) ) {
+				$junk[] = trim( $block['innerHTML'] );
+			}
+			$walk( $block['innerBlocks'] );
+		}
+	};
+	$walk( parse_blocks( $content ) );
+	pg_assert( array() === $junk, "pixelgrid/$slug parses with no freeform junk between blocks" . ( $junk ? ': ' . substr( $junk[0], 0, 80 ) : '' ) );
+
+	preg_match_all( '/<img[^>]+src="([^"]+)"/', $content, $imgs );
+	foreach ( $imgs[1] as $src ) {
+		$rel = 0 === strpos( $src, $theme_uri ) ? substr( $src, strlen( $theme_uri ) ) : $src;
+		pg_assert( 0 === strpos( $rel, 'assets/images/agency-' ) && file_exists( get_parent_theme_file_path( $rel ) ), "pixelgrid/$slug image $rel is an Agency theme file" );
+	}
+}
+
+$agency_cats = WP_Block_Pattern_Categories_Registry::get_instance()->get_registered( 'pixelgrid-agency' );
+pg_assert_same( 'Pixelgrid Agency', $agency_cats['label'] ?? null, 'pattern category pixelgrid-agency is labelled Pixelgrid Agency' );
+
+pg_assert( false !== strpos( $expanded['agency-header'], 'Start a project' ), 'agency header has a Start a project button' );
+pg_assert( false !== strpos( $expanded['agency-header'], esc_url( add_query_arg( 'pagename', 'contact', home_url( '/' ) ) ) ), 'agency header button links to contact' );
+pg_assert( false !== strpos( $expanded['agency-footer'], 'Have a project in mind?' ), 'agency footer has the closing line' );
+pg_assert( false !== strpos( $expanded['agency-blog-heading'], 'Journal' ), 'agency blog heading says Journal' );
+pg_assert( false !== strpos( $expanded['agency-template-home'], '"slug":"header"' ) && false !== strpos( $expanded['agency-template-home'], '"slug":"footer"' ), 'agency home template has header and footer parts' );
+pg_assert( false !== strpos( $expanded['agency-template-home'], 'Journal' ), 'agency home template includes the Journal heading' );
+pg_assert( false !== strpos( $expanded['agency-hero'], 'is-style-mosaic-cycle' ), 'agency hero has a changing mosaic' );
+pg_assert_same( 4, substr_count( $expanded['agency-process'], '<!-- wp:column -->' ), 'agency process has 4 steps' );
+pg_assert( false !== strpos( $expanded['agency-journal-rows'], '"perPage":3' ), 'agency journal rows show the latest 3 posts' );
+
+$case_slugs = array();
+preg_match_all( '/pagename=work(?:\/|%2F)([a-z0-9-]+)/', $expanded['agency-work-grid'], $work_links );
+$case_slugs = array_values( array_unique( $work_links[1] ) );
+pg_assert_same( 6, count( $case_slugs ), 'agency work grid links 6 distinct case studies' );
+$case_images = array();
+for ( $n = 1; $n <= 6; $n++ ) {
+	$case = $expanded[ 'agency-case-' . $n ];
+	preg_match( '/assets\/images\/(agency-\d\d)\.webp/', $case, $img );
+	$case_images[] = $img[1] ?? '';
+	$next = $case_slugs[ $n % 6 ] ?? 'missing';
+	pg_assert( false !== strpos( $case, esc_url( add_query_arg( 'pagename', 'work/' . $next, home_url( '/' ) ) ) ), "agency case $n links to the next case study ($next)" );
+	pg_assert( false !== strpos( $case, 'wp:pullquote' ), "agency case $n has a pull quote" );
+	pg_assert( false !== strpos( $case, 'is-style-stat' ), "agency case $n has results stats" );
+}
+pg_assert_same( 6, count( array_unique( array_filter( $case_images ) ) ), 'each agency case study has its own image' );
+foreach ( array( 'agency-page-home', 'agency-page-work', 'agency-page-services', 'agency-page-studio', 'agency-page-contact', 'agency-case-study' ) as $slug ) {
+	$pattern = $registry->get_registered( 'pixelgrid/' . $slug );
+	pg_assert( in_array( 'pixelgrid-pages', $pattern['categories'] ?? array(), true ), "pixelgrid/$slug is in Pixelgrid pages" );
+	pg_assert( in_array( 'core/post-content', $pattern['blockTypes'] ?? array(), true ), "pixelgrid/$slug is a post-content pattern" );
+	pg_assert_same( array( 'page' ), $pattern['postTypes'] ?? null, "pixelgrid/$slug is for pages" );
+}
+foreach ( array( 'agency-case-1', 'agency-blog-heading', 'agency-template-home' ) as $slug ) {
+	$pattern = $registry->get_registered( 'pixelgrid/' . $slug );
+	pg_assert( isset( $pattern['inserter'] ) && false === $pattern['inserter'], "pixelgrid/$slug is hidden from the inserter" );
+}
+
 pg_done();
