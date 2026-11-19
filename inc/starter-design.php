@@ -20,6 +20,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * The user global styles post for the active theme, created when missing.
  *
+ * Core creates the post with tax_input, which wp_insert_post() drops when the current user
+ * cannot assign terms (WP-CLI without --user, cron). The post would then lack its wp_theme
+ * term and the resolver would never find it, so the term is set here when it is missing.
+ * Apply and undo both get the post through here.
+ *
  * @return WP_Post|null
  */
 function pixelgrid_design_styles_post() {
@@ -27,7 +32,12 @@ function pixelgrid_design_styles_post() {
 	if ( empty( $data['ID'] ) ) {
 		return null;
 	}
-	return get_post( (int) $data['ID'] );
+	$id = (int) $data['ID'];
+	if ( ! has_term( get_stylesheet(), 'wp_theme', $id ) ) {
+		wp_set_object_terms( $id, get_stylesheet(), 'wp_theme' );
+		pixelgrid_design_clean_styles_cache();
+	}
+	return get_post( $id );
 }
 
 /**

@@ -513,4 +513,62 @@ pg_assert_same( 'Y', get_post( $header->wp_id )->post_content, 'kses: header is 
 pg_assert_same( $edited_stored, pg_test_styles(), 'kses: style edit is still there after undo' );
 wp_delete_post( $header->wp_id, true );
 
+// With no current user (WP-CLI without --user, cron) core creates the styles post without its
+// wp_theme term, because tax_input needs assign_terms. Apply must still leave a post the
+// resolver finds, so the Agency colours reach the front end.
+foreach ( get_posts(
+	array(
+		'post_type'   => 'wp_global_styles',
+		'post_status' => 'any',
+		'numberposts' => -1,
+		'fields'      => 'ids',
+	)
+) as $styles_id ) {
+	wp_delete_post( $styles_id, true );
+}
+delete_option( 'pixelgrid_starter_design' );
+WP_Theme_JSON_Resolver::clean_cached_data();
+$pg_user = get_current_user_id();
+wp_set_current_user( 0 );
+// WP-CLI without --user runs with kses off; switching user here turned it on, and kses keeps
+// no settings for a user without unfiltered_html (see the kses tests above). Match WP-CLI.
+kses_remove_filters();
+pg_assert( ! current_user_can( 'assign_terms' ), 'no user: nobody is logged in' );
+$agency_variant = pixelgrid_variant( 'agency' );
+$agency_variant['parts']     = array();
+$agency_variant['templates'] = array();
+pixelgrid_design_apply( $agency_variant );
+$styles_posts = get_posts(
+	array(
+		'post_type'   => 'wp_global_styles',
+		'post_status' => 'any',
+		'numberposts' => -1,
+	)
+);
+pg_assert_same( 1, count( $styles_posts ), 'no user: apply makes one styles post' );
+pg_assert( isset( $styles_posts[0] ) && has_term( $theme, 'wp_theme', $styles_posts[0] ), 'no user: the styles post has the wp_theme term' );
+WP_Theme_JSON_Resolver::clean_cached_data();
+$agency_blue_hover = '';
+foreach ( pixelgrid_design_style_data( $agency_variant )['settings']['color']['palette'] as $entry ) {
+	if ( 'blue-hover' === $entry['slug'] ) {
+		$agency_blue_hover = $entry['color'];
+	}
+}
+// A missing path returns all settings, so read the palette origins and pick custom here.
+$user_palette = wp_get_global_settings( array( 'color', 'palette' ) );
+$user_blue    = '';
+foreach ( (array) ( $user_palette['custom'] ?? array() ) as $entry ) {
+	if ( 'blue-hover' === ( $entry['slug'] ?? '' ) ) {
+		$user_blue = $entry['color'];
+	}
+}
+pg_assert( '' !== $agency_blue_hover && $agency_blue_hover === $user_blue, 'no user: the resolver returns the Agency blue-hover colour' );
+pg_assert( false !== stripos( wp_get_global_stylesheet( array( 'variables' ) ), '--wp--preset--color--blue-hover: ' . $agency_blue_hover ), 'no user: the global stylesheet carries the Agency blue-hover colour' );
+$result = pixelgrid_design_undo();
+pg_assert( true === $result['styles_restored'], 'no user: undo restores the styles' );
+WP_Theme_JSON_Resolver::clean_cached_data();
+$user_palette = wp_get_global_settings( array( 'color', 'palette' ) );
+pg_assert( empty( $user_palette['custom'] ), 'no user: undo leaves no custom palette' );
+wp_set_current_user( $pg_user ); // Runs kses_init() again for this user.
+
 pg_done();
