@@ -121,6 +121,11 @@ Copyright 2019 The Sofia Sans Project Authors (https://github.com/lettersoupfont
 License: SIL Open Font License, Version 1.1
 Source: https://fonts.google.com/specimen/Sofia+Sans+Extra+Condensed
 
+Bricolage Grotesque
+Copyright 2022 The Bricolage Grotesque Project Authors (https://github.com/ateliertriay/bricolage)
+License: SIL Open Font License, Version 1.1
+Source: https://fonts.google.com/specimen/Bricolage+Grotesque
+
 Images in assets/images (plate-1.webp to plate-8.webp)
 Copyright 2026 bitBirds Solutions. Original abstract images made for this theme.
 License: GPLv2 or later

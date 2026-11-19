@@ -1,0 +1,57 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/theme.json",
+	"version": 3,
+	"title": "Agency",
+	"settings": {
+		"color": {
+			"palette": [
+				{"slug": "paper-background", "color": "#F6F3EE", "name": "Light section: background"},
+				{"slug": "paper-text", "color": "#15131A", "name": "Light section: text"},
+				{"slug": "paper-hover", "color": "#6B3BFF", "name": "Light section: hover"},
+				{"slug": "paper-on-hover", "color": "#FFFFFF", "name": "Light section: text on hover"},
+				{"slug": "blue-background", "color": "#6B3BFF", "name": "Bold section: background"},
+				{"slug": "blue-text", "color": "#FFFFFF", "name": "Bold section: text"},
+				{"slug": "blue-hover", "color": "#D7FF3A", "name": "Bold section: hover"},
+				{"slug": "blue-on-hover", "color": "#15131A", "name": "Bold section: text on hover"},
+				{"slug": "sun-background", "color": "#D7FF3A", "name": "Bright section: background"},
+				{"slug": "sun-text", "color": "#15131A", "name": "Bright section: text"},
+				{"slug": "sun-hover", "color": "#FF4D6D", "name": "Bright section: hover"},
+				{"slug": "sun-on-hover", "color": "#15131A", "name": "Bright section: text on hover"},
+				{"slug": "night-background", "color": "#15131A", "name": "Dark section: background"},
+				{"slug": "night-text", "color": "#F6F3EE", "name": "Dark section: text"},
+				{"slug": "night-hover", "color": "#FF4D6D", "name": "Dark section: hover"},
+				{"slug": "night-on-hover", "color": "#15131A", "name": "Dark section: text on hover"},
+				{"slug": "fog-background", "color": "#ECE6F7", "name": "Soft section: background"},
+				{"slug": "fog-text", "color": "#15131A", "name": "Soft section: text"},
+				{"slug": "fog-hover", "color": "#6B3BFF", "name": "Soft section: hover"},
+				{"slug": "fog-on-hover", "color": "#FFFFFF", "name": "Soft section: text on hover"},
+				{"slug": "red-background", "color": "#FF4D6D", "name": "Alert section: background"},
+				{"slug": "red-text", "color": "#15131A", "name": "Alert section: text"},
+				{"slug": "red-hover", "color": "#15131A", "name": "Alert section: hover"},
+				{"slug": "red-on-hover", "color": "#F6F3EE", "name": "Alert section: text on hover"},
+				{"slug": "footer-background", "color": "#15131A", "name": "Footer: background"},
+				{"slug": "footer-text", "color": "#F6F3EE", "name": "Footer: text"},
+				{"slug": "footer-hover", "color": "#D7FF3A", "name": "Footer: hover"},
+				{"slug": "footer-on-hover", "color": "#15131A", "name": "Footer: text on hover"}
+			]
+		}
+	},
+	"styles": {
+		"elements": {
+			"heading": {
+				"typography": {
+					"fontFamily": "var:preset|font-family|display",
+					"fontWeight": "800",
+					"letterSpacing": "-0.02em",
+					"lineHeight": "0.92",
+					"textTransform": "uppercase"
+				}
+			}
+		},
+		"blocks": {
+			"core/site-title": {
+				"typography": { "fontFamily": "var:preset|font-family|display", "fontWeight": "800", "letterSpacing": "-0.02em", "textTransform": "uppercase" }
+			}
+		}
+	}
+}
