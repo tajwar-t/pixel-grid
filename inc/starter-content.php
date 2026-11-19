@@ -299,6 +299,88 @@ function pixelgrid_starter_page_order( array $pages ): array {
 }
 
 /**
+ * Makes sure a variant's categories exist. Categories that are missing are created and
+ * recorded in pixelgrid_starter_terms, so remove can delete them while they are empty.
+ *
+ * @param array $def Variant definition.
+ * @return array Term IDs keyed by category slug.
+ */
+function pixelgrid_starter_categories( array $def ): array {
+	$terms = get_option( 'pixelgrid_starter_terms', array() );
+	$cats  = array();
+	foreach ( (array) ( $def['categories'] ?? array() ) as $slug => $name ) {
+		$term = get_term_by( 'slug', $slug, 'category' );
+		if ( $term ) {
+			$cats[ $slug ] = (int) $term->term_id;
+			continue;
+		}
+		$new = wp_insert_term( $name, 'category', array( 'slug' => $slug ) );
+		if ( ! is_wp_error( $new ) ) {
+			$cats[ $slug ] = (int) $new['term_id'];
+			$terms[]       = (int) $new['term_id'];
+		}
+	}
+	update_option( 'pixelgrid_starter_terms', array_values( array_unique( $terms ) ), false );
+	return $cats;
+}
+
+/**
+ * Points query blocks at the site's real categories. A core/query block whose className holds
+ * pixelgrid-cat-{slug}, with {slug} in $cats, gets query.taxQuery.category = [ term ID ].
+ * Patterns carry no IDs; the IDs reach the blocks only here, in the pages setup creates.
+ *
+ * @param string $content Block markup.
+ * @param array  $cats    Term IDs keyed by category slug.
+ * @return string The markup, unchanged byte for byte when no block was changed.
+ */
+function pixelgrid_starter_fill_categories( string $content, array $cats ): string {
+	if ( ! $cats || false === strpos( $content, 'pixelgrid-cat-' ) ) {
+		return $content;
+	}
+	$changed = false;
+	$blocks  = pixelgrid_starter_fill_category_blocks( parse_blocks( $content ), $cats, $changed );
+	return $changed ? serialize_blocks( $blocks ) : $content;
+}
+
+/**
+ * Walks a parsed block tree for pixelgrid_starter_fill_categories().
+ *
+ * @param array $blocks  Parsed blocks.
+ * @param array $cats    Term IDs keyed by category slug.
+ * @param bool  $changed Set to true when a block was changed.
+ * @return array
+ */
+function pixelgrid_starter_fill_category_blocks( array $blocks, array $cats, bool &$changed ): array {
+	foreach ( $blocks as $i => $block ) {
+		if ( 'core/query' === $block['blockName'] && ! empty( $block['attrs']['className'] ) ) {
+			foreach ( preg_split( '/\s+/', (string) $block['attrs']['className'], -1, PREG_SPLIT_NO_EMPTY ) as $class ) {
+				if ( 0 !== strpos( $class, 'pixelgrid-cat-' ) ) {
+					continue;
+				}
+				$slug = substr( $class, strlen( 'pixelgrid-cat-' ) );
+				if ( ! isset( $cats[ $slug ] ) ) {
+					continue;
+				}
+				$query = isset( $block['attrs']['query'] ) && is_array( $block['attrs']['query'] ) ? $block['attrs']['query'] : array();
+				$tax   = isset( $query['taxQuery'] ) && is_array( $query['taxQuery'] ) ? $query['taxQuery'] : array();
+				$ids   = array( (int) $cats[ $slug ] );
+				if ( ! isset( $tax['category'] ) || $tax['category'] !== $ids ) {
+					$tax['category']                = $ids;
+					$query['taxQuery']              = $tax;
+					$blocks[ $i ]['attrs']['query'] = $query;
+					$changed                        = true;
+				}
+				break;
+			}
+		}
+		if ( ! empty( $block['innerBlocks'] ) ) {
+			$blocks[ $i ]['innerBlocks'] = pixelgrid_starter_fill_category_blocks( $block['innerBlocks'], $cats, $changed );
+		}
+	}
+	return $blocks;
+}
+
+/**
  * Creates the starter content the user picked for one variant.
  *
  * @param string $variant Variant slug.
@@ -349,6 +431,9 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 	);
 	$pages = array();
 
+	// Categories come first, so the pages' query blocks can point at them.
+	$cats = ( $options['pages'] || $options['posts'] ) ? pixelgrid_starter_categories( $def ) : array();
+
 	if ( $options['pages'] ) {
 		foreach ( pixelgrid_starter_page_order( $def['pages'] ) as $slug => $page ) {
 			$key      = pixelgrid_starter_key( $variant, 'page-' . $slug );
@@ -377,30 +462,39 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 			}
 		}
 		pixelgrid_starter_fix_links( $pages );
+		// Pages made now or on an earlier run get the real category IDs.
+		foreach ( $pages as $id ) {
+			if ( ! $id ) {
+				continue;
+			}
+			$content = (string) get_post_field( 'post_content', $id );
+			$filled  = pixelgrid_starter_fill_categories( $content, $cats );
+			if ( $filled !== $content ) {
+				wp_update_post(
+					wp_slash(
+						array(
+							'ID'           => $id,
+							'post_content' => $filled,
+						)
+					)
+				);
+			}
+		}
 	}
 
 	if ( $options['posts'] ) {
-		$terms = get_option( 'pixelgrid_starter_terms', array() );
-		$cats  = array();
-		foreach ( $def['categories'] as $slug => $name ) {
-			$term = get_term_by( 'slug', $slug, 'category' );
-			if ( $term ) {
-				$cats[ $slug ] = (int) $term->term_id;
-				continue;
-			}
-			$new = wp_insert_term( $name, 'category', array( 'slug' => $slug ) );
-			if ( ! is_wp_error( $new ) ) {
-				$cats[ $slug ] = (int) $new['term_id'];
-				$terms[]       = (int) $new['term_id'];
-			}
-		}
-		update_option( 'pixelgrid_starter_terms', array_values( array_unique( $terms ) ), false );
-
 		$step = 0;
 		foreach ( $def['posts'] as $item ) {
 			$key    = pixelgrid_starter_key( $variant, 'post-' . $item['key'] );
 			$before = pixelgrid_starter_find( 'post', $key );
-			$id     = pixelgrid_starter_insert(
+			// A post's category is a slug or a list of slugs; the first one is the primary category.
+			$in = array();
+			foreach ( (array) ( $item['category'] ?? array() ) as $cat ) {
+				if ( isset( $cats[ $cat ] ) && ! in_array( $cats[ $cat ], $in, true ) ) {
+					$in[] = $cats[ $cat ];
+				}
+			}
+			$id = pixelgrid_starter_insert(
 				$key,
 				array(
 					'post_type'     => 'post',
@@ -408,7 +502,7 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 					'post_name'     => $item['key'],
 					'post_excerpt'  => $item['excerpt'],
 					'post_content'  => $item['content'],
-					'post_category' => isset( $cats[ $item['category'] ] ) ? array( $cats[ $item['category'] ] ) : array(),
+					'post_category' => $in,
 					'post_date'     => gmdate( 'Y-m-d H:i:s', time() - ( $step + 1 ) * 3 * DAY_IN_SECONDS ),
 				)
 			);
@@ -433,6 +527,23 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 	if ( $options['menu'] && $pages ) {
 		$links = array();
 		foreach ( $def['menu'] as $slug ) {
+			if ( 0 === strpos( (string) $slug, 'cat:' ) ) {
+				// A category entry, linked only when the category exists.
+				$term = get_term_by( 'slug', substr( (string) $slug, 4 ), 'category' );
+				if ( ! $term ) {
+					continue;
+				}
+				$links[] = '<!-- wp:navigation-link ' . wp_json_encode(
+					array(
+						'label' => $term->name,
+						'type'  => 'category',
+						'id'    => (int) $term->term_id,
+						'url'   => get_category_link( $term->term_id ),
+						'kind'  => 'taxonomy',
+					)
+				) . ' /-->';
+				continue;
+			}
 			if ( empty( $pages[ $slug ] ) ) {
 				continue;
 			}

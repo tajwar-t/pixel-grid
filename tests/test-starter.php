@@ -236,4 +236,151 @@ $parent_at = array_search( $work, $trash_order, true );
 pg_assert( false !== $child_at && false !== $parent_at && $child_at < $parent_at, 'remove trashes the child page before its parent' );
 pg_assert( 'trash' === get_post_status( $work ) && 'trash' === get_post_status( $work_one ), 'remove trashes both pages and leaves no orphan published' );
 
+// Categories: created before pages, posts in several, category menu items, IDs filled into pages.
+$cat_query = '<!-- wp:query {"queryId":1,"query":{"perPage":3,"postType":"post"},"className":"pixelgrid-cat-one"} --><div class="wp-block-query pixelgrid-cat-one"><!-- wp:post-template --><!-- wp:post-title /--><!-- /wp:post-template --></div><!-- /wp:query -->';
+register_block_pattern(
+	'pixelgrid-test/cat-query',
+	array(
+		'title'   => 'Category query test',
+		'content' => $cat_query,
+	)
+);
+add_filter(
+	'pixelgrid_variants',
+	function ( $variants ) {
+		$variants['cats'] = array(
+			'slug'       => 'cats',
+			'label'      => 'Cats',
+			'pages'      => array(
+				'a' => array( 'A', 'pixelgrid-test/cat-query', '' ),
+				'b' => array( 'B', '', '' ),
+			),
+			'menu'       => array( 'a', 'cat:one', 'cat:missing' ),
+			'categories' => array(
+				'one' => 'One',
+				'two' => 'Two',
+			),
+			'posts'      => array(
+				array(
+					'key'      => 'p1',
+					'title'    => 'P1',
+					'excerpt'  => '',
+					'content'  => '',
+					'category' => array( 'one', 'two' ),
+					'tags'     => array(),
+				),
+			),
+		);
+		return $variants;
+	}
+);
+$cat_page_query = function () {
+	$page   = pixelgrid_starter_find( 'page', 'cats:page-a' );
+	$blocks = parse_blocks( (string) get_post_field( 'post_content', $page ) );
+	foreach ( $blocks as $b ) {
+		if ( 'core/query' === $b['blockName'] ) {
+			return $b['attrs']['query'];
+		}
+	}
+	return array();
+};
+
+// Pages ticked, Posts not: the categories still exist and the page gets the real ID.
+pixelgrid_starter_create(
+	'cats',
+	array(
+		'pages' => true,
+		'posts' => false,
+	)
+);
+$one = get_term_by( 'slug', 'one', 'category' );
+$two = get_term_by( 'slug', 'two', 'category' );
+pg_assert( $one && $two, 'with pages and not posts, categories one and two exist' );
+$one_id = $one ? (int) $one->term_id : -1;
+$two_id = $two ? (int) $two->term_id : -1;
+$q      = $cat_page_query();
+pg_assert_same( array( $one_id ), isset( $q['taxQuery']['category'] ) ? $q['taxQuery']['category'] : null, 'page a query gets taxQuery.category = [one id]' );
+$a_content = (string) get_post_field( 'post_content', pixelgrid_starter_find( 'page', 'cats:page-a' ) );
+pg_assert( false !== strpos( $a_content, '"taxQuery":{"category":[' . $one_id . ']}' ), 'page a markup holds "taxQuery":{"category":[one id]}' );
+
+// A page made earlier without the ID (for example before the category existed) is filled on the next run.
+wp_update_post(
+	wp_slash(
+		array(
+			'ID'           => pixelgrid_starter_find( 'page', 'cats:page-a' ),
+			'post_content' => $cat_query,
+		)
+	)
+);
+$all_cats = array(
+	'pages' => true,
+	'posts' => true,
+	'menu'  => true,
+);
+pixelgrid_starter_create( 'cats', $all_cats );
+$q = $cat_page_query();
+pg_assert_same( array( $one_id ), isset( $q['taxQuery']['category'] ) ? $q['taxQuery']['category'] : null, 'running setup again fills the ID into a page made earlier' );
+
+$p1      = pixelgrid_starter_find( 'post', 'cats:post-p1' );
+$p1_cats = wp_get_post_categories( $p1 );
+pg_assert( in_array( $one_id, $p1_cats, true ) && in_array( $two_id, $p1_cats, true ), 'post p1 is in categories one and two' );
+pg_assert_same( $one_id, isset( $p1_cats[0] ) ? (int) $p1_cats[0] : 0, 'one is p1\'s first category' );
+
+$nav       = pixelgrid_starter_find( 'wp_navigation', 'cats:menu' );
+$nav_links = parse_blocks( (string) get_post_field( 'post_content', $nav ) );
+$page_n    = 0;
+$cat_links = array();
+foreach ( $nav_links as $b ) {
+	if ( 'core/navigation-link' !== $b['blockName'] ) {
+		continue;
+	}
+	if ( 'page' === $b['attrs']['type'] ) {
+		++$page_n;
+	} elseif ( 'category' === $b['attrs']['type'] ) {
+		$cat_links[] = $b['attrs'];
+	}
+}
+pg_assert_same( 1, $page_n, 'menu has one page link' );
+pg_assert_same( 1, count( $cat_links ), 'menu has one category link and none for missing' );
+pg_assert(
+	isset( $cat_links[0] ) && $one_id === $cat_links[0]['id'] && 'taxonomy' === $cat_links[0]['kind'] && get_category_link( $one_id ) === $cat_links[0]['url'],
+	'category link has the one term id, kind taxonomy and the category url'
+);
+
+pixelgrid_starter_create( 'cats', $all_cats );
+$q = $cat_page_query();
+pg_assert_same( array( $one_id ), isset( $q['taxQuery']['category'] ) ? $q['taxQuery']['category'] : null, 'running create again keeps one ID, no duplicates' );
+pg_assert_same( 1, substr_count( (string) get_post_field( 'post_content', pixelgrid_starter_find( 'page', 'cats:page-a' ) ), '"category":[' ), 'page a holds a single category list' );
+
+// Posts ticked, Pages not: categories exist; pages created later get the real IDs.
+pixelgrid_starter_remove();
+pg_assert( ! get_term_by( 'slug', 'one', 'category' ), 'remove deletes the empty starter categories' );
+pixelgrid_starter_create(
+	'cats',
+	array(
+		'pages' => false,
+		'posts' => true,
+	)
+);
+$one = get_term_by( 'slug', 'one', 'category' );
+pg_assert( $one && get_term_by( 'slug', 'two', 'category' ), 'with posts and not pages, categories one and two exist' );
+pixelgrid_starter_create(
+	'cats',
+	array(
+		'pages' => true,
+		'posts' => false,
+	)
+);
+$q = $cat_page_query();
+pg_assert_same( array( $one ? (int) $one->term_id : -1 ), isset( $q['taxQuery']['category'] ) ? $q['taxQuery']['category'] : null, 'a page created after the posts gets the real category ID' );
+pixelgrid_starter_remove();
+
+// Content with no marker block comes back byte for byte.
+$plain = "<!-- wp:query {\"queryId\":1,\"query\":{\"perPage\":3},\"className\":\"other\"} -->\n<div class=\"wp-block-query other\">  odd   spacing </div>\n<!-- /wp:query -->\n\n<!-- wp:paragraph {\"x\":\"\\u003c\"} --><p>a</p><!-- /wp:paragraph -->";
+pg_assert_same( $plain, pixelgrid_starter_fill_categories( $plain, array( 'one' => 5 ) ), 'content with no marker class is unchanged' );
+$unknown = str_replace( 'other', 'pixelgrid-cat-nope', $plain );
+pg_assert_same( $unknown, pixelgrid_starter_fill_categories( $unknown, array( 'one' => 5 ) ), 'content whose marker slug is not in the map is unchanged' );
+$longer = str_replace( 'other', 'pixelgrid-cat-one-more', $plain );
+pg_assert_same( $longer, pixelgrid_starter_fill_categories( $longer, array( 'one' => 5 ) ), 'a class that only starts with a marker is not a match' );
+
 pg_done();

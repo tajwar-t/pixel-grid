@@ -187,6 +187,8 @@ if ( ! function_exists( 'pixelgrid_pattern_categories' ) ) :
 endif;
 add_action( 'init', 'pixelgrid_pattern_categories' );
 
+require get_parent_theme_file_path( 'inc/front.php' );
+
 if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
 	require get_parent_theme_file_path( 'inc/variants.php' );
 	require get_parent_theme_file_path( 'inc/starter-design.php' );
