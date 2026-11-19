@@ -325,8 +325,32 @@ function pixelgrid_starter_categories( array $def ): array {
 }
 
 /**
+ * Whether a variant's pages need its categories: its menu has a cat:{slug} entry, or one of
+ * its page patterns, expanded, holds a pixelgrid-cat- marker class.
+ *
+ * @param array $def Variant definition.
+ * @return bool
+ */
+function pixelgrid_starter_needs_categories( array $def ): bool {
+	foreach ( (array) ( $def['menu'] ?? array() ) as $entry ) {
+		if ( 0 === strpos( (string) $entry, 'cat:' ) ) {
+			return true;
+		}
+	}
+	$registry = WP_Block_Patterns_Registry::get_instance();
+	foreach ( (array) ( $def['pages'] ?? array() ) as $page ) {
+		$pattern = ! empty( $page[1] ) ? $registry->get_registered( $page[1] ) : null;
+		if ( $pattern && false !== strpos( pixelgrid_starter_expand( $pattern['content'] ), 'pixelgrid-cat-' ) ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
  * Points query blocks at the site's real categories. A core/query block whose className holds
- * pixelgrid-cat-{slug}, with {slug} in $cats, gets query.taxQuery.category = [ term ID ].
+ * pixelgrid-cat-{slug}, with {slug} in $cats, gets query.taxQuery.category = [ term ID ], or
+ * query.taxQuery.include.category when the block already uses the include/exclude form.
  * Patterns carry no IDs; the IDs reach the blocks only here, in the pages setup creates.
  *
  * @param string $content Block markup.
@@ -364,8 +388,24 @@ function pixelgrid_starter_fill_category_blocks( array $blocks, array $cats, boo
 				$query = isset( $block['attrs']['query'] ) && is_array( $block['attrs']['query'] ) ? $block['attrs']['query'] : array();
 				$tax   = isset( $query['taxQuery'] ) && is_array( $query['taxQuery'] ) ? $query['taxQuery'] : array();
 				$ids   = array( (int) $cats[ $slug ] );
-				if ( ! isset( $tax['category'] ) || $tax['category'] !== $ids ) {
-					$tax['category']                = $ids;
+				// WordPress 6.8+ stores terms as taxQuery.include/exclude and migrates the older
+				// taxQuery.category form when the editor opens the page. Write to whichever form the
+				// block already uses, so a later run never adds a second, conflicting key. The older
+				// form stays the default because WordPress 6.6 and 6.7 only read that one.
+				if ( isset( $tax['include'] ) || isset( $tax['exclude'] ) ) {
+					$include = isset( $tax['include'] ) && is_array( $tax['include'] ) ? $tax['include'] : array();
+					$current = isset( $include['category'] ) ? $include['category'] : null;
+					if ( $current !== $ids ) {
+						$include['category'] = $ids;
+						$tax['include']      = $include;
+					}
+				} else {
+					$current = isset( $tax['category'] ) ? $tax['category'] : null;
+					if ( $current !== $ids ) {
+						$tax['category'] = $ids;
+					}
+				}
+				if ( $current !== $ids ) {
 					$query['taxQuery']              = $tax;
 					$blocks[ $i ]['attrs']['query'] = $query;
 					$changed                        = true;
@@ -431,8 +471,10 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 	);
 	$pages = array();
 
-	// Categories come first, so the pages' query blocks can point at them.
-	$cats = ( $options['pages'] || $options['posts'] ) ? pixelgrid_starter_categories( $def ) : array();
+	// Categories come first, so the pages' query blocks can point at them. With Pages alone they
+	// are made only when the variant's pages or menu use them.
+	$need = $options['posts'] || ( $options['pages'] && pixelgrid_starter_needs_categories( $def ) );
+	$cats = $need ? pixelgrid_starter_categories( $def ) : array();
 
 	if ( $options['pages'] ) {
 		foreach ( pixelgrid_starter_page_order( $def['pages'] ) as $slug => $page ) {
@@ -487,7 +529,7 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 		foreach ( $def['posts'] as $item ) {
 			$key    = pixelgrid_starter_key( $variant, 'post-' . $item['key'] );
 			$before = pixelgrid_starter_find( 'post', $key );
-			// A post's category is a slug or a list of slugs; the first one is the primary category.
+			// A post's category is a slug or a list of slugs.
 			$in = array();
 			foreach ( (array) ( $item['category'] ?? array() ) as $cat ) {
 				if ( isset( $cats[ $cat ] ) && ! in_array( $cats[ $cat ], $in, true ) ) {

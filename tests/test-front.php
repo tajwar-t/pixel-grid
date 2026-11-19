@@ -82,6 +82,22 @@ pg_assert( false === strpos( $out, 'wp-block-post-title' ), 'related row on a po
 $view( array( 'p' => $z ) );
 $out = do_blocks( $related );
 pg_assert( false === strpos( $out, 'wp-block-post-title' ), 'related row on the only post in its category lists nothing, not the post itself' );
+$with_empty = str_replace( '<!-- /wp:post-template -->', '<!-- /wp:post-template --><!-- wp:query-no-results --><!-- wp:paragraph --><p>Norelatedmessage</p><!-- /wp:paragraph --><!-- /wp:query-no-results -->', $related );
+$out        = do_blocks( $with_empty );
+pg_assert( false !== strpos( $out, 'Norelatedmessage' ), 'on the only post in its category, the related query\'s no-results block renders' );
+// Pagination links sit one level deeper, inside core/query-pagination: they get the flag too.
+$paged = str_replace(
+	array( '"perPage":5', '<!-- /wp:post-template -->' ),
+	array( '"perPage":1', '<!-- /wp:post-template --><!-- wp:query-pagination --><!-- wp:query-pagination-next {"label":"Nextrelated"} /--><!-- /wp:query-pagination -->' ),
+	$related
+);
+$out   = do_blocks( $paged );
+pg_assert( false === strpos( $out, 'Nextrelated' ), 'on the only post in its category, the related query shows no next-page link' );
+$view( array( 'p' => $x1 ) );
+$out = do_blocks( $with_empty );
+pg_assert( false === strpos( $out, 'Norelatedmessage' ) && false !== strpos( $out, 'Bravopost' ), 'with related posts, the no-results block stays hidden' );
+$out = do_blocks( $paged );
+pg_assert( false !== strpos( $out, 'Nextrelated' ), 'with two related posts and one per page, the next-page link shows' );
 
 $view( array( 'page_id' => 2 ) );
 $out = do_blocks( $related );

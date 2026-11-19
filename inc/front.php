@@ -14,9 +14,14 @@ if ( ! defined( 'ABSPATH' ) ) {
  * Today's date in the site's date format, for the pixelgrid/today binding source.
  * It needs no post, so it works in any template and outside the loop.
  *
+ * The parameters are the binding source callback's signature; the date needs none of them.
+ *
+ * @param array         $source_args    Binding arguments from the block markup.
+ * @param WP_Block|null $block_instance The block being rendered.
+ * @param string        $attribute_name The bound attribute.
  * @return string Escaped date.
  */
-function pixelgrid_today_value() {
+function pixelgrid_today_value( $source_args = array(), $block_instance = null, $attribute_name = '' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter -- documents the callback signature.
 	return esc_html( wp_date( get_option( 'date_format' ) ) );
 }
 
@@ -52,12 +57,14 @@ function pixelgrid_has_class( $class_name, string $wanted ): bool {
 }
 
 /**
- * Marks the query context of a post template whose parent query block has the
- * pixelgrid-related class, so pixelgrid_related_query_vars() can tell the two apart.
+ * Marks the query context of every block inside a query block with the pixelgrid-related
+ * class, so pixelgrid_related_query_vars() can tell a related query from any other.
  *
- * The post template only receives its query's attributes through context, and className
- * is not among them. Here the parent block is at hand, so its class is read and a flag is
- * added to the 'query' context the post template already uses. Saved markup is not changed.
+ * The blocks inside a query (post template, no results, pagination, total) only receive the
+ * query's attributes through context, and className is not among them. Here the parent block
+ * is at hand: a child of a related core/query gets a flag in the 'query' context it already
+ * uses, and a deeper child (for example a pagination link inside core/query-pagination)
+ * inherits the flag from its parent's context. Saved markup is not changed.
  *
  * @param array         $context      Block context.
  * @param array         $parsed_block Block being rendered.
@@ -65,13 +72,15 @@ function pixelgrid_has_class( $class_name, string $wanted ): bool {
  * @return array
  */
 function pixelgrid_related_context( $context, $parsed_block, $parent_block = null ) {
-	if (
-		isset( $parsed_block['blockName'] ) && 'core/post-template' === $parsed_block['blockName'] &&
-		$parent_block instanceof WP_Block && 'core/query' === $parent_block->name &&
+	if ( ! isset( $context['query'] ) || ! is_array( $context['query'] ) || ! $parent_block instanceof WP_Block ) {
+		return $context;
+	}
+	$related = ! empty( $parent_block->context['query']['pixelgridRelated'] ) || (
+		'core/query' === $parent_block->name &&
 		isset( $parent_block->parsed_block['attrs']['className'] ) &&
-		pixelgrid_has_class( $parent_block->parsed_block['attrs']['className'], 'pixelgrid-related' ) &&
-		isset( $context['query'] ) && is_array( $context['query'] )
-	) {
+		pixelgrid_has_class( $parent_block->parsed_block['attrs']['className'], 'pixelgrid-related' )
+	);
+	if ( $related ) {
 		$context['query']['pixelgridRelated'] = true;
 	}
 	return $context;
@@ -86,7 +95,7 @@ add_filter( 'render_block_context', 'pixelgrid_related_context', 10, 3 );
  * This only narrows which posts a theme-styled query block shows; it creates and stores nothing.
  *
  * @param array    $query Query vars built from the query block.
- * @param WP_Block $block The post template block.
+ * @param WP_Block $block A block inside the query: post template, no results, pagination or total.
  * @return array
  */
 function pixelgrid_related_query_vars( array $query, WP_Block $block ): array {

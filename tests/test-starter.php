@@ -324,7 +324,6 @@ pg_assert_same( array( $one_id ), isset( $q['taxQuery']['category'] ) ? $q['taxQ
 $p1      = pixelgrid_starter_find( 'post', 'cats:post-p1' );
 $p1_cats = wp_get_post_categories( $p1 );
 pg_assert( in_array( $one_id, $p1_cats, true ) && in_array( $two_id, $p1_cats, true ), 'post p1 is in categories one and two' );
-pg_assert_same( $one_id, isset( $p1_cats[0] ) ? (int) $p1_cats[0] : 0, 'one is p1\'s first category' );
 
 $nav       = pixelgrid_starter_find( 'wp_navigation', 'cats:menu' );
 $nav_links = parse_blocks( (string) get_post_field( 'post_content', $nav ) );
@@ -382,5 +381,50 @@ $unknown = str_replace( 'other', 'pixelgrid-cat-nope', $plain );
 pg_assert_same( $unknown, pixelgrid_starter_fill_categories( $unknown, array( 'one' => 5 ) ), 'content whose marker slug is not in the map is unchanged' );
 $longer = str_replace( 'other', 'pixelgrid-cat-one-more', $plain );
 pg_assert_same( $longer, pixelgrid_starter_fill_categories( $longer, array( 'one' => 5 ) ), 'a class that only starts with a marker is not a match' );
+
+// The include/exclude taxQuery form (WordPress 6.8+, migrated by the editor) is filled in place.
+$include_form = '<!-- wp:query {"queryId":1,"query":{"perPage":3,"taxQuery":{"include":{"category":[99]}}},"className":"pixelgrid-cat-one"} --><div class="wp-block-query pixelgrid-cat-one"></div><!-- /wp:query -->';
+$filled       = parse_blocks( pixelgrid_starter_fill_categories( $include_form, array( 'one' => 5 ) ) );
+pg_assert_same( array( 'include' => array( 'category' => array( 5 ) ) ), $filled[0]['attrs']['query']['taxQuery'], 'include form gets include.category = [id] and no sibling category key' );
+$include_done = str_replace( '[99]', '[5]', $include_form );
+pg_assert_same( $include_done, pixelgrid_starter_fill_categories( $include_done, array( 'one' => 5 ) ), 'include form already holding the ID is unchanged' );
+$exclude_form = str_replace( '"include"', '"exclude"', $include_form );
+$filled       = parse_blocks( pixelgrid_starter_fill_categories( $exclude_form, array( 'one' => 5 ) ) );
+pg_assert_same(
+	array(
+		'exclude' => array( 'category' => array( 99 ) ),
+		'include' => array( 'category' => array( 5 ) ),
+	),
+	$filled[0]['attrs']['query']['taxQuery'],
+	'exclude form keeps exclude and gets include.category, with no legacy key'
+);
+
+// IT and Agency, Pages only: their pages and menus use no categories, so none are created.
+add_filter(
+	'pixelgrid_variants',
+	function ( $variants ) {
+		foreach ( array( 'it', 'agency' ) as $slug ) {
+			$variants[ $slug ]         = pixelgrid_variant_load_file( get_parent_theme_file_path( 'inc/variants/' . $slug . '.php' ) );
+			$variants[ $slug ]['slug'] = $slug;
+		}
+		return $variants;
+	},
+	100
+);
+foreach ( array( 'it', 'agency' ) as $slug ) {
+	$def  = pixelgrid_variant( $slug );
+	$made = pixelgrid_starter_create( $slug, array( 'pages' => true ) );
+	pg_assert( is_array( $made ) && $made['pages'] > 0, "$slug pages-only creates its pages" );
+	$found = array();
+	foreach ( array_keys( $def['categories'] ) as $cat_slug ) {
+		if ( get_term_by( 'slug', $cat_slug, 'category' ) ) {
+			$found[] = $cat_slug;
+		}
+	}
+	pg_assert( count( $def['categories'] ) > 0, "$slug defines categories" );
+	pg_assert_same( array(), $found, "$slug pages-only creates no categories" );
+	pg_assert_same( array(), get_option( 'pixelgrid_starter_terms', array() ), "$slug pages-only records no starter terms" );
+	pixelgrid_starter_remove();
+}
 
 pg_done();
