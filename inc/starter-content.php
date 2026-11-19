@@ -161,29 +161,52 @@ function pixelgrid_starter_insert( $full_key, $args ) {
 /**
  * Copies one of the theme's bundled images into the media library.
  *
- * @param string $variant Variant slug.
- * @param int    $number  Image number, 1 to 8.
+ * An image number (IT's plates) keeps the 1.2.0 file and marker: assets/images/plate-N.webp,
+ * marked image-N. A theme-relative path is marked image-{file name without extension}.
+ *
+ * @param string     $variant Variant slug.
+ * @param int|string $image   Plate number, 1 to 8, or a theme-relative image path.
  * @return int Attachment ID or 0.
  */
-function pixelgrid_starter_image( $variant, $number ) {
-	$key      = pixelgrid_starter_key( $variant, 'image-' . (int) $number );
+function pixelgrid_starter_image( $variant, $image ) {
+	if ( is_int( $image ) || ctype_digit( (string) $image ) ) {
+		$number = (int) $image;
+		$name   = (string) $number;
+		$path   = 'assets/images/plate-' . $number . '.webp';
+		$file   = 'pixelgrid-plate-' . $number . '.webp';
+		/* translators: %d: image number. */
+		$title = sprintf( __( 'Pixelgrid sample image %d', 'pixelgrid' ), $number );
+	} else {
+		$path = ltrim( (string) $image, '/' );
+		$name = sanitize_key( pathinfo( $path, PATHINFO_FILENAME ) );
+		if ( '' === $path || '' === $name || 0 !== validate_file( $path ) ) {
+			return 0;
+		}
+		$file = 'pixelgrid-' . sanitize_file_name( basename( $path ) );
+		/* translators: %s: image name, for example agency-03. */
+		$title = sprintf( __( 'Pixelgrid sample image %s', 'pixelgrid' ), $name );
+	}
+	$type = wp_check_filetype( $file );
+	if ( empty( $type['type'] ) || 0 !== strpos( $type['type'], 'image/' ) ) {
+		return 0;
+	}
+	$key      = pixelgrid_starter_key( $variant, 'image-' . $name );
 	$existing = pixelgrid_starter_find( 'attachment', $key );
 	if ( $existing ) {
 		return $existing;
 	}
-	$source = get_parent_theme_file_path( 'assets/images/plate-' . (int) $number . '.webp' );
+	$source = get_parent_theme_file_path( $path );
 	if ( ! is_readable( $source ) ) {
 		return 0;
 	}
-	$upload = wp_upload_bits( 'pixelgrid-plate-' . (int) $number . '.webp', null, file_get_contents( $source ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local file bundled with the theme.
+	$upload = wp_upload_bits( $file, null, file_get_contents( $source ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local file bundled with the theme.
 	if ( ! empty( $upload['error'] ) ) {
 		return 0;
 	}
 	$id = wp_insert_attachment(
 		array(
-			'post_mime_type' => 'image/webp',
-			/* translators: %d: image number. */
-			'post_title'     => sprintf( __( 'Pixelgrid sample image %d', 'pixelgrid' ), (int) $number ),
+			'post_mime_type' => $type['type'],
+			'post_title'     => $title,
 			'post_status'    => 'inherit',
 		),
 		$upload['file']
@@ -199,15 +222,33 @@ function pixelgrid_starter_image( $variant, $number ) {
 
 /**
  * Patterns link to pages as ?pagename=slug, which works on any site. On the new pages,
- * swaps those for the pages' real addresses so the links read cleanly.
+ * swaps those for the pages' real addresses so the links read cleanly. Child pages are
+ * also matched as ?pagename={parent}/{slug}, built from the slugs in $pages.
  *
  * @param array $pages Page IDs keyed by slug.
  */
 function pixelgrid_starter_fix_links( $pages ) {
-	$map = array();
+	$map   = array();
+	$slugs = array_flip( array_filter( $pages ) );
 	foreach ( $pages as $slug => $id ) {
-		if ( $id ) {
-			$map[ esc_url( add_query_arg( 'pagename', $slug, home_url( '/' ) ) ) ] = esc_url( get_permalink( $id ) );
+		if ( ! $id ) {
+			continue;
+		}
+		$link = esc_url( get_permalink( $id ) );
+
+		$map[ esc_url( add_query_arg( 'pagename', $slug, home_url( '/' ) ) ) ] = $link;
+
+		// Walk up through parents that are in the list: work/work-one, and so on.
+		$path   = (string) $slug;
+		$parent = (int) wp_get_post_parent_id( $id );
+		$guard  = 0;
+		while ( $parent && isset( $slugs[ $parent ] ) && $guard < 10 ) {
+			$path   = $slugs[ $parent ] . '/' . $path;
+			$parent = (int) wp_get_post_parent_id( $parent );
+			++$guard;
+		}
+		if ( (string) $slug !== $path ) {
+			$map[ esc_url( add_query_arg( 'pagename', $path, home_url( '/' ) ) ) ] = $link;
 		}
 	}
 	foreach ( $pages as $id ) {
@@ -227,6 +268,34 @@ function pixelgrid_starter_fix_links( $pages ) {
 			);
 		}
 	}
+}
+
+/**
+ * Orders a variant's pages so every page whose parent is in the list comes after that parent.
+ * Pages keep their listed order otherwise. A parent loop is broken by keeping the rest as listed.
+ *
+ * @param array $pages Pages keyed by slug: array( title, pattern, template, parent slug ).
+ * @return array
+ */
+function pixelgrid_starter_page_order( array $pages ): array {
+	$ordered = array();
+	$left    = $pages;
+	while ( $left ) {
+		$progress = false;
+		foreach ( $left as $slug => $page ) {
+			$parent = ! empty( $page[3] ) ? (string) $page[3] : '';
+			if ( '' === $parent || (string) $slug === $parent || ! isset( $pages[ $parent ] ) || isset( $ordered[ $parent ] ) ) {
+				$ordered[ $slug ] = $page;
+				unset( $left[ $slug ] );
+				$progress = true;
+			}
+		}
+		if ( ! $progress ) {
+			$ordered += $left;
+			break;
+		}
+	}
+	return $ordered;
 }
 
 /**
@@ -281,7 +350,7 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 	$pages = array();
 
 	if ( $options['pages'] ) {
-		foreach ( $def['pages'] as $slug => $page ) {
+		foreach ( pixelgrid_starter_page_order( $def['pages'] ) as $slug => $page ) {
 			$key      = pixelgrid_starter_key( $variant, 'page-' . $slug );
 			$before   = pixelgrid_starter_find( 'page', $key );
 			$pattern  = ! empty( $page[1] ) ? WP_Block_Patterns_Registry::get_instance()->get_registered( $page[1] ) : null;
@@ -294,6 +363,10 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 			);
 			if ( $template ) {
 				$args['page_template'] = $template;
+			}
+			$parent = ! empty( $page[3] ) ? (string) $page[3] : '';
+			if ( '' !== $parent && ! empty( $pages[ $parent ] ) ) {
+				$args['post_parent'] = (int) $pages[ $parent ];
 			}
 			$pages[ $slug ] = pixelgrid_starter_insert( $key, $args );
 			if ( $pages[ $slug ] ) {
@@ -426,8 +499,20 @@ function pixelgrid_starter_create( string $variant, array $options ) {
  *               revisions (bool, whether the user global styles have revisions to recover).
  */
 function pixelgrid_starter_remove(): array {
-	$count = 0;
-	foreach ( pixelgrid_starter_created() as $type => $ids ) {
+	$count   = 0;
+	$created = pixelgrid_starter_created();
+	// Children before parents, deepest first, so no child is left published under a trashed parent.
+	$depth = array();
+	foreach ( $created['page'] as $id ) {
+		$depth[ $id ] = count( get_post_ancestors( $id ) );
+	}
+	usort(
+		$created['page'],
+		function ( $a, $b ) use ( $depth ) {
+			return $depth[ $b ] - $depth[ $a ];
+		}
+	);
+	foreach ( $created as $type => $ids ) {
 		foreach ( $ids as $id ) {
 			$done = 'attachment' === $type ? wp_delete_attachment( $id, true ) : wp_trash_post( $id );
 			if ( $done ) {

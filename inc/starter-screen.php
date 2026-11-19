@@ -131,6 +131,129 @@ function pixelgrid_starter_handle() {
 add_action( 'admin_post_pixelgrid_starter', 'pixelgrid_starter_handle' );
 
 /**
+ * The sentences the setup screen shows for one variant: its own content_labels and
+ * design_note, or generic sentences built from its pages and posts when it has none.
+ *
+ * @param array $variant Variant.
+ * @return array Keys: pages, posts, reading, design.
+ */
+function pixelgrid_starter_labels( array $variant ): array {
+	$variant = pixelgrid_variant_defaults( $variant );
+	$own     = is_array( $variant['content_labels'] ) ? $variant['content_labels'] : array();
+	$pages   = (array) $variant['pages'];
+	$labels  = array();
+
+	if ( ! empty( $own['pages'] ) ) {
+		$labels['pages'] = (string) $own['pages'];
+	} else {
+		/* translators: %d: number of pages. */
+		$labels['pages'] = sprintf( _n( '%d page', '%d pages', count( $pages ), 'pixelgrid' ), count( $pages ) );
+	}
+
+	if ( ! empty( $own['posts'] ) ) {
+		$labels['posts'] = (string) $own['posts'];
+	} else {
+		$count = count( (array) $variant['posts'] );
+		/* translators: %d: number of sample posts. */
+		$labels['posts'] = sprintf( _n( '%d sample post with categories, tags and images', '%d sample posts with categories, tags and images', $count, 'pixelgrid' ), $count );
+	}
+
+	$front      = (string) $variant['front'];
+	$posts_page = (string) $variant['posts_page'];
+	if ( ! empty( $own['reading'] ) ) {
+		$labels['reading'] = (string) $own['reading'];
+	} elseif ( isset( $pages[ $front ][0] ) && isset( $pages[ $posts_page ][0] ) ) {
+		/* translators: 1: title of the homepage, 2: title of the posts page. */
+		$labels['reading'] = sprintf( __( 'Use the new %1$s page as the homepage and %2$s as the posts page', 'pixelgrid' ), $pages[ $front ][0], $pages[ $posts_page ][0] );
+	} elseif ( isset( $pages[ $front ][0] ) ) {
+		/* translators: %s: title of the homepage. */
+		$labels['reading'] = sprintf( __( 'Use the new %s page as the homepage', 'pixelgrid' ), $pages[ $front ][0] );
+	} else {
+		$labels['reading'] = __( 'This starting point does not change the homepage setting', 'pixelgrid' );
+	}
+
+	$labels['design'] = '' !== (string) $variant['design_note']
+		? (string) $variant['design_note']
+		: __( 'This changes the site\'s header, footer and some templates, and its styles when the starting point has its own. Your current ones are saved and put back when you remove the starter content. Applying again only changes what you have not edited since setup, and edits you make after setup are kept on removal.', 'pixelgrid' );
+
+	return $labels;
+}
+
+/**
+ * Prints one sentence per variant, each marked with its variant so the label switcher can
+ * show only the chosen one. Without JavaScript, all show, each after the variant's name
+ * (the name is left out when there is only one variant).
+ *
+ * @param array  $variants Variants keyed by slug.
+ * @param string $field    pages, posts, reading or design.
+ * @param string $tag      span (inside a checkbox label) or p (a description paragraph).
+ */
+function pixelgrid_starter_variant_text( array $variants, string $field, string $tag = 'span' ): void {
+	$many  = count( $variants ) > 1;
+	$first = true;
+	foreach ( $variants as $slug => $variant ) {
+		$labels = pixelgrid_starter_labels( $variant );
+		$text   = isset( $labels[ $field ] ) ? $labels[ $field ] : '';
+		if ( 'p' === $tag ) {
+			echo '<p class="description" data-pixelgrid-for="' . esc_attr( $slug ) . '">';
+		} else {
+			echo '<span data-pixelgrid-for="' . esc_attr( $slug ) . '">';
+			if ( $many && ! $first ) {
+				echo '<br class="pixelgrid-for-name">';
+			}
+		}
+		if ( $many ) {
+			/* translators: %s: name of the starting point, for example IT services. */
+			echo '<strong class="pixelgrid-for-name">' . esc_html( sprintf( __( 'For %s:', 'pixelgrid' ), $variant['label'] ) ) . '</strong> ';
+		}
+		echo esc_html( $text );
+		echo 'p' === $tag ? '</p>' : '</span>';
+		$first = false;
+	}
+}
+
+/**
+ * Loads the small script that shows only the chosen variant's sentences, on the setup page only.
+ *
+ * @param string $hook_suffix Current admin page.
+ */
+function pixelgrid_starter_enqueue( $hook_suffix ) {
+	if ( 'appearance_page_pixelgrid-setup' !== $hook_suffix ) {
+		return;
+	}
+	wp_register_script( 'pixelgrid-setup', false, array(), wp_get_theme( get_template() )->get( 'Version' ), true );
+	wp_enqueue_script( 'pixelgrid-setup' );
+	wp_add_inline_script(
+		'pixelgrid-setup',
+		'( function () {
+	var root = document.querySelector( ".pixelgrid-setup" );
+	if ( ! root ) {
+		return;
+	}
+	function pick() {
+		var radio = root.querySelector( "input[name=\"pixelgrid_variant\"]:checked" );
+		var slug = radio ? radio.value : "";
+		var i, list = root.querySelectorAll( ".pixelgrid-for-name" );
+		for ( i = 0; i < list.length; i++ ) {
+			list[ i ].hidden = "" !== slug;
+		}
+		list = root.querySelectorAll( "[data-pixelgrid-for]" );
+		for ( i = 0; i < list.length; i++ ) {
+			list[ i ].hidden = "" !== slug && list[ i ].getAttribute( "data-pixelgrid-for" ) !== slug;
+		}
+	}
+	root.addEventListener( "change", function ( event ) {
+		if ( event.target && "pixelgrid_variant" === event.target.name ) {
+			pick();
+		}
+	} );
+	pick();
+}() );'
+	);
+}
+add_action( 'admin_enqueue_scripts', 'pixelgrid_starter_enqueue' );
+
+/**
  * Prints the setup page with core admin markup only.
  */
 function pixelgrid_starter_screen() {
@@ -274,7 +397,7 @@ function pixelgrid_starter_screen() {
 							<p class="description"><?php esc_html_e( 'The design is already applied. Applying it again only changes the styles, header, footer and templates you have not edited since setup; your edits are left as they are.', 'pixelgrid' ); ?></p>
 						<?php else : ?>
 							<label><input type="checkbox" name="pixelgrid_design" value="1" checked> <?php esc_html_e( 'Apply this variant\'s design', 'pixelgrid' ); ?></label>
-							<p class="description"><?php esc_html_e( 'This changes the site\'s header, footer and some templates, and its styles when the starting point has its own (IT services keeps your current styles). Your current ones are saved and put back when you remove the starter content. Applying again only changes what you have not edited since setup, and edits you make after setup are kept on removal.', 'pixelgrid' ); ?></p>
+							<?php pixelgrid_starter_variant_text( $variants, 'design', 'p' ); ?>
 						<?php endif; ?>
 					</td>
 				</tr>
@@ -283,8 +406,8 @@ function pixelgrid_starter_screen() {
 					<td>
 						<fieldset>
 							<legend class="screen-reader-text"><?php esc_html_e( 'Content to add', 'pixelgrid' ); ?></legend>
-							<label><input type="checkbox" name="pixelgrid_pages" value="1" checked> <?php esc_html_e( 'Pages: Home, Services, About, Pricing, Contact and Notes', 'pixelgrid' ); ?></label><br>
-							<label><input type="checkbox" name="pixelgrid_posts" value="1" checked> <?php esc_html_e( 'Six sample notes (posts) with categories, tags and images', 'pixelgrid' ); ?></label><br>
+							<label><input type="checkbox" name="pixelgrid_pages" value="1" checked> <?php pixelgrid_starter_variant_text( $variants, 'pages' ); ?></label><br>
+							<label><input type="checkbox" name="pixelgrid_posts" value="1" checked> <?php pixelgrid_starter_variant_text( $variants, 'posts' ); ?></label><br>
 							<label><input type="checkbox" name="pixelgrid_menu" value="1" checked> <?php esc_html_e( 'A menu linking the new pages', 'pixelgrid' ); ?></label>
 							<p class="description"><?php esc_html_e( 'The header and footer show the newest menu, so this replaces the menu they show now. You can switch back in the Navigation block.', 'pixelgrid' ); ?></p>
 						</fieldset>
@@ -293,7 +416,7 @@ function pixelgrid_starter_screen() {
 				<tr>
 					<th scope="row"><?php esc_html_e( 'Homepage', 'pixelgrid' ); ?></th>
 					<td>
-						<label><input type="checkbox" name="pixelgrid_reading" value="1" checked> <?php esc_html_e( 'Use the new Home page as the homepage and Notes as the posts page', 'pixelgrid' ); ?></label>
+						<label><input type="checkbox" name="pixelgrid_reading" value="1" checked> <?php pixelgrid_starter_variant_text( $variants, 'reading' ); ?></label>
 						<p class="description"><?php esc_html_e( 'This changes Settings, Reading. Your current choice is saved and put back if you remove the starter content.', 'pixelgrid' ); ?></p>
 					</td>
 				</tr>

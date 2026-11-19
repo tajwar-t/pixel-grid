@@ -171,4 +171,69 @@ pg_assert_same( $attachments, (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb
 $removed = pixelgrid_starter_remove();
 pg_assert( $removed['removed'] >= 19, 'upgraded 1.2.0 content is removed' );
 
+// Child pages, links to them and images given by path.
+register_block_pattern(
+	'pixelgrid-test/work',
+	array(
+		'title'   => 'Work test',
+		'content' => '<!-- wp:paragraph --><p><a href="' . esc_url( add_query_arg( 'pagename', 'work/work-one', home_url( '/' ) ) ) . '">One</a></p><!-- /wp:paragraph -->',
+	)
+);
+add_filter(
+	'pixelgrid_variants',
+	function ( $variants ) {
+		$variants['kids'] = array(
+			'slug'  => 'kids',
+			'label' => 'Kids',
+			// The child is listed first on purpose: create must still insert the parent first.
+			'pages' => array(
+				'work-one' => array( 'Work one', '', '', 'work' ),
+				'work'     => array( 'Work', 'pixelgrid-test/work', '' ),
+			),
+			'posts' => array(
+				array(
+					'key'      => 'imaged',
+					'title'    => 'Imaged',
+					'excerpt'  => '',
+					'content'  => '',
+					'category' => '',
+					'tags'     => array(),
+					'image'    => 'tests/fixtures/test-image.webp',
+				),
+			),
+		);
+		return $variants;
+	}
+);
+$made = pixelgrid_starter_create(
+	'kids',
+	array(
+		'pages' => true,
+		'posts' => true,
+	)
+);
+pg_assert( is_array( $made ) && 2 === $made['pages'] && 1 === $made['posts'], 'kids variant creates 2 pages and 1 post' );
+$work     = pixelgrid_starter_find( 'page', 'kids:page-work' );
+$work_one = pixelgrid_starter_find( 'page', 'kids:page-work-one' );
+pg_assert( $work > 0 && $work_one > 0, 'child and parent pages carry page-{slug} markers' );
+pg_assert_same( $work, (int) get_post_field( 'post_parent', $work_one ), 'work-one post_parent is the work page' );
+$content = (string) get_post_field( 'post_content', $work );
+pg_assert( false !== strpos( $content, esc_url( get_permalink( $work_one ) ) ) && false === strpos( $content, 'pagename=work/work-one' ), 'a ?pagename=work/work-one link gets the child permalink' );
+$imaged = pixelgrid_starter_find( 'post', 'kids:post-imaged' );
+$thumb  = (int) get_post_thumbnail_id( $imaged );
+pg_assert( $thumb > 0 && $thumb === pixelgrid_starter_find( 'attachment', 'kids:image-test-image' ), 'a post image given by path gets a featured image marked kids:image-test-image' );
+
+$trash_order = array();
+add_action(
+	'wp_trash_post',
+	function ( $post_id ) use ( &$trash_order ) {
+		$trash_order[] = (int) $post_id;
+	}
+);
+pixelgrid_starter_remove();
+$child_at  = array_search( $work_one, $trash_order, true );
+$parent_at = array_search( $work, $trash_order, true );
+pg_assert( false !== $child_at && false !== $parent_at && $child_at < $parent_at, 'remove trashes the child page before its parent' );
+pg_assert( 'trash' === get_post_status( $work ) && 'trash' === get_post_status( $work_one ), 'remove trashes both pages and leaves no orphan published' );
+
 pg_done();

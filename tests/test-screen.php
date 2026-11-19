@@ -13,6 +13,51 @@ preg_match( '/<input[^>]*name="pixelgrid_design"[^>]*>/', $html, $m );
 pg_assert( ! empty( $m ) && false !== strpos( $m[0], 'checked' ), 'design checkbox is ticked before any design is applied' );
 pg_assert( false === strpos( $html, 'Starting point in use' ), 'no variant in use on a fresh site' );
 
+// IT's wording is unchanged from 1.3.0.
+$it_strings = array(
+	'Pages: Home, Services, About, Pricing, Contact and Notes',
+	'Six sample notes (posts) with categories, tags and images',
+	'Use the new Home page as the homepage and Notes as the posts page',
+	esc_html( "This changes the site's header, footer and some templates, and its styles when the starting point has its own (IT services keeps your current styles). Your current ones are saved and put back when you remove the starter content. Applying again only changes what you have not edited since setup, and edits you make after setup are kept on removal." ),
+);
+foreach ( $it_strings as $text ) {
+	pg_assert( false !== strpos( $html, $text ), 'it screen shows: ' . substr( $text, 0, 40 ) );
+}
+pg_assert( false === strpos( $html, '<script' ), 'no script in the page body' );
+
+// The label switcher is enqueued on this page only.
+if ( function_exists( 'pixelgrid_starter_enqueue' ) ) {
+	pixelgrid_starter_enqueue( 'index.php' );
+}
+pg_assert( ! wp_script_is( 'pixelgrid-setup', 'enqueued' ), 'label switcher is not enqueued on other screens' );
+if ( function_exists( 'pixelgrid_starter_enqueue' ) ) {
+	pixelgrid_starter_enqueue( 'appearance_page_pixelgrid-setup' );
+}
+pg_assert( false !== has_action( 'admin_enqueue_scripts', 'pixelgrid_starter_enqueue' ), 'label switcher hooks admin_enqueue_scripts' );
+pg_assert( wp_script_is( 'pixelgrid-setup', 'enqueued' ), 'label switcher is enqueued on the setup page' );
+$inline = wp_scripts()->get_data( 'pixelgrid-setup', 'after' );
+pg_assert( ! empty( $inline ) && false !== strpos( implode( ' ', (array) $inline ), 'pixelgrid_variant' ), 'label switcher has its inline script' );
+
+// A variant's own content labels show, alongside IT's.
+$pg_fake_filter = function ( $variants ) {
+	$variants['fakelabels'] = array(
+		'slug'           => 'fakelabels',
+		'label'          => 'Fake labels',
+		'content_labels' => array( 'pages' => 'Fake pages label for the test' ),
+		'design_note'    => 'Fake design note for the test',
+	);
+	return $variants;
+};
+add_filter( 'pixelgrid_variants', $pg_fake_filter );
+ob_start();
+pixelgrid_starter_screen();
+$html = ob_get_clean();
+pg_assert( false !== strpos( $html, 'Fake pages label for the test' ), 'a variant content_labels pages text appears' );
+pg_assert( false !== strpos( $html, 'Fake design note for the test' ), 'a variant design_note appears' );
+pg_assert( false !== strpos( $html, 'data-pixelgrid-for="fakelabels"' ) && false !== strpos( $html, 'data-pixelgrid-for="it"' ), 'one label set per variant' );
+pg_assert( false !== strpos( $html, 'Pages: Home, Services, About, Pricing, Contact and Notes' ), 'it labels still shown next to another variant' );
+remove_filter( 'pixelgrid_variants', $pg_fake_filter );
+
 add_filter(
 	'pixelgrid_variants',
 	function ( $variants ) {

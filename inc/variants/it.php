@@ -31,13 +31,19 @@ $pixelgrid_q  = function ( $text, $cite ) {
 };
 
 return array(
-	'slug'        => 'it',
-	'label'       => __( 'IT services', 'pixelgrid' ),
-	'description' => __( 'A managed IT services business with services, pricing and a notes blog.', 'pixelgrid' ),
-	'style'       => '',
-	'parts'       => array(),
-	'templates'   => array(),
-	'pages'       => array(
+	'slug'           => 'it',
+	'label'          => __( 'IT services', 'pixelgrid' ),
+	'description'    => __( 'A managed IT services business with services, pricing and a notes blog.', 'pixelgrid' ),
+	'content_labels' => array(
+		'pages'   => __( 'Pages: Home, Services, About, Pricing, Contact and Notes', 'pixelgrid' ),
+		'posts'   => __( 'Six sample notes (posts) with categories, tags and images', 'pixelgrid' ),
+		'reading' => __( 'Use the new Home page as the homepage and Notes as the posts page', 'pixelgrid' ),
+	),
+	'design_note'    => __( 'This changes the site\'s header, footer and some templates, and its styles when the starting point has its own (IT services keeps your current styles). Your current ones are saved and put back when you remove the starter content. Applying again only changes what you have not edited since setup, and edits you make after setup are kept on removal.', 'pixelgrid' ),
+	'style'          => '',
+	'parts'          => array(),
+	'templates'      => array(),
+	'pages'          => array(
 		'home'     => array( __( 'Home', 'pixelgrid' ), 'pixelgrid/page-home', 'page-sections' ),
 		'services' => array( __( 'Services', 'pixelgrid' ), 'pixelgrid/page-services', 'page-sections' ),
 		'about'    => array( __( 'About', 'pixelgrid' ), 'pixelgrid/page-about', 'page-sections' ),
@@ -45,16 +51,16 @@ return array(
 		'contact'  => array( __( 'Contact', 'pixelgrid' ), 'pixelgrid/page-contact', 'page-sections' ),
 		'notes'    => array( __( 'Notes', 'pixelgrid' ), '', '' ),
 	),
-	'front'       => 'home',
-	'posts_page'  => 'notes',
-	'menu'        => array( 'services', 'about', 'pricing', 'notes', 'contact' ),
-	'categories'  => array(
+	'front'          => 'home',
+	'posts_page'     => 'notes',
+	'menu'           => array( 'services', 'about', 'pricing', 'notes', 'contact' ),
+	'categories'     => array(
 		'security' => __( 'Security', 'pixelgrid' ),
 		'cloud'    => __( 'Cloud', 'pixelgrid' ),
 		'helpdesk' => __( 'Helpdesk', 'pixelgrid' ),
 		'backups'  => __( 'Backups', 'pixelgrid' ),
 	),
-	'posts'       => array(
+	'posts'          => array(
 		array(
 			'key'      => 'password-clean-up',
 			'title'    => __( 'The five-minute password clean-up every office should do', 'pixelgrid' ),
