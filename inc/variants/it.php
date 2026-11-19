@@ -12,10 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$pixelgrid_p = function ( $text ) {
+$pixelgrid_p  = function ( $text ) {
 	return "<!-- wp:paragraph -->\n<p>" . esc_html( $text ) . "</p>\n<!-- /wp:paragraph -->\n\n";
 };
-$pixelgrid_h = function ( $text, $level = 2 ) {
+$pixelgrid_h  = function ( $text, $level = 2 ) {
 	$attrs = 2 === $level ? '' : ' {"level":' . (int) $level . '}';
 	return '<!-- wp:heading' . $attrs . " -->\n<h" . (int) $level . ' class="wp-block-heading">' . esc_html( $text ) . '</h' . (int) $level . ">\n<!-- /wp:heading -->\n\n";
 };
@@ -26,7 +26,7 @@ $pixelgrid_ul = function ( $items ) {
 	}
 	return $out . "</ul>\n<!-- /wp:list -->\n\n";
 };
-$pixelgrid_q = function ( $text, $cite ) {
+$pixelgrid_q  = function ( $text, $cite ) {
 	return "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\"><!-- wp:paragraph -->\n<p>" . esc_html( $text ) . "</p>\n<!-- /wp:paragraph --><cite>" . esc_html( $cite ) . "</cite></blockquote>\n<!-- /wp:quote -->\n\n";
 };
 

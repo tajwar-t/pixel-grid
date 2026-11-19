@@ -81,16 +81,16 @@ if ( ! function_exists( 'pixelgrid_register_block_styles' ) ) :
 		);
 
 		$mosaics = array(
-			'mosaic-screen'  => __( 'Pixel screen', 'pixelgrid' ),
-			'mosaic-cloud'   => __( 'Pixel cloud', 'pixelgrid' ),
-			'mosaic-lock'    => __( 'Pixel padlock', 'pixelgrid' ),
-			'mosaic-chat'    => __( 'Pixel speech bubble', 'pixelgrid' ),
-			'mosaic-chart'   => __( 'Pixel chart', 'pixelgrid' ),
-			'mosaic-people'  => __( 'Pixel people', 'pixelgrid' ),
-			'mosaic-mail'    => __( 'Pixel envelope', 'pixelgrid' ),
-			'mosaic-note'    => __( 'Pixel note', 'pixelgrid' ),
-			'mosaic-lost'    => __( 'Pixel 404', 'pixelgrid' ),
-			'mosaic-cycle'   => __( 'Pixel, changing', 'pixelgrid' ),
+			'mosaic-screen' => __( 'Pixel screen', 'pixelgrid' ),
+			'mosaic-cloud'  => __( 'Pixel cloud', 'pixelgrid' ),
+			'mosaic-lock'   => __( 'Pixel padlock', 'pixelgrid' ),
+			'mosaic-chat'   => __( 'Pixel speech bubble', 'pixelgrid' ),
+			'mosaic-chart'  => __( 'Pixel chart', 'pixelgrid' ),
+			'mosaic-people' => __( 'Pixel people', 'pixelgrid' ),
+			'mosaic-mail'   => __( 'Pixel envelope', 'pixelgrid' ),
+			'mosaic-note'   => __( 'Pixel note', 'pixelgrid' ),
+			'mosaic-lost'   => __( 'Pixel 404', 'pixelgrid' ),
+			'mosaic-cycle'  => __( 'Pixel, changing', 'pixelgrid' ),
 		);
 		foreach ( $mosaics as $name => $label ) {
 			register_block_style(

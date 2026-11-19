@@ -100,7 +100,7 @@ function pixelgrid_starter_created() {
 			'post_type'      => array( 'page', 'post', 'attachment', 'wp_navigation' ),
 			'post_status'    => array( 'publish', 'draft', 'private', 'inherit' ),
 			'meta_key'       => '_pixelgrid_starter', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- runs only on the setup page.
-			'posts_per_page' => 200,
+			'posts_per_page' => 200, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- bounded list of starter items, admin setup page only.
 			'fields'         => 'ids',
 		)
 	);
@@ -130,8 +130,8 @@ function pixelgrid_starter_expand( $content, $depth = 0 ) {
 	$registry = WP_Block_Patterns_Registry::get_instance();
 	return preg_replace_callback(
 		'/<!-- wp:pattern \{"slug":"([^"]+)"\} \/-->/',
-		function ( $match ) use ( $registry, $depth ) {
-			$pattern = $registry->get_registered( $match[1] );
+		function ( $matches ) use ( $registry, $depth ) {
+			$pattern = $registry->get_registered( $matches[1] );
 			return $pattern ? pixelgrid_starter_expand( trim( $pattern['content'] ), $depth + 1 ) : '';
 		},
 		$content

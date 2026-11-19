@@ -327,16 +327,18 @@ function pixelgrid_starter_notice() {
 		return;
 	}
 	$dismiss = wp_nonce_url( admin_url( 'admin-post.php?action=pixelgrid_starter_dismiss' ), 'pixelgrid_starter_dismiss' );
+	$count   = count( pixelgrid_variants() );
 	?>
 	<div class="notice notice-info">
-		<p><strong><?php esc_html_e( 'Pixelgrid is ready.', 'pixelgrid' ); ?></strong> <?php
-			$count = count( pixelgrid_variants() );
-			printf(
-				/* translators: %d: number of starting points. */
-				esc_html( _n( 'Start from the pages shown in the theme preview. %d starting point is available. You choose what gets added.', 'Start from the pages shown in the theme previews. %d starting points are available. You choose what gets added.', $count, 'pixelgrid' ) ),
-				(int) $count
-			);
-			?></p>
+		<p><strong><?php esc_html_e( 'Pixelgrid is ready.', 'pixelgrid' ); ?></strong>
+		<?php
+		printf(
+			/* translators: %d: number of starting points. */
+			esc_html( _n( 'Start from the pages shown in the theme preview. %d starting point is available. You choose what gets added.', 'Start from the pages shown in the theme previews. %d starting points are available. You choose what gets added.', $count, 'pixelgrid' ) ),
+			(int) $count
+		);
+		?>
+		</p>
 		<p>
 			<a class="button button-primary" href="<?php echo esc_url( admin_url( 'themes.php?page=pixelgrid-setup' ) ); ?>"><?php esc_html_e( 'Set up starter content', 'pixelgrid' ); ?></a>
 			<a class="button-link" style="margin-inline-start:12px" href="<?php echo esc_url( $dismiss ); ?>"><?php esc_html_e( 'Dismiss this notice', 'pixelgrid' ); ?></a>

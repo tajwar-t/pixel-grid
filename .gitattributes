@@ -1,3 +1,4 @@
+* text=auto eol=lf
 # Kept in the repo, left out of release zips made with git archive.
 /docs export-ignore
 /README.md export-ignore
