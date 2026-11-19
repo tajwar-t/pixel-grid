@@ -69,11 +69,11 @@ $pixelgrid_plans = array(
 
 <!-- wp:list {"className":"is-style-pixel"} -->
 <ul class="wp-block-list is-style-pixel">
-<?php foreach ( $pixelgrid_plan['items'] as $pixelgrid_plan_item ) : ?>
+	<?php foreach ( $pixelgrid_plan['items'] as $pixelgrid_plan_item ) : ?>
 <!-- wp:list-item -->
 <li><?php echo esc_html( $pixelgrid_plan_item ); ?></li>
 <!-- /wp:list-item -->
-<?php endforeach; ?>
+	<?php endforeach; ?>
 </ul>
 <!-- /wp:list -->
 

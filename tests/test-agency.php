@@ -250,7 +250,7 @@ pg_assert_same( 'home', $pg_agency['front'], 'agency front page is home' );
 pg_assert_same( 'journal', $pg_agency['posts_page'], 'agency posts page is journal' );
 pg_assert_same( array( 'work', 'services', 'studio', 'journal', 'contact' ), $pg_agency['menu'], 'agency menu order' );
 pg_assert_same( array( 'process', 'design', 'technology', 'culture' ), array_keys( $pg_agency['categories'] ), 'agency categories' );
-pg_assert_same( '', $pg_agency['preview'], 'agency preview is empty until Task 7' );
+pg_assert_same( 'assets/images/variants/agency.webp', $pg_agency['preview'], 'agency preview is the setup-screen capture' );
 foreach ( array( 'pages', 'posts', 'reading' ) as $pg_key ) {
 	pg_assert( ! empty( $pg_agency['content_labels'][ $pg_key ] ), "agency has content label $pg_key" );
 }

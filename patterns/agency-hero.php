@@ -15,7 +15,7 @@
 <section class="wp-block-group alignfull is-style-tone-paper pixelgrid-tall"><!-- wp:columns {"className":"pixelgrid-split"} -->
 <div class="wp-block-columns pixelgrid-split"><!-- wp:column -->
 <div class="wp-block-column"><!-- wp:heading {"level":1} -->
-<h1 class="wp-block-heading"><?php echo esc_html_x( 'Brands, sites and packs people read at a glance', 'Agency hero heading', 'pixelgrid' ); ?></h1>
+<h1 class="wp-block-heading"><?php echo esc_html_x( 'Brands and sites people read at a glance', 'Agency hero heading', 'pixelgrid' ); ?></h1>
 <!-- /wp:heading -->
 
 <!-- wp:paragraph {"className":"is-style-lead"} -->

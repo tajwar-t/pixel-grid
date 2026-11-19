@@ -12,6 +12,8 @@ A block theme for IT and technology companies, built on one pixel grid.
 
 Pixelgrid is a block theme for IT and technology companies. Every page sits on one pixel grid: bold condensed headlines, full-page colour sections that change as you scroll, and photos shown through pixel icons.
 
+Two starting points are included: IT services, which uses the theme's default design, and Agency, a design studio with its own colours, the Bricolage Grotesque display face, header, footer and journal template. Each adds its own pages and sample posts, only when you choose; more starting points come in later versions.
+
 Features:
 
 * Six section colours (Light, Bold, Bright, Dark, Soft, Alert), applied as Group block styles. As a visitor scrolls, the whole page fades to the colour of the section in view.
@@ -23,15 +25,25 @@ Features:
 
 = Starter content =
 
-On a new site, a notice on the Dashboard offers to set up the pages shown in the theme preview. You can also go to Appearance, Pixelgrid setup at any time. Choose a starting point (IT services is the first; more come in later versions), tick what you want and click "Add starter content":
+On a new site, a notice on the Dashboard offers to set up the pages shown in the theme preview. You can also go to Appearance, Pixelgrid setup at any time. Choose a starting point (IT services or Agency; more starting points come in later versions), tick what you want and click "Add starter content". Each starting point is shown with a preview.
+
+IT services adds:
 
 * Pages: Home, Services, About, Pricing, Contact and Notes, built from the theme's patterns
 * Six sample notes (posts) with categories, tags and images
+
+Agency adds:
+
+* Pages: Home, Work, Services, Studio, Contact and Journal, plus six case studies under Work, built from the theme's patterns
+* Six sample journal posts with categories, tags and images
+
+Both also add:
+
 * A menu linking the new pages
-* Optionally, the new Home page as the homepage and Notes as the posts page
+* Optionally, the new Home page as the homepage and the blog page (Notes or Journal) as the posts page
 * Optionally, the starting point's design: its styles, header, footer and templates
 
-Nothing is added until you click the button, and nothing is downloaded: the content is built from the theme's own patterns and images. Clicking again does not create duplicates. When you apply a design, your current styles, header, footer and templates are backed up first. The IT services starting point uses the theme's default design, so applying its design does not change your Styles. Applying a design again only changes the styles, header, footer and templates you have not edited since setup. The same screen shows the starting point in use, lists what was added and has a "Remove starter content" button, which moves the starter pages, posts and menu to the trash, deletes the starter images, removes empty starter categories, puts your homepage setting back and restores the backed-up design. Edits you made to the design after setup are kept; if your styles are kept, the styles you had before setup can still be found in Styles, Revisions.
+Nothing is added until you click the button, and nothing is downloaded: the content is built from the theme's own patterns and images. Clicking again does not create duplicates. When you apply a design, your current styles, header, footer and templates are backed up first. The IT services starting point uses the theme's default design, so applying its design does not change your Styles. The Agency design changes the colours, fonts, header, footer and blog template. Applying a design again only changes the styles, header, footer and templates you have not edited since setup. The same screen shows the starting point in use, lists what was added and has a "Remove starter content" button, which moves the starter pages, posts and menu to the trash, deletes the starter images, removes empty starter categories, puts your homepage setting back and restores the backed-up design. Edits you made to the design after setup are kept; if your styles are kept, the styles you had before setup can still be found in Styles, Revisions.
 
 = Setting up a page like the demo by hand =
 
@@ -68,6 +80,11 @@ Go to Appearance, Editor, Styles, Colours, Palette. Open the menu next to Theme 
 Changes apply to the whole site. Keep enough contrast between each background and its text, and between each hover colour and its text on hover.
 
 == Changelog ==
+
+= 1.4.0 =
+* Released: November 19, 2026
+
+New Agency starting point for a small design studio: 12 pages (Home, Work with six case studies, Services, Studio, Contact and Journal) and 6 journal posts, with its own design: colours, the Bricolage Grotesque display face for headings, header, footer and journal template. The setup screen now shows a preview of each starting point and says "posts" instead of "notes", since not every starting point has a notes blog. Applying a design again no longer brings back a header, footer or template you deleted or trashed after setup. Templates added by a design get their proper names, such as "Blog Home". When you remove the starter content, the notice lists the parts you edited and kept by name (Header, Footer, Blog Home), and only points to Styles, Revisions when there are revisions. A missing or damaged style file now shows an error and changes nothing. A design's styles now take effect even when the site's styles record was created without a signed-in user.
 
 = 1.3.0 =
 * Released: November 18, 2026
@@ -128,6 +145,10 @@ Source: https://fonts.google.com/specimen/Bricolage+Grotesque
 
 Images in assets/images (plate-1.webp to plate-8.webp, agency-01.webp to agency-12.webp)
 Copyright 2026 bitBirds Solutions. Original abstract images made for this theme, generated by code (tools/make-plates.php in the source repository).
+License: GPLv2 or later
+
+Setup screen previews in assets/images/variants (it.webp, agency.webp)
+Copyright 2026 bitBirds Solutions. Captures of the theme's own starting points using its bundled images.
 License: GPLv2 or later
 
 Screenshot

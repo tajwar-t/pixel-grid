@@ -18,7 +18,7 @@ $pixelgrid_services = array(
 	array( 6, __( 'Custom software', 'pixelgrid' ), __( 'Internal tools and integrations for the job no off-the-shelf product does.', 'pixelgrid' ) ),
 	array( 7, __( 'IT strategy', 'pixelgrid' ), __( 'A plain one-page plan for the next two years of equipment, licences and spend.', 'pixelgrid' ) ),
 );
-$pixelgrid_rows = array_chunk( $pixelgrid_services, 3 );
+$pixelgrid_rows     = array_chunk( $pixelgrid_services, 3 );
 ?>
 <!-- wp:group {"tagName":"section","align":"full","className":"is-style-tone-paper pixelgrid-stack","layout":{"type":"constrained"}} -->
 <section class="wp-block-group alignfull is-style-tone-paper pixelgrid-stack"><!-- wp:heading {"level":1} -->

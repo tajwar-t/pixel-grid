@@ -150,5 +150,5 @@ return array(
 				. $pixelgrid_p( __( 'Then we spend an hour with whoever will use it most. Usually that is not the marketing lead, it is the person who makes the posters.', 'pixelgrid' ) ),
 		),
 	),
-	'preview'        => '',
+	'preview'        => 'assets/images/variants/agency.webp',
 );

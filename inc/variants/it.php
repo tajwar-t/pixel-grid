@@ -133,4 +133,5 @@ return array(
 			'content'  => $pixelgrid_p( __( 'Our rule of thumb: repair anything under three years old, replace anything over five, and decide in between based on the battery and the work it does.', 'pixelgrid' ) ),
 		),
 	),
+	'preview'        => 'assets/images/variants/it.webp',
 );
