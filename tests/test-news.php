@@ -407,6 +407,9 @@ for ( $pg_i = 1; $pg_i <= 15; $pg_i++ ) {
 	$pg_expected_images[] = sprintf( 'assets/images/news-%02d.webp', $pg_i );
 }
 pg_assert_same( $pg_expected_images, $pg_images, 'articles use news-01 to news-15 in order' );
+$pg_keys = wp_list_pluck( $pg_def['posts'], 'key' );
+pg_assert_same( count( $pg_keys ), count( array_unique( $pg_keys ) ), 'article keys are unique' );
+pg_assert( in_array( 'heat-pump-startup-funding', $pg_keys, true ), 'the startup article key says what it is about' );
 
 // Helpers for rendered pages.
 $pg_title_html = function ( $title ) {
@@ -458,7 +461,9 @@ $pg_log_lines = function () use ( $pg_debug_log ) {
 	clearstatcache();
 	$out = array();
 	foreach ( preg_split( '/\R/', (string) file_get_contents( $pg_debug_log ) ) as $line ) {
-		if ( '' !== trim( $line ) && false === strpos( $line, 'Deprecated' ) ) {
+		// Only PHP 8.5 deprecations raised inside WordPress core are noise; any other line counts.
+		$core_deprecation = false !== strpos( $line, 'Deprecated' ) && preg_match( '#[\\\\/]wp-(includes|admin)[\\\\/]#', $line );
+		if ( '' !== trim( $line ) && ! $core_deprecation ) {
 			$out[] = $line;
 		}
 	}
@@ -661,7 +666,20 @@ pg_assert( false === strpos( $pg_after, 'Warning:' ) && false === strpos( $pg_af
 pg_assert_same( array(), array_slice( $pg_log_lines(), $pg_log_before ), 'no new PHP log entries after the World category is deleted' );
 pg_assert_same( array(), $pg_titles_in( $pg_query_html( $pg_after, 'pixelgrid-cat-world' ) ), 'the World row lists no posts once its category is gone' );
 pg_assert( false !== strpos( $pg_after, 'pixelgrid-cat-business' ) && array() !== $pg_titles_in( $pg_query_html( $pg_after, 'pixelgrid-cat-business' ) ), 'the other rows still list their posts' );
+// Notices raised in this process while removing are caught too.
+$pg_cli_errors = array();
+set_error_handler(
+	function ( $errno, $errstr, $errfile, $errline ) use ( &$pg_cli_errors ) {
+		$core_deprecation = in_array( $errno, array( E_DEPRECATED, E_USER_DEPRECATED ), true ) && preg_match( '#[\\\\/]wp-(includes|admin)[\\\\/]#', $errfile );
+		if ( ! $core_deprecation ) {
+			$pg_cli_errors[] = "$errstr ($errfile:$errline)";
+		}
+		return true;
+	}
+);
 $pg_removed = pixelgrid_starter_remove();
+restore_error_handler();
+pg_assert_same( array(), $pg_cli_errors, 'remove after the World category is deleted raises no PHP notice' );
 pg_assert( $pg_removed['removed'] >= 25, 'remove still runs after the World category is deleted (got ' . $pg_removed['removed'] . ')' );
 pg_assert_same( array(), $pg_removed['kept'], 'remove after the World category is deleted keeps nothing' );
 

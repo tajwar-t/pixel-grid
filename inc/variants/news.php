@@ -12,21 +12,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$pixelgrid_p  = function ( $text ) {
+$pixelgrid_p = function ( $text ) {
 	return "<!-- wp:paragraph -->\n<p>" . esc_html( $text ) . "</p>\n<!-- /wp:paragraph -->\n\n";
 };
-$pixelgrid_h  = function ( $text, $level = 2 ) {
+$pixelgrid_h = function ( $text, $level = 2 ) {
 	$attrs = 2 === $level ? '' : ' {"level":' . (int) $level . '}';
 	return '<!-- wp:heading' . $attrs . " -->\n<h" . (int) $level . ' class="wp-block-heading">' . esc_html( $text ) . '</h' . (int) $level . ">\n<!-- /wp:heading -->\n\n";
 };
-$pixelgrid_ul = function ( $items ) {
-	$out = "<!-- wp:list -->\n<ul class=\"wp-block-list\">";
-	foreach ( $items as $item ) {
-		$out .= "<!-- wp:list-item -->\n<li>" . esc_html( $item ) . "</li>\n<!-- /wp:list-item -->";
-	}
-	return $out . "</ul>\n<!-- /wp:list -->\n\n";
-};
-$pixelgrid_q  = function ( $text, $cite ) {
+$pixelgrid_q = function ( $text, $cite ) {
 	return "<!-- wp:quote -->\n<blockquote class=\"wp-block-quote\"><!-- wp:paragraph -->\n<p>" . esc_html( $text ) . "</p>\n<!-- /wp:paragraph --><cite>" . esc_html( $cite ) . "</cite></blockquote>\n<!-- /wp:quote -->\n\n";
 };
 
@@ -35,7 +28,7 @@ return array(
 	'label'          => __( 'News', 'pixelgrid' ),
 	'description'    => __( 'A city newspaper with five sections, most read, opinion and a page for tips.', 'pixelgrid' ),
 	'content_labels' => array(
-		'pages'   => __( 'Pages: Home, About, Contact, Tips and Latest, plus a menu of the five sections', 'pixelgrid' ),
+		'pages'   => __( 'Pages: Home, About, Contact, Tips and Latest', 'pixelgrid' ),
 		'posts'   => __( 'Fifteen sample articles in World, Business, Technology, Culture and Sport, with standfirsts, tags and images', 'pixelgrid' ),
 		'reading' => __( 'Use the new Home page as the homepage and Latest as the posts page', 'pixelgrid' ),
 	),
@@ -73,12 +66,12 @@ return array(
 		array(
 			'key'      => 'council-budget-libraries',
 			'title'    => __( 'Council passes a budget that keeps every library branch open', 'pixelgrid' ),
-			'excerpt'  => __( 'Councillors voted 31 to 18 for a spending plan that closes a 4.2 million gap without shutting a single branch.', 'pixelgrid' ),
+			'excerpt'  => __( 'Councillors voted 31 to 18 for a spending plan that closes a gap of 4.2 million euros without shutting a single branch.', 'pixelgrid' ),
 			'category' => array( 'business', 'most-read' ),
 			'tags'     => array( __( 'City council', 'pixelgrid' ), __( 'Budget', 'pixelgrid' ), __( 'Libraries', 'pixelgrid' ) ),
 			'image'    => 'assets/images/news-01.webp',
 			'content'  => $pixelgrid_p( __( 'The city council approved next year\'s budget late on Tuesday after a debate that ran for almost five hours. The final vote was 31 in favour and 18 against.', 'pixelgrid' ) )
-				. $pixelgrid_p( __( 'The plan closes a gap of 4.2 million by delaying two road resurfacing projects, raising parking charges in the centre by 20 cents an hour and freezing hiring in the planning office until spring.', 'pixelgrid' ) )
+				. $pixelgrid_p( __( 'The plan closes a gap of 4.2 million euros by delaying two road resurfacing projects, raising parking charges in the centre by 20 euro cents an hour and freezing hiring in the planning office until spring.', 'pixelgrid' ) )
 				. $pixelgrid_h( __( 'What changed since the draft', 'pixelgrid' ) )
 				. $pixelgrid_p( __( 'An earlier draft would have closed the Eastbank and Mill Road library branches. After more than 2,000 written comments, the finance committee found the money elsewhere, mostly from the road budget.', 'pixelgrid' ) )
 				. $pixelgrid_q( __( 'We heard from parents, pensioners and students. The libraries are where this city does its homework, so they stay open.', 'pixelgrid' ), __( 'Marta Ilić, chair of the finance committee', 'pixelgrid' ) )
@@ -100,13 +93,13 @@ return array(
 				. $pixelgrid_p( __( 'The company says the extra sailing is a trial until the end of March. If the boats are less than a third full, it will be dropped again next winter.', 'pixelgrid' ) ),
 		),
 		array(
-			'key'      => 'kettle-startup-funding',
+			'key'      => 'heat-pump-startup-funding',
 			'title'    => __( 'Riverside startup that repairs heat pumps raises its first funding', 'pixelgrid' ),
 			'excerpt'  => __( 'Four engineers who started in a rented garage now have money to hire eight more and open a second workshop.', 'pixelgrid' ),
 			'category' => array( 'technology', 'most-read' ),
 			'tags'     => array( __( 'Startups', 'pixelgrid' ), __( 'Energy', 'pixelgrid' ) ),
 			'image'    => 'assets/images/news-03.webp',
-			'content'  => $pixelgrid_p( __( 'Coilwork, a company that diagnoses and repairs domestic heat pumps, has raised 1.5 million from a group of local investors and the regional development fund.', 'pixelgrid' ) )
+			'content'  => $pixelgrid_p( __( 'Coilwork, a company that diagnoses and repairs domestic heat pumps, has raised 1.5 million euros from a group of local investors and the regional development fund.', 'pixelgrid' ) )
 				. $pixelgrid_p( __( 'The firm began two years ago in a garage on Riverside Lane. Its four founders built a small sensor that clips onto a heat pump and reports faults to a technician before the house goes cold.', 'pixelgrid' ) )
 				. $pixelgrid_h( __( 'Eight new jobs this year', 'pixelgrid' ) )
 				. $pixelgrid_p( __( 'The money will pay for eight more technicians and a second workshop in the old tram depot. The company says it will train apprentices from the city\'s technical college.', 'pixelgrid' ) )
@@ -125,7 +118,7 @@ return array(
 				. $pixelgrid_h( __( 'Open late on weekdays', 'pixelgrid' ) )
 				. $pixelgrid_p( __( 'The reading room on the first floor stays open until ten on weekdays, staffed by two librarians and a security guard. It is the first branch in the city with evening hours.', 'pixelgrid' ) )
 				. $pixelgrid_q( __( 'Students told us they had nowhere quiet to work after the cafes close. So we kept the lights on.', 'pixelgrid' ), __( 'Tomas Reyes, branch manager', 'pixelgrid' ) )
-				. $pixelgrid_p( __( 'Library cards are free for anyone who lives, works or studies in the city. The tool library needs a card and a deposit of ten euros.', 'pixelgrid' ) ),
+				. $pixelgrid_p( __( 'Library cards are free for anyone who lives, works or studies in the city. The tool library needs a card and a deposit of 10 euros.', 'pixelgrid' ) ),
 		),
 		array(
 			'key'      => 'harbour-fc-promotion',
@@ -179,7 +172,7 @@ return array(
 			'content'  => $pixelgrid_p( __( 'Waiting for a bus in the city should involve less guessing from this week. The transit authority has finished fitting live arrival screens at all 410 of its stops.', 'pixelgrid' ) )
 				. $pixelgrid_p( __( 'The screens run on small solar panels and show the next three buses on each route, updated every 20 seconds from a tracker on each vehicle.', 'pixelgrid' ) )
 				. $pixelgrid_h( __( 'Built by the city\'s own team', 'pixelgrid' ) )
-				. $pixelgrid_p( __( 'The software was written by a team of five inside the transit authority rather than bought in. The authority says that saved about 300,000 a year in licence fees.', 'pixelgrid' ) )
+				. $pixelgrid_p( __( 'The software was written by a team of five inside the transit authority rather than bought in. The authority says that saved about 300,000 euros a year in licence fees.', 'pixelgrid' ) )
 				. $pixelgrid_q( __( 'The data was always there. We just had never put it on the pole where people are standing.', 'pixelgrid' ), __( 'Head of digital services, city transit authority', 'pixelgrid' ) )
 				. $pixelgrid_p( __( 'Riders can report a broken screen by scanning the code on its side. The authority aims to fix faults within two working days.', 'pixelgrid' ) ),
 		),
@@ -195,7 +188,7 @@ return array(
 				. $pixelgrid_h( __( 'A year of Saturdays', 'pixelgrid' ) )
 				. $pixelgrid_p( __( 'The writers met every Saturday morning for a year with the theatre\'s resident playwright. Professional actors will perform it, with two of the pupils in small roles.', 'pixelgrid' ) )
 				. $pixelgrid_q( __( 'They argued about every line. That is exactly what a writers\' room should sound like.', 'pixelgrid' ), __( 'Resident playwright at the Lantern Theatre', 'pixelgrid' ) )
-				. $pixelgrid_p( __( 'The Last Tram runs for three weeks from the 14th. Tickets for under-18s cost five euros.', 'pixelgrid' ) ),
+				. $pixelgrid_p( __( 'The Last Tram runs for three weeks from the 14th. Tickets for under-18s cost 5 euros.', 'pixelgrid' ) ),
 		),
 		array(
 			'key'      => 'harbour-rowing-regatta',
