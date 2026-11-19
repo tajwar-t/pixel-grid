@@ -230,7 +230,7 @@ function pixelgrid_starter_enqueue( $hook_suffix ) {
 	if ( ! root ) {
 		return;
 	}
-	function pick() {
+	function pixelgrid_pick() {
 		var radio = root.querySelector( "input[name=\"pixelgrid_variant\"]:checked" );
 		var slug = radio ? radio.value : "";
 		var i, list = root.querySelectorAll( ".pixelgrid-for-name" );
@@ -244,10 +244,10 @@ function pixelgrid_starter_enqueue( $hook_suffix ) {
 	}
 	root.addEventListener( "change", function ( event ) {
 		if ( event.target && "pixelgrid_variant" === event.target.name ) {
-			pick();
+			pixelgrid_pick();
 		}
 	} );
-	pick();
+	pixelgrid_pick();
 }() );'
 	);
 }
