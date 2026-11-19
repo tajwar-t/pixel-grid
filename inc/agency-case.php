@@ -33,6 +33,8 @@ if ( ! function_exists( 'pixelgrid_agency_case' ) ) :
 	 *     @type string $cite       Quote source.
 	 *     @type string $next_path  pagename of the next page, for example work/tidewater-museum.
 	 *     @type string $next_title Heading of the next page.
+	 *     @type string $next_label Optional. Label above the next link. Default "Next case study".
+	 *     @type string $next_button Optional. Button text. Default "Read the next case study".
 	 * }
 	 */
 	function pixelgrid_agency_case( array $c ) {
@@ -113,7 +115,7 @@ if ( ! function_exists( 'pixelgrid_agency_case' ) ) :
 
 <!-- wp:group {"tagName":"section","align":"full","className":"is-style-tone-night pixelgrid-stack","layout":{"type":"constrained"}} -->
 <section class="wp-block-group alignfull is-style-tone-night pixelgrid-stack"><!-- wp:paragraph {"fontSize":"small"} -->
-<p class="has-small-font-size"><?php echo esc_html_x( 'Next case study', 'Case study label', 'pixelgrid' ); ?></p>
+<p class="has-small-font-size"><?php echo esc_html( isset( $c['next_label'] ) ? $c['next_label'] : _x( 'Next case study', 'Case study label', 'pixelgrid' ) ); ?></p>
 <!-- /wp:paragraph -->
 
 <!-- wp:heading {"fontSize":"xx-large"} -->
@@ -122,7 +124,7 @@ if ( ! function_exists( 'pixelgrid_agency_case' ) ) :
 
 <!-- wp:buttons -->
 <div class="wp-block-buttons"><!-- wp:button -->
-<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="<?php echo esc_url( $next_url ); ?>"><?php echo esc_html_x( 'Read the next case study', 'Case study button', 'pixelgrid' ); ?></a></div>
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="<?php echo esc_url( $next_url ); ?>"><?php echo esc_html( isset( $c['next_button'] ) ? $c['next_button'] : _x( 'Read the next case study', 'Case study button', 'pixelgrid' ) ); ?></a></div>
 <!-- /wp:button -->
 
 <!-- wp:button {"className":"is-style-outline"} -->

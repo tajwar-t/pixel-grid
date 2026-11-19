@@ -169,7 +169,7 @@ function pixelgrid_starter_insert( $full_key, $args ) {
  * @return int Attachment ID or 0.
  */
 function pixelgrid_starter_image( $variant, $image ) {
-	if ( is_int( $image ) || ctype_digit( (string) $image ) ) {
+	if ( is_int( $image ) || 1 === preg_match( '/^\d+$/', (string) $image ) ) {
 		$number = (int) $image;
 		$name   = (string) $number;
 		$path   = 'assets/images/plate-' . $number . '.webp';
