@@ -58,6 +58,9 @@ up() {
 
 	wpq theme activate pixelgrid
 	wpq option update fresh_site 1
+	# Drop the cached list of theme pattern files, so each test reads the patterns folder as it is now.
+	# mysql directly: wp db query goes through cmd on Windows, which expands the % wildcards.
+	mysql -uroot "$DB_NAME" -e "DELETE FROM $(wpq db prefix)options WHERE option_name LIKE '\_site\_transient\_%wp\_theme\_files\_patterns-%';"
 	wpq db export "$SNAPSHOT" --quiet
 	echo "Site up at $SITE_URL (snapshot: $SNAPSHOT)"
 }

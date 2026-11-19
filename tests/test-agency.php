@@ -106,9 +106,6 @@ for ( $i = 1; $i <= 12; $i++ ) {
 }
 
 // Agency patterns: registered, expandable, valid markup, real images, no database ids.
-// The database snapshot holds a cached list of theme pattern files; read the folder afresh.
-wp_get_theme()->delete_pattern_cache();
-_register_theme_block_patterns();
 $agency_slugs = array(
 	'agency-header',
 	'agency-footer',

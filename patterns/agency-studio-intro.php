@@ -19,7 +19,7 @@
 <!-- /wp:heading -->
 
 <!-- wp:paragraph {"className":"is-style-lead"} -->
-<p class="is-style-lead"><?php echo esc_html_x( 'Fieldwork Studio is seven people in one room. The person who runs your first workshop is the person who hands over the final files.', 'Studio page introduction', 'pixelgrid' ); ?></p>
+<p class="is-style-lead"><?php echo esc_html_x( 'Fieldwork Studio is four people in one room. The person who runs your first workshop is the person who hands over the final files.', 'Studio page introduction', 'pixelgrid' ); ?></p>
 <!-- /wp:paragraph -->
 
 <!-- wp:buttons -->

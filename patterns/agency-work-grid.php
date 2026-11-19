@@ -30,8 +30,8 @@ $pixelgrid_cases = array(
 	<?php foreach ( $pixelgrid_row as $pixelgrid_case ) : ?>
 		<?php $pixelgrid_url = add_query_arg( 'pagename', 'work/' . $pixelgrid_case[0], home_url( '/' ) ); ?>
 <!-- wp:column -->
-<div class="wp-block-column"><!-- wp:image {"aspectRatio":"3/2","scale":"cover","sizeSlug":"full","linkDestination":"custom","className":"is-style-notch"} -->
-<figure class="wp-block-image size-full is-style-notch"><a href="<?php echo esc_url( $pixelgrid_url ); ?>"><img src="<?php echo esc_url( get_parent_theme_file_uri( sprintf( 'assets/images/agency-%02d.webp', $pixelgrid_case[1] ) ) ); ?>" alt="" style="aspect-ratio:3/2;object-fit:cover"/></a></figure>
+<div class="wp-block-column"><!-- wp:image {"aspectRatio":"3/2","scale":"cover","sizeSlug":"full","linkDestination":"none","className":"is-style-notch"} -->
+<figure class="wp-block-image size-full is-style-notch"><img src="<?php echo esc_url( get_parent_theme_file_uri( sprintf( 'assets/images/agency-%02d.webp', $pixelgrid_case[1] ) ) ); ?>" alt="" style="aspect-ratio:3/2;object-fit:cover"/></figure>
 <!-- /wp:image -->
 
 <!-- wp:paragraph {"fontSize":"small"} -->
