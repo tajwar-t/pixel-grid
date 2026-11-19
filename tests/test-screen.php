@@ -31,6 +31,12 @@ preg_match( '/<input[^>]*value="agency"[^>]*>\s*<strong>([^<]*)<\/strong>/', $ht
 pg_assert_same( 'Agency', $m[1] ?? null, 'screen has the agency radio labelled Agency' );
 pg_assert( is_array( $pg_agency ) && ! empty( $pg_agency['content_labels']['pages'] ) && false !== strpos( $html, esc_html( $pg_agency['content_labels']['pages'] ) ), 'screen shows the agency pages label' );
 
+// News is listed with its own wording.
+$pg_news = pixelgrid_variant( 'news' );
+preg_match( '/<input[^>]*value="news"[^>]*>\s*<strong>([^<]*)<\/strong>/', $html, $m );
+pg_assert_same( 'News', $m[1] ?? null, 'screen has the news radio labelled News' );
+pg_assert( is_array( $pg_news ) && ! empty( $pg_news['content_labels']['pages'] ) && false !== strpos( $html, esc_html( $pg_news['content_labels']['pages'] ) ), 'screen shows the news pages label' );
+
 // Wording shared by every variant is generic, not IT's blog name.
 $html = pg_test_screen_with( array( 'pixelgrid_created' => '12-6-1' ) );
 pg_assert( false !== strpos( $html, 'Starter content added: 12 pages, 6 posts and 1 menu.' ), 'created notice counts posts, not notes' );

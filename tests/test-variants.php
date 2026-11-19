@@ -2,7 +2,7 @@
 /**
  * Variant registry tests.
  */
-pg_assert_same( array( 'it', 'agency' ), array_keys( pixelgrid_variants() ), 'registry lists the it and agency variants' );
+pg_assert_same( array( 'it', 'agency', 'news' ), array_keys( pixelgrid_variants() ), 'registry lists the it, agency and news variants' );
 $it = pixelgrid_variant( 'it' );
 pg_assert_same( 'home', $it['front'], 'it front page is home' );
 pg_assert_same( 6, count( $it['posts'] ), 'it has 6 posts' );
