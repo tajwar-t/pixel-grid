@@ -202,4 +202,159 @@ foreach ( array( 'agency-case-1', 'agency-blog-heading', 'agency-template-home' 
 	pg_assert( isset( $pattern['inserter'] ) && false === $pattern['inserter'], "pixelgrid/$slug is hidden from the inserter" );
 }
 
+// Agency variant: definition, end-to-end setup and removal.
+$pg_agency = pixelgrid_variant( 'agency' );
+pg_assert( is_array( $pg_agency ), 'agency variant exists' );
+pg_assert( is_array( $pg_agency ) && pixelgrid_variant_available( $pg_agency ), 'agency variant is available' );
+$pg_agency = is_array( $pg_agency ) ? $pg_agency : pixelgrid_variant_defaults( array() );
+pg_assert_same( 'Agency', $pg_agency['label'], 'agency is labelled Agency' );
+pg_assert_same( 'styles/agency.json', $pg_agency['style'], 'agency uses styles/agency.json' );
+pg_assert_same(
+	array(
+		'header' => 'pixelgrid/agency-header',
+		'footer' => 'pixelgrid/agency-footer',
+	),
+	$pg_agency['parts'],
+	'agency parts are its header and footer'
+);
+pg_assert_same( array( 'home' => 'pixelgrid/agency-template-home' ), $pg_agency['templates'], 'agency home template' );
+pg_assert_same( 'home', $pg_agency['front'], 'agency front page is home' );
+pg_assert_same( 'journal', $pg_agency['posts_page'], 'agency posts page is journal' );
+pg_assert_same( array( 'work', 'services', 'studio', 'journal', 'contact' ), $pg_agency['menu'], 'agency menu order' );
+pg_assert_same( array( 'process', 'design', 'technology', 'culture' ), array_keys( $pg_agency['categories'] ), 'agency categories' );
+pg_assert_same( '', $pg_agency['preview'], 'agency preview is empty until Task 7' );
+foreach ( array( 'pages', 'posts', 'reading' ) as $pg_key ) {
+	pg_assert( ! empty( $pg_agency['content_labels'][ $pg_key ] ), "agency has content label $pg_key" );
+}
+pg_assert( '' !== $pg_agency['design_note'], 'agency has a design note' );
+foreach ( array( 'home', 'work', 'services', 'studio', 'contact' ) as $pg_slug ) {
+	$pg_page = $pg_agency['pages'][ $pg_slug ] ?? array();
+	pg_assert_same( 'pixelgrid/agency-page-' . $pg_slug, $pg_page[1] ?? null, "page $pg_slug uses agency-page-$pg_slug" );
+	pg_assert_same( 'page-sections', $pg_page[2] ?? null, "page $pg_slug uses page-sections" );
+}
+pg_assert_same( '', $pg_agency['pages']['journal'][1] ?? null, 'journal page is empty' );
+pg_assert_same( '', $pg_agency['pages']['journal'][2] ?? null, 'journal page has no template' );
+$pg_case_slugs = array( 'northline-rebrand', 'tidewater-museum', 'copperleaf-packaging', 'meridian-booking-app', 'foxglove-festival', 'quarry-lane-wayfinding' );
+foreach ( $pg_case_slugs as $pg_i => $pg_slug ) {
+	$pg_page = $pg_agency['pages'][ $pg_slug ] ?? array();
+	pg_assert_same( 'pixelgrid/agency-case-' . ( $pg_i + 1 ), $pg_page[1] ?? null, "case $pg_slug uses agency-case-" . ( $pg_i + 1 ) );
+	pg_assert_same( 'page-sections', $pg_page[2] ?? null, "case $pg_slug uses page-sections" );
+	pg_assert_same( 'work', $pg_page[3] ?? null, "case $pg_slug is a child of work" );
+}
+pg_assert_same( 12, count( $pg_agency['pages'] ), 'agency has 12 pages' );
+pg_assert_same( 6, count( $pg_agency['posts'] ), 'agency has 6 posts' );
+$pg_post_images = array();
+foreach ( $pg_agency['posts'] as $pg_post ) {
+	$pg_post_images[] = $pg_post['image'];
+	pg_assert( isset( $pg_agency['categories'][ $pg_post['category'] ] ), "post {$pg_post['key']} has an agency category" );
+	pg_assert( false === stripos( $pg_post['content'] . $pg_post['title'] . $pg_post['excerpt'], 'notes' ), "post {$pg_post['key']} never says notes" );
+	$pg_junk = array_filter(
+		parse_blocks( $pg_post['content'] ),
+		function ( $block ) {
+			return null === $block['blockName'] && '' !== trim( $block['innerHTML'] );
+		}
+	);
+	pg_assert( array() === $pg_junk, "post {$pg_post['key']} is clean block markup" );
+}
+sort( $pg_post_images );
+$pg_expected_images = array();
+for ( $pg_i = 7; $pg_i <= 12; $pg_i++ ) {
+	$pg_expected_images[] = sprintf( 'assets/images/agency-%02d.webp', $pg_i );
+}
+pg_assert_same( $pg_expected_images, $pg_post_images, 'agency posts use images agency-07 to agency-12' );
+pg_assert_same( 4, count( array_unique( wp_list_pluck( $pg_agency['posts'], 'category' ) ) ), 'agency posts cover all 4 categories' );
+
+$pg_theme         = get_stylesheet();
+$pg_header_block  = '<!-- wp:template-part {"slug":"header","theme":"' . $pg_theme . '"} /-->';
+$pg_styles_id     = (int) WP_Theme_JSON_Resolver::get_user_data_from_wp_global_styles( wp_get_theme(), true )['ID'];
+$pg_styles_before = get_post( $pg_styles_id )->post_content;
+$pg_page_count    = function () {
+	return (int) wp_count_posts( 'page' )->publish;
+};
+
+$pg_all  = array(
+	'design'  => true,
+	'pages'   => true,
+	'posts'   => true,
+	'menu'    => true,
+	'reading' => true,
+);
+$pg_made = pixelgrid_starter_create( 'agency', $pg_all );
+pg_assert_same(
+	array(
+		'pages' => 12,
+		'posts' => 6,
+		'menu'  => 1,
+	),
+	$pg_made,
+	'agency create makes 12 pages, 6 posts and 1 menu'
+);
+$pg_work = pixelgrid_starter_find( 'page', 'agency:page-work' );
+$pg_home = pixelgrid_starter_find( 'page', 'agency:page-home' );
+foreach ( $pg_case_slugs as $pg_slug ) {
+	$pg_id = pixelgrid_starter_find( 'page', 'agency:page-' . $pg_slug );
+	pg_assert( $pg_id > 0 && $pg_work > 0 && $pg_work === (int) get_post( $pg_id )->post_parent, "case $pg_slug is a child of the Work page" );
+}
+foreach ( array( 'Work' => $pg_work, 'Home' => $pg_home ) as $pg_name => $pg_id ) {
+	$pg_content = (string) get_post_field( 'post_content', $pg_id );
+	pg_assert( '' !== $pg_content && false === strpos( $pg_content, 'pagename=' ), "$pg_name page has no ?pagename= links left" );
+	preg_match_all( '/href="([^"]+)"/', $pg_content, $pg_hrefs );
+	$pg_hrefs = array_unique( $pg_hrefs[1] );
+	pg_assert( count( $pg_hrefs ) > 0, "$pg_name page has links" );
+	foreach ( $pg_hrefs as $pg_href ) {
+		$pg_href = html_entity_decode( $pg_href );
+		if ( 0 !== strpos( $pg_href, home_url() ) ) {
+			continue;
+		}
+		$pg_code = wp_remote_retrieve_response_code( wp_remote_get( $pg_href, array( 'timeout' => 20 ) ) );
+		pg_assert_same( 200, $pg_code, "$pg_name link $pg_href returns 200" );
+	}
+}
+pg_assert_same( $pg_home, (int) get_option( 'page_on_front' ), 'front page is Home' );
+pg_assert_same( pixelgrid_starter_find( 'page', 'agency:page-journal' ), (int) get_option( 'page_for_posts' ), 'posts page is Journal' );
+pg_assert( false !== strpos( do_blocks( $pg_header_block ), 'Start a project' ), 'header renders the Agency header' );
+$pg_agency_json = json_decode( file_get_contents( get_parent_theme_file_path( 'styles/agency.json' ) ), true );
+$pg_blue_hover  = '';
+foreach ( $pg_agency_json['settings']['color']['palette'] as $pg_entry ) {
+	if ( 'blue-hover' === $pg_entry['slug'] ) {
+		$pg_blue_hover = $pg_entry['color'];
+	}
+}
+$pg_user_styles = json_decode( get_post( $pg_styles_id )->post_content, true );
+$pg_user_blue   = '';
+foreach ( (array) ( $pg_user_styles['settings']['color']['palette'] ?? array() ) as $pg_entry ) {
+	if ( 'blue-hover' === ( $pg_entry['slug'] ?? '' ) ) {
+		$pg_user_blue = $pg_entry['color'];
+	}
+}
+pg_assert( '' !== $pg_blue_hover && $pg_blue_hover === $pg_user_blue, 'user styles carry the Agency blue-hover colour' );
+
+$pg_removed = pixelgrid_starter_remove();
+pg_assert( $pg_removed['removed'] >= 25, 'agency remove removes at least 25 items (got ' . $pg_removed['removed'] . ')' );
+pg_assert_same( array(), $pg_removed['kept'], 'agency remove keeps nothing' );
+pg_assert( false !== strpos( do_blocks( $pg_header_block ), 'Get a quote' ), 'header renders the theme default after removal' );
+pg_assert_same( $pg_styles_before, get_post( $pg_styles_id )->post_content, 'user styles are back to the pre-setup content' );
+$pg_published = array();
+foreach ( get_posts(
+	array(
+		'post_type'      => 'page',
+		'post_status'    => 'publish',
+		'posts_per_page' => -1,
+		'fields'         => 'ids',
+	)
+) as $pg_id ) {
+	if ( 0 === strpos( (string) get_post_meta( $pg_id, '_pixelgrid_starter', true ), 'agency:' ) ) {
+		$pg_published[] = $pg_id;
+	}
+}
+pg_assert_same( array(), $pg_published, 'no Agency page is published after removal' );
+
+// Review Focus 2: one variant at a time.
+pixelgrid_starter_create( 'it', array( 'pages' => true ) );
+$pg_count_it = $pg_page_count();
+$pg_busy     = pixelgrid_starter_create( 'agency', $pg_all );
+pg_assert( is_wp_error( $pg_busy ) && 'pixelgrid_variant_busy' === $pg_busy->get_error_code(), 'agency while it is active returns pixelgrid_variant_busy' );
+pg_assert_same( $pg_count_it, $pg_page_count(), 'busy agency create leaves the page count unchanged' );
+pixelgrid_starter_remove();
+
 pg_done();

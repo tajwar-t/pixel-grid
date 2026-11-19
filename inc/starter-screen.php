@@ -283,8 +283,8 @@ function pixelgrid_starter_screen() {
 			$counts = array_map( 'absint', explode( '-', sanitize_text_field( wp_unslash( $_GET['pixelgrid_created'] ) ) ) + array( 0, 0, 0 ) );
 			echo '<div class="notice notice-success"><p>';
 			printf(
-				/* translators: 1: number of pages, 2: number of notes, 3: number of menus. */
-				esc_html__( 'Starter content added: %1$d pages, %2$d notes and %3$d menu. Anything that already existed was left as it was.', 'pixelgrid' ),
+				/* translators: 1: number of pages, 2: number of posts, 3: number of menus. */
+				esc_html__( 'Starter content added: %1$d pages, %2$d posts and %3$d menu. Anything that already existed was left as it was.', 'pixelgrid' ),
 				(int) $counts[0],
 				(int) $counts[1],
 				(int) $counts[2]
@@ -444,7 +444,7 @@ function pixelgrid_starter_screen() {
 			<?php
 			$groups = array(
 				'page' => __( 'Pages', 'pixelgrid' ),
-				'post' => __( 'Notes', 'pixelgrid' ),
+				'post' => __( 'Posts', 'pixelgrid' ),
 			);
 			foreach ( $groups as $type => $label ) :
 				if ( ! $created[ $type ] ) {
@@ -461,7 +461,7 @@ function pixelgrid_starter_screen() {
 
 			<?php if ( $can ) : ?>
 			<h2><?php esc_html_e( 'Remove starter content', 'pixelgrid' ); ?></h2>
-			<p><?php esc_html_e( 'Moves the starter pages, notes and menu to the trash, deletes the starter images, removes empty starter categories, restores your homepage setting and puts back the styles, header, footer and templates that were replaced, unless you changed them after setup. Content you created yourself is not touched, but changes you made to starter pages are lost with them.', 'pixelgrid' ); ?></p>
+			<p><?php esc_html_e( 'Moves the starter pages, posts and menu to the trash, deletes the starter images, removes empty starter categories, restores your homepage setting and puts back the styles, header, footer and templates that were replaced, unless you changed them after setup. Content you created yourself is not touched, but changes you made to starter pages are lost with them.', 'pixelgrid' ); ?></p>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="pixelgrid_starter">
 				<input type="hidden" name="pixelgrid_task" value="remove">

@@ -25,6 +25,23 @@ foreach ( $it_strings as $text ) {
 }
 pg_assert( false === strpos( $html, '<script' ), 'no script in the page body' );
 
+// Agency is listed with its own wording.
+$pg_agency = pixelgrid_variant( 'agency' );
+preg_match( '/<input[^>]*value="agency"[^>]*>\s*<strong>([^<]*)<\/strong>/', $html, $m );
+pg_assert_same( 'Agency', $m[1] ?? null, 'screen has the agency radio labelled Agency' );
+pg_assert( is_array( $pg_agency ) && ! empty( $pg_agency['content_labels']['pages'] ) && false !== strpos( $html, esc_html( $pg_agency['content_labels']['pages'] ) ), 'screen shows the agency pages label' );
+
+// Wording shared by every variant is generic, not IT's blog name.
+$html = pg_test_screen_with( array( 'pixelgrid_created' => '12-6-1' ) );
+pg_assert( false !== strpos( $html, 'Starter content added: 12 pages, 6 posts and 1 menu.' ), 'created notice counts posts, not notes' );
+pixelgrid_starter_create( 'it', array( 'posts' => true ) );
+ob_start();
+pixelgrid_starter_screen();
+$html = ob_get_clean();
+pg_assert( false !== strpos( $html, '<h3>Posts</h3>' ) && false === strpos( $html, '<h3>Notes</h3>' ), 'created list heads posts as Posts' );
+pg_assert( false !== strpos( $html, 'Moves the starter pages, posts and menu to the trash' ), 'remove paragraph says posts' );
+pixelgrid_starter_remove();
+
 // The label switcher is enqueued on this page only.
 if ( function_exists( 'pixelgrid_starter_enqueue' ) ) {
 	pixelgrid_starter_enqueue( 'index.php' );
