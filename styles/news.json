@@ -1,0 +1,79 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/theme.json",
+	"version": 3,
+	"title": "News",
+	"settings": {
+		"color": {
+			"palette": [
+				{"slug": "paper-background", "color": "#F7F5F0", "name": "Light section: background"},
+				{"slug": "paper-text", "color": "#141414", "name": "Light section: text"},
+				{"slug": "paper-hover", "color": "#C8102E", "name": "Light section: hover"},
+				{"slug": "paper-on-hover", "color": "#FFFFFF", "name": "Light section: text on hover"},
+				{"slug": "blue-background", "color": "#000000", "name": "Bold section: background"},
+				{"slug": "blue-text", "color": "#FFFFFF", "name": "Bold section: text"},
+				{"slug": "blue-hover", "color": "#C8102E", "name": "Bold section: hover"},
+				{"slug": "blue-on-hover", "color": "#FFFFFF", "name": "Bold section: text on hover"},
+				{"slug": "sun-background", "color": "#C8102E", "name": "Bright section: background"},
+				{"slug": "sun-text", "color": "#FFFFFF", "name": "Bright section: text"},
+				{"slug": "sun-hover", "color": "#141414", "name": "Bright section: hover"},
+				{"slug": "sun-on-hover", "color": "#FFFFFF", "name": "Bright section: text on hover"},
+				{"slug": "night-background", "color": "#141414", "name": "Dark section: background"},
+				{"slug": "night-text", "color": "#F7F5F0", "name": "Dark section: text"},
+				{"slug": "night-hover", "color": "#C8102E", "name": "Dark section: hover"},
+				{"slug": "night-on-hover", "color": "#FFFFFF", "name": "Dark section: text on hover"},
+				{"slug": "fog-background", "color": "#E6E3DC", "name": "Soft section: background"},
+				{"slug": "fog-text", "color": "#141414", "name": "Soft section: text"},
+				{"slug": "fog-hover", "color": "#C8102E", "name": "Soft section: hover"},
+				{"slug": "fog-on-hover", "color": "#FFFFFF", "name": "Soft section: text on hover"},
+				{"slug": "red-background", "color": "#A30D25", "name": "Alert section: background"},
+				{"slug": "red-text", "color": "#FFFFFF", "name": "Alert section: text"},
+				{"slug": "red-hover", "color": "#F7F5F0", "name": "Alert section: hover"},
+				{"slug": "red-on-hover", "color": "#141414", "name": "Alert section: text on hover"},
+				{"slug": "footer-background", "color": "#141414", "name": "Footer: background"},
+				{"slug": "footer-text", "color": "#F7F5F0", "name": "Footer: text"},
+				{"slug": "footer-hover", "color": "#C8102E", "name": "Footer: hover"},
+				{"slug": "footer-on-hover", "color": "#FFFFFF", "name": "Footer: text on hover"}
+			]
+		},
+		"typography": {
+			"fontSizes": [
+				{"slug": "xx-large", "size": "calc(var(--pixelgrid-u) * 1.15)", "name": "Headline"},
+				{"slug": "huge", "size": "min(calc(var(--pixelgrid-u) * 2.2), 13vw)", "name": "Huge"}
+			]
+		}
+	},
+	"styles": {
+		"typography": {
+			"fontFamily": "var:preset|font-family|news-serif",
+			"lineHeight": "1.55"
+		},
+		"elements": {
+			"heading": {
+				"typography": {
+					"fontFamily": "var:preset|font-family|news-serif",
+					"fontWeight": "700",
+					"letterSpacing": "-0.01em",
+					"lineHeight": "1.05",
+					"textTransform": "none"
+				}
+			},
+			"h1": {
+				"typography": { "fontSize": "calc(var(--pixelgrid-u) * 1.4)", "lineHeight": "1.02" }
+			},
+			"h2": {
+				"typography": { "fontSize": "calc(var(--pixelgrid-u) * 1.15)", "lineHeight": "1.05" }
+			}
+		},
+		"blocks": {
+			"core/site-title": {
+				"typography": { "fontFamily": "var:preset|font-family|news-serif", "fontWeight": "800", "letterSpacing": "-0.01em", "textTransform": "none" }
+			},
+			"core/pullquote": {
+				"typography": { "fontFamily": "var:preset|font-family|news-serif", "fontWeight": "400" }
+			},
+			"core/quote": {
+				"typography": { "fontFamily": "var:preset|font-family|news-serif", "fontWeight": "400" }
+			}
+		}
+	}
+}
