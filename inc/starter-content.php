@@ -325,6 +325,26 @@ function pixelgrid_starter_categories( array $def ): array {
 }
 
 /**
+ * Records tags that setup created, in pixelgrid_starter_tags, so remove can delete them while
+ * they are empty. Tags that existed before setup are never passed here.
+ *
+ * @param string[] $names Names of tags that did not exist before setup assigned them.
+ */
+function pixelgrid_starter_record_tags( array $names ): void {
+	if ( ! $names ) {
+		return;
+	}
+	$tags = (array) get_option( 'pixelgrid_starter_tags', array() );
+	foreach ( $names as $name ) {
+		$term = term_exists( $name, 'post_tag' );
+		if ( is_array( $term ) && ! empty( $term['term_id'] ) ) {
+			$tags[] = (int) $term['term_id'];
+		}
+	}
+	update_option( 'pixelgrid_starter_tags', array_values( array_unique( array_map( 'intval', $tags ) ) ), false );
+}
+
+/**
  * Whether a variant's pages need its categories: its menu has a cat:{slug} entry, or one of
  * its page patterns, expanded, holds a pixelgrid-cat- marker class.
  *
@@ -557,7 +577,15 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 			}
 			++$made['posts'];
 			if ( ! empty( $item['tags'] ) ) {
+				// Tags that do not exist yet are made here; record them so remove can delete them.
+				$new_tags = array();
+				foreach ( (array) $item['tags'] as $tag ) {
+					if ( ! term_exists( (string) $tag, 'post_tag' ) ) {
+						$new_tags[] = (string) $tag;
+					}
+				}
 				wp_set_post_tags( $id, $item['tags'] );
+				pixelgrid_starter_record_tags( $new_tags );
 			}
 			$image = ! empty( $item['image'] ) ? pixelgrid_starter_image( $variant, $item['image'] ) : 0;
 			if ( $image ) {
@@ -679,6 +707,12 @@ function pixelgrid_starter_remove(): array {
 			wp_delete_term( (int) $term_id, 'category' );
 		}
 	}
+	foreach ( (array) get_option( 'pixelgrid_starter_tags', array() ) as $term_id ) {
+		$term = get_term( (int) $term_id, 'post_tag' );
+		if ( $term && ! is_wp_error( $term ) && 0 === (int) $term->count ) {
+			wp_delete_term( (int) $term_id, 'post_tag' );
+		}
+	}
 	$reading = get_option( 'pixelgrid_starter_reading' );
 	if ( is_array( $reading ) ) {
 		update_option( 'show_on_front', $reading['show_on_front'] );
@@ -689,6 +723,7 @@ function pixelgrid_starter_remove(): array {
 	$design = pixelgrid_design_undo();
 
 	delete_option( 'pixelgrid_starter_terms' );
+	delete_option( 'pixelgrid_starter_tags' );
 	delete_option( 'pixelgrid_starter_reading' );
 	delete_option( 'pixelgrid_starter_done' );
 	delete_option( 'pixelgrid_starter_variant' );

@@ -427,4 +427,90 @@ foreach ( array( 'it', 'agency' ) as $slug ) {
 	pixelgrid_starter_remove();
 }
 
+// Tags setup creates are removed with the starter content; tags that existed before are kept.
+$pg_existing_tag = wp_insert_term( 'Existing test tag', 'post_tag' );
+$pg_existing_id  = is_wp_error( $pg_existing_tag ) ? 0 : (int) $pg_existing_tag['term_id'];
+add_filter(
+	'pixelgrid_variants',
+	function ( $variants ) {
+		$variants['tagged'] = array(
+			'slug'  => 'tagged',
+			'label' => 'Tagged',
+			'posts' => array(
+				array(
+					'key'      => 'one',
+					'title'    => 'One',
+					'excerpt'  => '',
+					'content'  => '',
+					'category' => '',
+					'tags'     => array( 'New test tag', 'Existing test tag' ),
+				),
+				array(
+					'key'      => 'two',
+					'title'    => 'Two',
+					'excerpt'  => '',
+					'content'  => '',
+					'category' => '',
+					'tags'     => array( 'New test tag' ),
+				),
+			),
+		);
+		return $variants;
+	}
+);
+pg_assert( $pg_existing_id > 0, 'existing tag made before setup' );
+pg_assert( is_array( pixelgrid_starter_create( 'tagged', array( 'posts' => true ) ) ), 'tagged variant created' );
+$pg_new_tag = get_term_by( 'name', 'New test tag', 'post_tag' );
+pg_assert( $pg_new_tag instanceof WP_Term, 'setup created the new tag' );
+$pg_new_id = $pg_new_tag ? (int) $pg_new_tag->term_id : -1;
+pg_assert_same( array( $pg_new_id ), get_option( 'pixelgrid_starter_tags' ), 'only the new tag is recorded' );
+pixelgrid_starter_create( 'tagged', array( 'posts' => true ) );
+pg_assert_same( array( $pg_new_id ), get_option( 'pixelgrid_starter_tags' ), 'running create twice records no duplicates' );
+pixelgrid_starter_remove();
+pg_assert( null === get_term( $pg_new_id, 'post_tag' ), 'the new tag is gone after removal' );
+pg_assert( get_term( $pg_existing_id, 'post_tag' ) instanceof WP_Term, 'the tag that existed before setup is kept' );
+pg_assert_same( false, get_option( 'pixelgrid_starter_tags' ), 'removal deletes pixelgrid_starter_tags' );
+
+// A site with no recorded tags (made before this option existed) removes as before.
+pixelgrid_starter_create( 'tagged', array( 'posts' => true ) );
+delete_option( 'pixelgrid_starter_tags' );
+$pg_removed = pixelgrid_starter_remove();
+pg_assert( $pg_removed['removed'] >= 2, 'remove without recorded tags still removes the posts' );
+pg_assert( get_term_by( 'name', 'New test tag', 'post_tag' ) instanceof WP_Term, 'without a record, no tag is deleted' );
+pg_assert( get_term( $pg_existing_id, 'post_tag' ) instanceof WP_Term, 'without a record, the existing tag is kept' );
+wp_delete_term( (int) get_term_by( 'name', 'New test tag', 'post_tag' )->term_id, 'post_tag' );
+
+// IT, Agency and News leave no tags behind.
+add_filter(
+	'pixelgrid_variants',
+	function ( $variants ) {
+		foreach ( array( 'it', 'agency', 'news' ) as $slug ) {
+			$variants[ $slug ]         = pixelgrid_variant_load_file( get_parent_theme_file_path( 'inc/variants/' . $slug . '.php' ) );
+			$variants[ $slug ]['slug'] = $slug;
+		}
+		return $variants;
+	},
+	200
+);
+$pg_tag_ids = function () {
+	$ids = get_terms(
+		array(
+			'taxonomy'   => 'post_tag',
+			'hide_empty' => false,
+			'fields'     => 'ids',
+		)
+	);
+	$ids = array_map( 'intval', (array) $ids );
+	sort( $ids );
+	return $ids;
+};
+foreach ( array( 'it', 'agency', 'news' ) as $slug ) {
+	$pg_before = $pg_tag_ids();
+	$made      = pixelgrid_starter_create( $slug, array( 'posts' => true ) );
+	pg_assert( is_array( $made ) && $made['posts'] > 0, "$slug creates its posts" );
+	pg_assert( count( $pg_tag_ids() ) > count( $pg_before ), "$slug setup adds tags" );
+	pixelgrid_starter_remove();
+	pg_assert_same( $pg_before, $pg_tag_ids(), "$slug remove leaves no starter tags" );
+}
+
 pg_done();
