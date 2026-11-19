@@ -6,11 +6,11 @@ require_once __DIR__ . '/lib/contrast.php';
 
 $theme_json = json_decode( file_get_contents( get_parent_theme_file_path( 'theme.json' ) ), true );
 $agency     = json_decode( file_get_contents( get_parent_theme_file_path( 'styles/agency.json' ) ), true );
-$news_path  = get_parent_theme_file_path( 'styles/news.json' );
+$news_path  = get_parent_theme_file_path( 'styles/news-portal.json' );
 $news_raw   = file_exists( $news_path ) ? file_get_contents( $news_path ) : false;
 $news       = false === $news_raw ? null : json_decode( $news_raw, true );
 
-pg_assert( is_array( $news ), 'styles/news.json exists and decodes' );
+pg_assert( is_array( $news ), 'styles/news-portal.json exists and decodes' );
 $news     = is_array( $news ) ? $news : array();
 $news_raw = (string) $news_raw;
 pg_assert_same( 3, $news['version'] ?? null, 'news is version 3' );
@@ -128,5 +128,7 @@ pg_assert( in_array( 'News', $titles, true ), 'style variations list News' );
 // Rendered with the News variation, the stylesheet carries the serif and the faces.
 $pg_css = wp_get_global_stylesheet();
 pg_assert( false !== strpos( $pg_css, '--wp--preset--font-family--news-serif' ), 'global stylesheet defines the news-serif preset' );
+
+pg_assert( isset( $news['styles']['css'] ) && false !== strpos( $news['styles']['css'], 'p.is-style-lead' ) && false !== strpos( $news['styles']['css'], 'news-serif' ), 'News lead paragraphs use the News serif' );
 
 pg_done();

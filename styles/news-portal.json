@@ -43,6 +43,7 @@
 		}
 	},
 	"styles": {
+		"css": "body p.is-style-lead{font-family:var(--wp--preset--font-family--news-serif)}",
 		"typography": {
 			"fontFamily": "var:preset|font-family|news-serif",
 			"lineHeight": "1.55"
