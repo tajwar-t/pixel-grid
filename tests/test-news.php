@@ -131,4 +131,36 @@ pg_assert( false !== strpos( $pg_css, '--wp--preset--font-family--news-serif' ),
 
 pg_assert( isset( $news['styles']['css'] ) && false !== strpos( $news['styles']['css'], 'p.is-style-lead' ) && false !== strpos( $news['styles']['css'], 'news-serif' ), 'News lead paragraphs use the News serif' );
 
+// News images: generated plates exist, are valid 1200x1200 WebP, stay small and keep mid-tone variation.
+for ( $i = 1; $i <= 15; $i++ ) {
+	$img_rel  = sprintf( 'assets/images/news-%02d.webp', $i );
+	$img_path = get_parent_theme_file_path( $img_rel );
+	pg_assert( file_exists( $img_path ), "$img_rel exists" );
+	$img_info = file_exists( $img_path ) ? getimagesize( $img_path ) : false;
+	pg_assert( is_array( $img_info ) && 'image/webp' === $img_info['mime'], "$img_rel is a valid WebP" );
+	pg_assert( is_array( $img_info ) && 1200 === $img_info[0] && 1200 === $img_info[1], "$img_rel is 1200x1200" );
+	pg_assert( file_exists( $img_path ) && filesize( $img_path ) <= 150 * 1024, "$img_rel is at most 150 KB" );
+	$src = file_exists( $img_path ) ? imagecreatefromwebp( $img_path ) : false;
+	$sd  = 0;
+	if ( $src ) {
+		$small = imagecreatetruecolor( 100, 100 );
+		imagecopyresampled( $small, $src, 0, 0, 0, 0, 100, 100, 1200, 1200 );
+		$vals = array();
+		for ( $py = 0; $py < 100; $py++ ) {
+			for ( $px = 0; $px < 100; $px++ ) {
+				$vals[] = imagecolorat( $small, $px, $py ) & 0xFF;
+			}
+		}
+		$mean = array_sum( $vals ) / count( $vals );
+		$var  = 0;
+		foreach ( $vals as $val ) {
+			$var += ( $val - $mean ) ** 2;
+		}
+		$sd = sqrt( $var / count( $vals ) );
+	}
+	printf( "INFO: %s stddev %.1f size %d
+", $img_rel, $sd, file_exists( $img_path ) ? filesize( $img_path ) : 0 );
+	pg_assert( $sd >= 35, sprintf( '%s luminance stddev is at least 35 (got %.1f)', $img_rel, $sd ) );
+}
+
 pg_done();
