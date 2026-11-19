@@ -41,6 +41,34 @@ foreach ( array( 'Agency' => $agency_palette, 'IT' => $it_palette ) as $label =>
 pg_assert_same( 'var:preset|font-family|display', $agency['styles']['elements']['heading']['typography']['fontFamily'] ?? null, 'agency headings use the display family' );
 pg_assert( false === strpos( (string) $agency_raw, 'fontFace' ), 'agency variation declares no fontFace' );
 
+// The display face is far wider than the IT condensed face, so the theme.json heading sizes
+// break words in Agency. Agency sets its own h1 and h2 sizes in grid units, small enough that the
+// longest heading word fits a half-width column (8 units) at every width the unit scales with.
+foreach ( array( 'h1' => 1.9, 'h2' => 1.7 ) as $pg_level => $pg_max ) {
+	$pg_size = $agency['styles']['elements'][ $pg_level ]['typography']['fontSize'] ?? '';
+	$pg_line = $agency['styles']['elements'][ $pg_level ]['typography']['lineHeight'] ?? '';
+	pg_assert( '' !== $pg_size, "agency sets an $pg_level font size" );
+	pg_assert( $pg_size !== ( $theme_json['styles']['elements'][ $pg_level ]['typography']['fontSize'] ?? '' ), "agency $pg_level font size differs from theme.json" );
+	pg_assert( '' !== $pg_line && $pg_line !== ( $theme_json['styles']['elements'][ $pg_level ]['typography']['lineHeight'] ?? '' ), "agency $pg_level line height is its own" );
+	pg_assert( (bool) preg_match( '/^calc\(var\(--pixelgrid-u\) \* ([0-9.]+)\)$/', $pg_size, $pg_m ) && (float) $pg_m[1] <= $pg_max, "agency $pg_level size is at most $pg_max grid units" );
+}
+// Patterns pick the Headline and Huge presets by class, which beat the element sizes, so Agency
+// redefines those presets too.
+$pg_agency_sizes = array();
+foreach ( (array) ( $agency['settings']['typography']['fontSizes'] ?? array() ) as $pg_entry ) {
+	$pg_agency_sizes[ $pg_entry['slug'] ] = $pg_entry['size'];
+}
+pg_assert_same( $agency['styles']['elements']['h2']['typography']['fontSize'] ?? null, $pg_agency_sizes['xx-large'] ?? '', 'agency Headline preset matches its h2 size' );
+pg_assert( false !== strpos( $pg_agency_sizes['huge'] ?? '', 'vw' ), 'agency Huge preset is capped by the window width for phones' );
+// The hero heading sits in a half-width column; at 1.9 units a word of more than seven letters
+// does not fit there in the display face.
+preg_match( '#<h1[^>]*>(.*?)</h1>#s', pixelgrid_starter_expand( '<!-- wp:pattern {"slug":"pixelgrid/agency-hero"} /-->' ), $pg_hero_h1 );
+$pg_longest = 0;
+foreach ( preg_split( '/\s+/', wp_strip_all_tags( $pg_hero_h1[1] ?? '' ) ) as $pg_word ) {
+	$pg_longest = max( $pg_longest, strlen( preg_replace( '/[^A-Za-z]/', '', $pg_word ) ) );
+}
+pg_assert( $pg_longest > 0 && $pg_longest <= 7, "agency hero heading words are at most 7 letters (longest: $pg_longest)" );
+
 $families = wp_get_global_settings( array( 'typography', 'fontFamilies', 'theme' ) );
 $display  = null;
 foreach ( (array) $families as $family ) {

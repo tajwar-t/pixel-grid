@@ -34,6 +34,12 @@
 				{"slug": "footer-hover", "color": "#D7FF3A", "name": "Footer: hover"},
 				{"slug": "footer-on-hover", "color": "#15131A", "name": "Footer: text on hover"}
 			]
+		},
+		"typography": {
+			"fontSizes": [
+				{"slug": "xx-large", "size": "calc(var(--pixelgrid-u) * 1.7)", "name": "Headline"},
+				{"slug": "huge", "size": "min(calc(var(--pixelgrid-u) * 3), 21vw)", "name": "Huge"}
+			]
 		}
 	},
 	"styles": {
@@ -46,6 +52,12 @@
 					"lineHeight": "0.92",
 					"textTransform": "uppercase"
 				}
+			},
+			"h1": {
+				"typography": { "fontSize": "calc(var(--pixelgrid-u) * 1.9)", "lineHeight": "0.92" }
+			},
+			"h2": {
+				"typography": { "fontSize": "calc(var(--pixelgrid-u) * 1.7)", "lineHeight": "0.92" }
 			}
 		},
 		"blocks": {
