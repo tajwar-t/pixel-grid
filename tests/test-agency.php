@@ -357,4 +357,33 @@ pg_assert( is_wp_error( $pg_busy ) && 'pixelgrid_variant_busy' === $pg_busy->get
 pg_assert_same( $pg_count_it, $pg_page_count(), 'busy agency create leaves the page count unchanged' );
 pixelgrid_starter_remove();
 
+// Re-applying the Agency design keeps a header edited after setup, and removal keeps it too.
+$pg_custom = function ( $slug, $type ) {
+	$tpl = get_block_template( get_stylesheet() . '//' . $slug, $type );
+	return ( $tpl && 'custom' === $tpl->source && $tpl->wp_id ) ? $tpl : null;
+};
+pg_assert( is_array( pixelgrid_starter_create( 'agency', $pg_all ) ), 're-apply: agency created' );
+$pg_header = $pg_custom( 'header', 'wp_template_part' );
+pg_assert( null !== $pg_header, 're-apply: agency setup made a custom header' );
+pg_assert( null !== $pg_custom( 'home', 'wp_template' ), 're-apply: agency setup made a custom home template' );
+wp_update_post(
+	wp_slash(
+		array(
+			'ID'           => $pg_header ? (int) $pg_header->wp_id : 0,
+			'post_content' => ( $pg_header ? $pg_header->content : '' ) . "\n\n<!-- wp:paragraph -->\n<p>PIXELGRID-EDITED</p>\n<!-- /wp:paragraph -->",
+		)
+	)
+);
+$pg_again = pixelgrid_starter_create( 'agency', array( 'design' => true ) );
+pg_assert( is_array( $pg_again ), 're-apply: create with design again succeeds' );
+pg_assert( false !== strpos( do_blocks( $pg_header_block ), 'PIXELGRID-EDITED' ), 're-apply: header still renders the edit' );
+// pixelgrid_starter_create() returns counts only; the skipped list comes from pixelgrid_design_apply().
+$pg_applied = pixelgrid_design_apply( pixelgrid_variant( 'agency' ) );
+pg_assert( is_array( $pg_applied ) && in_array( 'wp_template_part:header', $pg_applied['skipped'], true ), 're-apply: design apply reports the edited header as skipped' );
+pg_assert( false !== strpos( do_blocks( $pg_header_block ), 'PIXELGRID-EDITED' ), 're-apply: header keeps the edit after another apply' );
+$pg_removed = pixelgrid_starter_remove();
+pg_assert_same( array( 'wp_template_part:header' ), $pg_removed['kept'], 're-apply: remove keeps only the edited header' );
+pg_assert( null === $pg_custom( 'home', 'wp_template' ), 're-apply: the Agency home template customisation is gone' );
+pg_assert( false !== strpos( do_blocks( $pg_header_block ), 'PIXELGRID-EDITED' ), 're-apply: edited header survives removal' );
+
 pg_done();
