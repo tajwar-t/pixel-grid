@@ -69,4 +69,15 @@ foreach ( WP_Theme_JSON_Resolver::get_style_variations() as $variation ) {
 }
 pg_assert( in_array( 'Agency', $titles, true ), 'style variations list Agency' );
 
+// Agency images: generated plates exist, are valid 1200x1200 WebP and stay small.
+for ( $i = 1; $i <= 12; $i++ ) {
+	$img_rel  = sprintf( 'assets/images/agency-%02d.webp', $i );
+	$img_path = get_parent_theme_file_path( $img_rel );
+	pg_assert( file_exists( $img_path ), "$img_rel exists" );
+	$img_info = file_exists( $img_path ) ? getimagesize( $img_path ) : false;
+	pg_assert( is_array( $img_info ) && 'image/webp' === $img_info['mime'], "$img_rel is a valid WebP" );
+	pg_assert( is_array( $img_info ) && 1200 === $img_info[0] && 1200 === $img_info[1], "$img_rel is 1200x1200" );
+	pg_assert( file_exists( $img_path ) && filesize( $img_path ) <= 150 * 1024, "$img_rel is at most 150 KB" );
+}
+
 pg_done();
