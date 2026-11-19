@@ -80,4 +80,29 @@ for ( $i = 1; $i <= 12; $i++ ) {
 	pg_assert( file_exists( $img_path ) && filesize( $img_path ) <= 150 * 1024, "$img_rel is at most 150 KB" );
 }
 
+// Agency images keep real mid-tone variation (not washed out, not near-black).
+for ( $i = 1; $i <= 12; $i++ ) {
+	$img_rel  = sprintf( 'assets/images/agency-%02d.webp', $i );
+	$img_path = get_parent_theme_file_path( $img_rel );
+	$src      = file_exists( $img_path ) ? imagecreatefromwebp( $img_path ) : false;
+	$sd       = 0;
+	if ( $src ) {
+		$small = imagecreatetruecolor( 100, 100 );
+		imagecopyresampled( $small, $src, 0, 0, 0, 0, 100, 100, 1200, 1200 );
+		$vals = array();
+		for ( $py = 0; $py < 100; $py++ ) {
+			for ( $px = 0; $px < 100; $px++ ) {
+				$vals[] = imagecolorat( $small, $px, $py ) & 0xFF;
+			}
+		}
+		$mean = array_sum( $vals ) / count( $vals );
+		$var  = 0;
+		foreach ( $vals as $val ) {
+			$var += ( $val - $mean ) ** 2;
+		}
+		$sd = sqrt( $var / count( $vals ) );
+	}
+	pg_assert( $sd >= 35, sprintf( '%s luminance stddev is at least 35 (got %.1f)', $img_rel, $sd ) );
+}
+
 pg_done();

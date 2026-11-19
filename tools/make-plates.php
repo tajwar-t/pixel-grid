@@ -52,6 +52,8 @@ for ( $i = 1; $i <= $count; $i++ ) {
 	mt_srand( $n * 101 );
 	$angle = mt_rand( 0, 628 ) / 100; $dx = cos( $angle ); $dy = sin( $angle );
 	$bands = mt_rand( 0, 1 );
+	$field = array();
+	$all   = array();
 	for ( $y = 0; $y < $s; $y++ ) {
 		for ( $x = 0; $x < $s; $x++ ) {
 			$v = 0.55 * $o1[ $y ][ $x ] + 0.3 * $o2[ $y ][ $x ] + 0.15 * $o3[ $y ][ $x ];
@@ -59,7 +61,18 @@ for ( $i = 1; $i <= $count; $i++ ) {
 			if ( $bands ) {
 				$v = $v + 0.08 * sin( $v * 40 );
 			}
-			$v = max( 0, min( 1, ( $v - 0.25 ) * 1.5 ) );
+			$field[ $y ][ $x ] = $v;
+			$all[]             = $v;
+		}
+	}
+	// Stretch the 2nd to 98th percentile to the full range so every plate keeps real mid-tone variation.
+	sort( $all );
+	$lo   = $all[ (int) ( count( $all ) * 0.02 ) ];
+	$hi   = $all[ (int) ( count( $all ) * 0.98 ) ];
+	$span = max( 0.0001, $hi - $lo );
+	for ( $y = 0; $y < $s; $y++ ) {
+		for ( $x = 0; $x < $s; $x++ ) {
+			$v = max( 0, min( 1, ( $field[ $y ][ $x ] - $lo ) / $span ) );
 			$g = (int) ( 20 + $v * 225 );
 			imagesetpixel( $im, $x, $y, ( $g << 16 ) | ( $g << 8 ) | $g );
 		}
