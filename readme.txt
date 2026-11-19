@@ -6,11 +6,11 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-A block theme for IT and technology companies, built on one pixel grid.
+A block theme for IT companies and design studios, built on one pixel grid.
 
 == Description ==
 
-Pixelgrid is a block theme for IT and technology companies. Every page sits on one pixel grid: bold condensed headlines, full-page colour sections that change as you scroll, and photos shown through pixel icons.
+Pixelgrid is a block theme for IT companies and design studios. Every page sits on one pixel grid: bold headlines, full-page colour sections that change as you scroll, and photos shown through pixel icons.
 
 Two starting points are included: IT services, which uses the theme's default design, and Agency, a design studio with its own colours, the Bricolage Grotesque display face, header, footer and journal template. Each adds its own pages and sample posts, only when you choose; more starting points come in later versions.
 
