@@ -35,19 +35,56 @@ function pixelgrid_starter_ticked( $name ) {
 }
 
 /**
- * Readable name for a template or part slug left in place on removal.
+ * Readable name for a part or template left in place on removal.
  *
- * @param string $slug Slug.
+ * @param string $entry "{type}:{slug}", for example wp_template_part:header or wp_template:home.
  * @return string
  */
-function pixelgrid_starter_kept_label( string $slug ): string {
-	if ( 'header' === $slug ) {
+function pixelgrid_starter_kept_label( string $entry ): string {
+	$parts = explode( ':', $entry, 2 );
+	$type  = 2 === count( $parts ) ? $parts[0] : '';
+	$slug  = 2 === count( $parts ) ? $parts[1] : $entry;
+	if ( 'wp_template_part' === $type && 'header' === $slug ) {
 		return __( 'Header', 'pixelgrid' );
 	}
-	if ( 'footer' === $slug ) {
+	if ( 'wp_template_part' === $type && 'footer' === $slug ) {
 		return __( 'Footer', 'pixelgrid' );
 	}
+	if ( 'wp_template' === $type ) {
+		$defaults = get_default_block_template_types();
+		if ( isset( $defaults[ $slug ]['title'] ) ) {
+			return (string) $defaults[ $slug ]['title'];
+		}
+	}
 	return $slug;
+}
+
+/**
+ * Query args for the redirect after removal. Kept entries travel as "{type}__{slug}" so they
+ * survive sanitize_key(); the screen turns them back into "{type}:{slug}".
+ *
+ * @param array $result Result of pixelgrid_starter_remove().
+ * @return array
+ */
+function pixelgrid_starter_removed_args( array $result ): array {
+	$args = array( 'pixelgrid_removed' => (int) $result['removed'] );
+	if ( ! empty( $result['kept'] ) ) {
+		$kept                   = array_map(
+			function ( $entry ) {
+				return sanitize_key( str_replace( ':', '__', (string) $entry ) );
+			},
+			(array) $result['kept']
+		);
+		$args['pixelgrid_kept'] = implode( ',', $kept );
+	}
+	// Only when the design wrote the styles and they changed afterwards.
+	if ( ! empty( $result['styles_written'] ) && empty( $result['styles_restored'] ) ) {
+		$args['pixelgrid_styles'] = 'kept';
+		if ( ! empty( $result['revisions'] ) ) {
+			$args['pixelgrid_revisions'] = '1';
+		}
+	}
+	return $args;
 }
 
 /**
@@ -85,16 +122,7 @@ function pixelgrid_starter_handle() {
 		exit;
 	}
 	if ( 'remove' === $task && pixelgrid_starter_ticked( 'pixelgrid_confirm' ) ) {
-		$result = pixelgrid_starter_remove();
-		$args   = array( 'pixelgrid_removed' => $result['removed'] );
-		if ( $result['kept'] ) {
-			$args['pixelgrid_kept'] = implode( ',', array_map( 'sanitize_key', $result['kept'] ) );
-		}
-		// Only when the design wrote the styles and they changed afterwards.
-		if ( $result['styles_written'] && ! $result['styles_restored'] ) {
-			$args['pixelgrid_styles'] = 'kept';
-		}
-		wp_safe_redirect( add_query_arg( $args, $back ) );
+		wp_safe_redirect( add_query_arg( pixelgrid_starter_removed_args( pixelgrid_starter_remove() ), $back ) );
 		exit;
 	}
 	wp_safe_redirect( add_query_arg( array( 'pixelgrid_removed' => 'unconfirmed' ), $back ) );
@@ -151,6 +179,13 @@ function pixelgrid_starter_screen() {
 				echo '</p>';
 				if ( isset( $_GET['pixelgrid_kept'] ) ) {
 					$kept = array_filter( array_map( 'sanitize_key', explode( ',', sanitize_text_field( wp_unslash( $_GET['pixelgrid_kept'] ) ) ) ) );
+					// Back from "{type}__{slug}" to "{type}:{slug}".
+					$kept = array_map(
+						function ( $entry ) {
+							return implode( ':', explode( '__', $entry, 2 ) );
+						},
+						$kept
+					);
 					if ( $kept ) {
 						echo '<p>';
 						printf(
@@ -162,7 +197,12 @@ function pixelgrid_starter_screen() {
 					}
 				}
 				if ( isset( $_GET['pixelgrid_styles'] ) && 'kept' === sanitize_key( wp_unslash( $_GET['pixelgrid_styles'] ) ) ) {
-					echo '<p>' . esc_html__( 'Your style changes were kept because they changed after setup. The styles you had before setup can be recovered in Styles, Revisions.', 'pixelgrid' ) . '</p>';
+					echo '<p>' . esc_html__( 'Your style changes were kept because they changed after setup.', 'pixelgrid' );
+					// The hint only helps when the styles have revisions to go back to.
+					if ( isset( $_GET['pixelgrid_revisions'] ) && '1' === sanitize_key( wp_unslash( $_GET['pixelgrid_revisions'] ) ) ) {
+						echo ' ' . esc_html__( 'The styles you had before setup can be recovered in Styles, Revisions.', 'pixelgrid' );
+					}
+					echo '</p>';
 				}
 				echo '</div>';
 			}
@@ -170,9 +210,10 @@ function pixelgrid_starter_screen() {
 		if ( isset( $_GET['pixelgrid_error'] ) ) {
 			$error    = sanitize_key( wp_unslash( $_GET['pixelgrid_error'] ) );
 			$messages = array(
-				'busy'        => __( 'Nothing was added. Remove the current starter content to switch.', 'pixelgrid' ),
-				'unavailable' => __( 'Nothing was added. This variant needs a plugin that is not active.', 'pixelgrid' ),
-				'unknown'     => __( 'Nothing was added. That variant does not exist.', 'pixelgrid' ),
+				'busy'                    => __( 'Nothing was added. Remove the current starter content to switch.', 'pixelgrid' ),
+				'unavailable'             => __( 'Nothing was added. This variant needs a plugin that is not active.', 'pixelgrid' ),
+				'unknown'                 => __( 'Nothing was added. That variant does not exist.', 'pixelgrid' ),
+				'pixelgrid_style_missing' => __( 'Nothing was added. This starting point\'s style file is missing or damaged.', 'pixelgrid' ),
 			);
 			if ( isset( $messages[ $error ] ) ) {
 				echo '<div class="notice notice-error"><p>' . esc_html( $messages[ $error ] ) . '</p></div>';

@@ -235,7 +235,8 @@ function pixelgrid_starter_fix_links( $pages ) {
  * @param string $variant Variant slug.
  * @param array  $options Keys: design, pages, posts, menu, reading (booleans).
  * @return array|WP_Error Counts of what was created (pages, posts, menu), or an error when
- *                        the variant is unknown, unavailable or another variant is in use.
+ *                        the variant is unknown, unavailable or another variant is in use, or
+ *                        pixelgrid_style_missing from the design apply (nothing is created).
  */
 function pixelgrid_starter_create( string $variant, array $options ) {
 	$def = pixelgrid_variant( $variant );
@@ -263,8 +264,12 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 	// True once an item was made or found, or the design applied; only then is the variant recorded.
 	$any = false;
 
+	// The design goes first: a style file it cannot use stops setup before anything is created.
 	if ( $options['design'] ) {
-		pixelgrid_design_apply( $def );
+		$applied = pixelgrid_design_apply( $def );
+		if ( is_wp_error( $applied ) ) {
+			return $applied;
+		}
 		$any = true;
 	}
 
@@ -416,8 +421,9 @@ function pixelgrid_starter_create( string $variant, array $options ) {
  * Removes everything the setup created, restores the reading settings it changed and
  * undoes the design change when it can.
  *
- * @return array Keys: removed (int), styles_restored (bool), kept (string[]),
- *               styles_written (bool, whether the applied design had written the styles).
+ * @return array Keys: removed (int), styles_restored (bool), kept (string[], "{type}:{slug}"),
+ *               styles_written (bool, whether the applied design had written the styles),
+ *               revisions (bool, whether the user global styles have revisions to recover).
  */
 function pixelgrid_starter_remove(): array {
 	$count = 0;
@@ -454,6 +460,7 @@ function pixelgrid_starter_remove(): array {
 		'styles_restored' => (bool) $design['styles_restored'],
 		'kept'            => array_values( (array) $design['kept'] ),
 		'styles_written'  => (bool) $design['styles_written'],
+		'revisions'       => (bool) $design['revisions'],
 	);
 }
 

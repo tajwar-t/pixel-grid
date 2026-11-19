@@ -90,22 +90,40 @@ function pixelgrid_design_sort_keys( $data ) {
 }
 
 /**
+ * The decoded style variation of a variant. A variant without one (style '') has none.
+ *
+ * @param array $variant Variant.
+ * @return array|WP_Error Decoded data (empty without a style variation), or
+ *                        pixelgrid_style_missing when the file is missing or not valid JSON.
+ */
+function pixelgrid_design_style_data( array $variant ) {
+	$style = isset( $variant['style'] ) ? (string) $variant['style'] : '';
+	if ( '' === $style ) {
+		return array();
+	}
+	$file    = get_parent_theme_file_path( $style );
+	$decoded = is_readable( $file ) ? wp_json_file_decode( $file, array( 'associative' => true ) ) : null;
+	if ( ! is_array( $decoded ) ) {
+		return new WP_Error(
+			'pixelgrid_style_missing',
+			/* translators: %s: path of the style variation file inside the theme. */
+			sprintf( __( 'The style file %s is missing or is not valid JSON.', 'pixelgrid' ), $style )
+		);
+	}
+	return $decoded;
+}
+
+/**
  * The user global styles a variant writes: its style variation. Variants without one
- * (style '') write nothing; see pixelgrid_design_apply().
+ * (style '') write nothing; see pixelgrid_design_apply(), which also checks the file first.
  *
  * @param array $variant Variant.
  * @return string JSON.
  */
 function pixelgrid_design_style_json( array $variant ) {
-	$data = array();
-	if ( '' !== (string) $variant['style'] ) {
-		$file = get_parent_theme_file_path( $variant['style'] );
-		if ( is_readable( $file ) ) {
-			$decoded = wp_json_file_decode( $file, array( 'associative' => true ) );
-			if ( is_array( $decoded ) ) {
-				$data = $decoded;
-			}
-		}
+	$data = pixelgrid_design_style_data( $variant );
+	if ( is_wp_error( $data ) ) {
+		$data = array();
 	}
 	unset( $data['title'], $data['$schema'] );
 	$data['version']                     = 3;
@@ -137,12 +155,18 @@ function pixelgrid_design_find_custom( $type, $slug ) {
  * @return int Post ID or 0.
  */
 function pixelgrid_design_insert( $type, $slug, $content ) {
+	$title = ucwords( str_replace( array( '-', '_' ), ' ', $slug ) );
+	if ( 'wp_template' === $type ) {
+		// Core's title for its own template slugs, as the Site Editor shows it; else the slug.
+		$defaults = get_default_block_template_types();
+		$title    = isset( $defaults[ $slug ]['title'] ) ? (string) $defaults[ $slug ]['title'] : $slug;
+	}
 	$id = wp_insert_post(
 		wp_slash(
 			array(
 				'post_type'    => $type,
 				'post_name'    => $slug,
-				'post_title'   => ucwords( str_replace( array( '-', '_' ), ' ', $slug ) ),
+				'post_title'   => $title,
 				'post_status'  => 'publish',
 				'post_content' => $content,
 			)
@@ -177,14 +201,23 @@ function pixelgrid_design_live_post( $id ) {
  * Applying again while a design is applied keeps the first backups, so undo still returns
  * the site to how it was before the first apply. Styles, parts and templates changed since
  * the earlier apply are left as they are and reported as skipped, so later edits survive.
- * A variant without a style variation does not touch the user global styles.
+ * A part or template recorded by the earlier apply whose post was deleted or trashed since
+ * counts as a user change too: it is not written again and its record is kept as it is.
+ * A variant without a style variation does not touch the user global styles. A style file
+ * that is missing or not valid JSON stops the apply before anything is written.
  *
  * @param array $variant Variant.
- * @return array Keys: skipped (string[]: 'styles' and the slugs of parts and templates left
- *               alone because they changed after the earlier apply).
+ * @return array|WP_Error Keys: skipped (string[]: 'styles' and "{type}:{slug}" for parts and
+ *                        templates left alone because they changed after the earlier apply).
+ *                        WP_Error pixelgrid_style_missing when the style file cannot be used.
  */
-function pixelgrid_design_apply( array $variant ): array {
-	$variant  = pixelgrid_variant_defaults( $variant );
+function pixelgrid_design_apply( array $variant ) {
+	$variant = pixelgrid_variant_defaults( $variant );
+	$check   = pixelgrid_design_style_data( $variant );
+	if ( is_wp_error( $check ) ) {
+		return $check;
+	}
+
 	$previous = get_option( 'pixelgrid_starter_design', false );
 	$previous = is_array( $previous ) ? $previous : null;
 	$skipped  = array();
@@ -234,13 +267,14 @@ function pixelgrid_design_apply( array $variant ): array {
 			}
 			$key = $type . '|' . $slug;
 
-			$live = isset( $old[ $key ] ) ? pixelgrid_design_live_post( $old[ $key ]['post_id'] ) : null;
-			if ( $live ) {
+			if ( isset( $old[ $key ] ) ) {
 				$entity = $old[ $key ];
 				unset( $old[ $key ] );
-				if ( trim( $live->post_content ) !== trim( (string) $entity['written'] ) ) {
-					// Changed after the earlier apply: leave it and keep its record for undo.
-					$skipped[]           = $slug;
+				$live = pixelgrid_design_live_post( $entity['post_id'] );
+				if ( ! $live || trim( $live->post_content ) !== trim( (string) $entity['written'] ) ) {
+					// Deleted, trashed or changed after the earlier apply: a user change. Leave it
+					// and keep its record as it is, so a backup of the user's own work survives.
+					$skipped[]           = $type . ':' . $slug;
 					$state['entities'][] = $entity;
 					continue;
 				}
@@ -250,7 +284,6 @@ function pixelgrid_design_apply( array $variant ): array {
 				$state['entities'][] = $entity;
 				continue;
 			}
-			unset( $old[ $key ] );
 
 			$existing = pixelgrid_design_find_custom( $type, $slug );
 			if ( $existing ) {
@@ -331,14 +364,18 @@ function pixelgrid_design_set_content( $id, $content ) {
  * Undoes the applied design. Styles, parts and templates are put back only when they still
  * hold exactly what setup wrote; anything changed after setup is left as it is.
  *
- * @return array Keys: styles_restored (bool), kept (string[], slugs left because they changed),
- *               styles_written (bool, whether apply wrote the user global styles at all).
+ * @return array Keys: styles_restored (bool), kept (string[], "{type}:{slug}" of parts and
+ *               templates left because they changed), styles_written (bool, whether apply
+ *               wrote the user global styles at all), revisions (bool, whether the user global
+ *               styles post has at least one revision, so earlier styles can be recovered in
+ *               Styles > Revisions; false when no design was applied).
  */
 function pixelgrid_design_undo(): array {
 	$result = array(
 		'styles_restored' => false,
 		'kept'            => array(),
 		'styles_written'  => false,
+		'revisions'       => false,
 	);
 	$state  = get_option( 'pixelgrid_starter_design', false );
 	if ( ! is_array( $state ) ) {
@@ -359,12 +396,12 @@ function pixelgrid_design_undo(): array {
 		if ( ! $post ) {
 			// Gone: a created customisation needs nothing more; a backed-up one was removed after setup.
 			if ( empty( $entity['created'] ) ) {
-				$result['kept'][] = $entity['slug'];
+				$result['kept'][] = $entity['type'] . ':' . $entity['slug'];
 			}
 			continue;
 		}
 		if ( trim( $post->post_content ) !== trim( (string) $entity['written'] ) ) {
-			$result['kept'][] = $entity['slug'];
+			$result['kept'][] = $entity['type'] . ':' . $entity['slug'];
 			continue;
 		}
 		if ( ! empty( $entity['created'] ) ) {
@@ -375,6 +412,19 @@ function pixelgrid_design_undo(): array {
 	}
 
 	$result['kept'] = array_values( array_unique( $result['kept'] ) );
+
+	$data = WP_Theme_JSON_Resolver::get_user_data_from_wp_global_styles( wp_get_theme(), false );
+	if ( ! empty( $data['ID'] ) ) {
+		$revisions           = wp_get_post_revisions(
+			(int) $data['ID'],
+			array(
+				'fields'         => 'ids',
+				'posts_per_page' => 1,
+			)
+		);
+		$result['revisions'] = ! empty( $revisions );
+	}
+
 	delete_option( 'pixelgrid_starter_design' );
 	return $result;
 }

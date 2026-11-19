@@ -144,6 +144,7 @@ pg_assert_same(
 		'styles_restored' => true,
 		'kept'            => array(),
 		'styles_written'  => true,
+		'revisions'       => true,
 	),
 	$result,
 	'undo on a clean site restores styles and keeps nothing'
@@ -158,6 +159,7 @@ pg_assert_same(
 		'styles_restored' => false,
 		'kept'            => array(),
 		'styles_written'  => false,
+		'revisions'       => false,
 	),
 	pixelgrid_design_undo(),
 	'undo with nothing applied does nothing'
@@ -205,7 +207,7 @@ pixelgrid_design_apply( $variant );
 $header = pg_test_custom( 'header', 'wp_template_part' );
 pg_test_set_content( $header->wp_id, 'Y' );
 $result = pixelgrid_design_undo();
-pg_assert_same( array( 'header' ), $result['kept'], 'undo keeps the header edited after setup' );
+pg_assert_same( array( 'wp_template_part:header' ), $result['kept'], 'undo keeps the header edited after setup' );
 pg_assert_same( 'Y', get_post( $header->wp_id )->post_content, 'header content stays Y' );
 pg_assert( null === pg_test_custom( 'home', 'wp_template' ), 'unedited home template is still removed' );
 wp_delete_post( $header->wp_id, true );
@@ -240,7 +242,7 @@ $edited['settings']['color']['palette'][0]['color'] = '#ABCDEF';
 pg_test_set_styles( $edited );
 $state_before = get_option( 'pixelgrid_starter_design' );
 $again        = pixelgrid_design_apply( $variant );
-pg_assert_same( array( 'styles', 'header' ), $again['skipped'] ?? null, 'second apply reports the edited styles and header as skipped' );
+pg_assert_same( array( 'styles', 'wp_template_part:header' ), $again['skipped'] ?? null, 'second apply reports the edited styles and header as skipped' );
 pg_assert_same( 'Y', get_post( $header->wp_id )->post_content, 'second apply keeps the header edit' );
 pg_assert_same( $edited, pg_test_styles(), 'second apply keeps the style edit' );
 $home_now = pg_test_custom( 'home', 'wp_template' );
@@ -249,7 +251,7 @@ $state_after = get_option( 'pixelgrid_starter_design' );
 pg_assert_same( $state_before['styles_written'], $state_after['styles_written'], 'second apply keeps the recorded styles_written' );
 pg_assert_same( $state_before['entities'][0], $state_after['entities'][0], 'second apply keeps the header record' );
 $result = pixelgrid_design_undo();
-pg_assert_same( array( 'header' ), $result['kept'], 'undo after a second apply keeps the edited header' );
+pg_assert_same( array( 'wp_template_part:header' ), $result['kept'], 'undo after a second apply keeps the edited header' );
 pg_assert( false === $result['styles_restored'] && true === $result['styles_written'], 'undo after a second apply leaves the edited styles' );
 pg_assert_same( 'Y', get_post( $header->wp_id )->post_content, 'header is still Y after undo' );
 pg_assert_same( $edited, pg_test_styles(), 'style edit is still there after undo' );
@@ -287,10 +289,152 @@ pixelgrid_starter_create( 'testdesign', array( 'design' => true ) );
 $header = pg_test_custom( 'header', 'wp_template_part' );
 pg_test_set_content( $header->wp_id, 'Y' );
 $removed = pixelgrid_starter_remove();
-pg_assert_same( array( 'header' ), $removed['kept'], 'starter remove passes kept through' );
+pg_assert_same( array( 'wp_template_part:header' ), $removed['kept'], 'starter remove passes kept through' );
 pg_assert_same( 'publish', get_post_status( $header->wp_id ), 'edited header is not trashed by starter remove' );
 pg_assert_same( 'Y', get_post( $header->wp_id )->post_content, 'edited header keeps its content after starter remove' );
 wp_delete_post( $header->wp_id, true );
+
+/**
+ * Live (not trashed) header part posts.
+ *
+ * @return int[]
+ */
+function pg_test_header_posts() {
+	return get_posts(
+		array(
+			'post_type'      => 'wp_template_part',
+			'name'           => 'header',
+			'post_status'    => array( 'publish', 'draft', 'private' ),
+			'fields'         => 'ids',
+			'posts_per_page' => -1,
+		)
+	);
+}
+
+/**
+ * The recorded design entity for a type and slug, or null.
+ *
+ * @param string $type Type.
+ * @param string $slug Slug.
+ * @return array|null
+ */
+function pg_test_entity( $type, $slug ) {
+	$state = get_option( 'pixelgrid_starter_design', false );
+	foreach ( is_array( $state ) ? $state['entities'] : array() as $entity ) {
+		if ( $type === $entity['type'] && $slug === $entity['slug'] ) {
+			return $entity;
+		}
+	}
+	return null;
+}
+
+// Re-apply after the user deleted a backed-up customisation: no write, record kept, reported.
+$own = pg_test_make_header( 'X' );
+pixelgrid_design_apply( $variant );
+wp_delete_post( $own, true );
+$again = pixelgrid_design_apply( $variant );
+pg_assert_same( array(), pg_test_header_posts(), 're-apply does not recreate a deleted backed-up header' );
+pg_assert( in_array( 'wp_template_part:header', (array) ( $again['skipped'] ?? array() ), true ), 're-apply reports the deleted backed-up header as skipped' );
+$record = pg_test_entity( 'wp_template_part', 'header' );
+pg_assert( null !== $record && 'X' === $record['before'] && false === $record['created'] && $own === (int) $record['post_id'], 're-apply keeps the backed-up header record and its backup X' );
+$result = pixelgrid_design_undo();
+pg_assert( in_array( 'wp_template_part:header', $result['kept'], true ), 'undo reports the deleted backed-up header as kept' );
+pg_assert_same( array(), pg_test_header_posts(), 'undo does not bring back a header the user deleted' );
+
+// Re-apply after the user trashed a header setup created: nothing new is created.
+pixelgrid_design_apply( $variant );
+$header = pg_test_custom( 'header', 'wp_template_part' );
+wp_trash_post( $header->wp_id );
+$again = pixelgrid_design_apply( $variant );
+pg_assert_same( array(), pg_test_header_posts(), 're-apply does not recreate a trashed created header' );
+pg_assert( in_array( 'wp_template_part:header', (array) ( $again['skipped'] ?? array() ), true ), 're-apply reports the trashed created header as skipped' );
+$record = pg_test_entity( 'wp_template_part', 'header' );
+pg_assert( null !== $record && true === $record['created'] && (int) $header->wp_id === (int) $record['post_id'], 're-apply keeps the created header record' );
+pixelgrid_design_undo();
+pg_assert_same( array(), pg_test_header_posts(), 'undo leaves no header after a trashed created header' );
+wp_delete_post( $header->wp_id, true );
+
+// A created template takes core's default title.
+pixelgrid_design_apply( $variant );
+$home = pg_test_custom( 'home', 'wp_template' );
+$core = get_default_block_template_types();
+pg_assert_same( $core['home']['title'], $home ? get_post( $home->wp_id )->post_title : null, 'created home template uses the core default title' );
+pixelgrid_design_undo();
+
+// A missing or broken style file stops apply before anything is written.
+add_filter(
+	'pixelgrid_variants',
+	function ( $variants ) {
+		$variants['testmissing'] = array(
+			'slug'      => 'testmissing',
+			'label'     => 'Test missing style',
+			'style'     => 'styles/does-not-exist.json',
+			'parts'     => array( 'header' => 'pixelgrid/footer' ),
+			'templates' => array( 'home' => 'pixelgrid/blog-heading' ),
+		);
+		$variants['testbroken']  = array(
+			'slug'  => 'testbroken',
+			'label' => 'Test broken style',
+			'style' => 'tests/fixtures/broken-style.json',
+			'parts' => array( 'header' => 'pixelgrid/footer' ),
+		);
+		// Everything IT adds, with a missing style file.
+		$variants['testmissingfull'] = array_merge(
+			$variants['it'],
+			array(
+				'slug'  => 'testmissingfull',
+				'style' => 'styles/does-not-exist.json',
+			)
+		);
+		return $variants;
+	}
+);
+$styles_before = pg_test_styles();
+foreach ( array( 'testmissing', 'testbroken' ) as $bad ) {
+	$error = pixelgrid_design_apply( pixelgrid_variant( $bad ) );
+	pg_assert( is_wp_error( $error ) && 'pixelgrid_style_missing' === $error->get_error_code(), "$bad: apply returns pixelgrid_style_missing" );
+	pg_assert_same( $styles_before, pg_test_styles(), "$bad: user styles unchanged" );
+	pg_assert( null === pg_test_custom( 'header', 'wp_template_part' ) && null === pg_test_custom( 'home', 'wp_template' ), "$bad: no part or template written" );
+	pg_assert( false === get_option( 'pixelgrid_starter_design', false ), "$bad: no design option stored" );
+}
+// With a design already applied, a failing apply leaves everything exactly as it was.
+pixelgrid_design_apply( $variant );
+$state_before = get_option( 'pixelgrid_starter_design' );
+$header       = pg_test_custom( 'header', 'wp_template_part' );
+$styles_now   = pg_test_styles();
+pg_assert( is_wp_error( pixelgrid_design_apply( pixelgrid_variant( 'testmissing' ) ) ), 'missing style over an applied design returns an error' );
+pg_assert_same( $state_before, get_option( 'pixelgrid_starter_design' ), 'missing style leaves the design option unchanged' );
+pg_assert_same( $header->content, pg_test_custom( 'header', 'wp_template_part' )->content, 'missing style leaves the header unchanged' );
+pg_assert_same( $styles_now, pg_test_styles(), 'missing style leaves the applied styles unchanged' );
+pixelgrid_design_undo();
+
+// Starter create passes the error through and creates nothing.
+$made = pixelgrid_starter_create(
+	'testmissingfull',
+	array(
+		'design'  => true,
+		'pages'   => true,
+		'posts'   => true,
+		'menu'    => true,
+		'reading' => true,
+	)
+);
+pg_assert( is_wp_error( $made ) && 'pixelgrid_style_missing' === $made->get_error_code(), 'starter create passes pixelgrid_style_missing through' );
+$created = pixelgrid_starter_created();
+pg_assert( ! $created['page'] && ! $created['post'] && ! $created['wp_navigation'] && ! $created['attachment'], 'starter create with a missing style creates no content' );
+pg_assert_same( '', pixelgrid_starter_active_variant(), 'starter create with a missing style records no variant' );
+pg_assert( false === get_option( 'pixelgrid_starter_reading', false ), 'starter create with a missing style leaves reading settings alone' );
+
+// Undo reports whether the styles post has revisions to recover from.
+$styles_id = WP_Theme_JSON_Resolver::get_user_data_from_wp_global_styles( wp_get_theme(), true )['ID'];
+foreach ( wp_get_post_revisions( $styles_id, array( 'fields' => 'ids' ) ) as $revision ) {
+	wp_delete_post_revision( $revision );
+}
+pixelgrid_design_apply( pixelgrid_variant( 'it' ) );
+pg_assert( false === ( pixelgrid_design_undo()['revisions'] ?? null ), 'undo reports no revisions when the styles post has none' );
+pixelgrid_design_apply( $variant );
+pg_assert( true === ( pixelgrid_design_undo()['revisions'] ?? null ), 'undo reports revisions once the styles post has some' );
+pg_test_set_styles( $original );
 
 // A user without unfiltered_html: kses rewrites what setup sends, and undo must still match it.
 register_block_pattern(
@@ -331,6 +475,7 @@ pg_assert_same(
 		'styles_restored' => true,
 		'kept'            => array(),
 		'styles_written'  => true,
+		'revisions'       => true,
 	),
 	$result,
 	'undo without unfiltered_html restores styles and keeps nothing'
@@ -358,11 +503,11 @@ pg_test_set_styles( $edited );
 $edited_stored = pg_test_styles();
 pg_assert_same( '#abcdef', $edited_stored['styles']['color']['background'] ?? null, 'kses: the style edit is stored' );
 $again = pixelgrid_design_apply( $kses_variant );
-pg_assert_same( array( 'styles', 'header' ), $again['skipped'] ?? null, 'kses: second apply reports the edited styles and header as skipped' );
+pg_assert_same( array( 'styles', 'wp_template_part:header' ), $again['skipped'] ?? null, 'kses: second apply reports the edited styles and header as skipped' );
 pg_assert_same( 'Y', get_post( $header->wp_id )->post_content, 'kses: second apply keeps the header edit' );
 pg_assert_same( $edited_stored, pg_test_styles(), 'kses: second apply keeps the style edit' );
 $result = pixelgrid_design_undo();
-pg_assert_same( array( 'header' ), $result['kept'], 'kses: undo keeps the header edited before the second apply' );
+pg_assert_same( array( 'wp_template_part:header' ), $result['kept'], 'kses: undo keeps the header edited before the second apply' );
 pg_assert( false === $result['styles_restored'] && true === $result['styles_written'], 'kses: undo leaves the edited styles' );
 pg_assert_same( 'Y', get_post( $header->wp_id )->post_content, 'kses: header is still Y after undo' );
 pg_assert_same( $edited_stored, pg_test_styles(), 'kses: style edit is still there after undo' );
