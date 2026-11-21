@@ -1,0 +1,606 @@
+/*
+ * Pixelgrid: WooCommerce blocks on the grid.
+ * Loaded only when WooCommerce is active. Theme tokens only: the --pixelgrid-* tone
+ * colours, the --pixelgrid-u grid unit and the theme.json presets.
+ *
+ * 1. Product pictures   4. Forms        7. Cart and checkout
+ * 2. Product grid       5. Notices      8. Mini-cart
+ * 3. Prices and labels  6. Single product
+ */
+
+/* 1. Product pictures ------------------------------------------------- */
+
+/* The theme shows post thumbnails in black and white; product pictures are colour pixel art,
+   so they stay in colour everywhere and keep their hard pixel edges when scaled. */
+.wc-block-components-product-image img,
+.wp-block-woocommerce-product-collection img,
+.woocommerce-product-gallery img,
+.wp-block-woocommerce-product-image-gallery img,
+.wc-block-cart-item__image img,
+.wc-block-mini-cart-items img,
+.wc-block-components-order-summary-item__image img,
+.wp-block-woocommerce-cart-cross-sells-products-block img {
+	filter: none;
+	image-rendering: pixelated;
+}
+
+/* The pixel notch: one cell knocked out top right, one cell of accent bottom left. */
+.wc-block-components-product-image.is-style-notch,
+.wp-block-woocommerce-product-collection .wc-block-components-product-image,
+.wp-block-woocommerce-product-image-gallery.is-style-notch .woocommerce-product-gallery__wrapper {
+	position: relative;
+	overflow: hidden;
+	border-radius: 0;
+}
+
+.wc-block-components-product-image.is-style-notch::before,
+.wc-block-components-product-image.is-style-notch::after,
+.wp-block-woocommerce-product-collection .wc-block-components-product-image::before,
+.wp-block-woocommerce-product-collection .wc-block-components-product-image::after,
+.wp-block-woocommerce-product-image-gallery.is-style-notch .woocommerce-product-gallery__wrapper::before,
+.wp-block-woocommerce-product-image-gallery.is-style-notch .woocommerce-product-gallery__wrapper::after {
+	content: "";
+	position: absolute;
+	width: calc(var(--pixelgrid-u) * 0.6);
+	height: calc(var(--pixelgrid-u) * 0.6);
+	z-index: 2;
+	pointer-events: none;
+}
+
+.wc-block-components-product-image.is-style-notch::before,
+.wp-block-woocommerce-product-collection .wc-block-components-product-image::before,
+.wp-block-woocommerce-product-image-gallery.is-style-notch .woocommerce-product-gallery__wrapper::before {
+	right: 0;
+	top: 0;
+	background-color: var(--pixelgrid-bg);
+	transition: background-color 0.7s ease;
+}
+
+.wc-block-components-product-image.is-style-notch::after,
+.wp-block-woocommerce-product-collection .wc-block-components-product-image::after,
+.wp-block-woocommerce-product-image-gallery.is-style-notch .woocommerce-product-gallery__wrapper::after {
+	left: 0;
+	bottom: 0;
+	background-color: var(--pixelgrid-ac);
+	transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.7s ease;
+}
+
+.wc-block-product:hover .wc-block-components-product-image::after {
+	width: 100%;
+}
+
+.wp-block-woocommerce-product-image-gallery.is-style-notch .woocommerce-product-gallery__wrapper::before,
+.wp-block-woocommerce-product-image-gallery.is-style-notch .woocommerce-product-gallery__wrapper::after {
+	width: var(--pixelgrid-u);
+	height: var(--pixelgrid-u);
+}
+
+.wc-block-components-product-image img,
+.woocommerce-product-gallery img {
+	display: block;
+	width: 100%;
+	height: auto;
+	border-radius: 0;
+}
+
+/* 2. Product grid ----------------------------------------------------- */
+
+/* Three columns of 6 cells with 2-cell gutters, as the theme's cards. */
+.pixelgrid-products .wc-block-product-template.wc-block-product-template {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: calc(var(--pixelgrid-u) * 1.2) calc(var(--pixelgrid-u) * 2);
+}
+
+.pixelgrid-products .wc-block-product-template > .wc-block-product {
+	width: auto;
+	max-width: none;
+	margin: 0;
+}
+
+.pixelgrid-products .wc-block-product {
+	text-align: start;
+}
+
+.pixelgrid-products .wc-block-product > * {
+	margin-block: 0;
+}
+
+.pixelgrid-products .wc-block-product > * + * {
+	margin-block-start: 12px;
+}
+
+.pixelgrid-products .wc-block-product .wp-block-post-title {
+	line-height: 0.95;
+}
+
+.pixelgrid-products .wc-block-product .wp-block-post-title a {
+	text-decoration: none;
+}
+
+.pixelgrid-products .wc-block-product .wp-block-post-title a:hover {
+	text-decoration: underline;
+}
+
+.pixelgrid-products .wc-block-components-product-button {
+	align-items: flex-start;
+}
+
+.pixelgrid-shop-toolbar {
+	border-top: 2px solid var(--pixelgrid-fg);
+	border-bottom: 2px solid var(--pixelgrid-fg);
+	padding-block: 12px;
+	align-items: center;
+}
+
+.pixelgrid-shop-toolbar > * {
+	margin: 0;
+}
+
+.pixelgrid-shop-main .wp-block-woocommerce-breadcrumbs {
+	font-size: var(--wp--preset--font-size--small);
+	margin-bottom: 12px;
+}
+
+.pixelgrid-product-related {
+	border-top: 2px solid var(--pixelgrid-fg);
+	padding-top: var(--pixelgrid-u);
+}
+
+.pixelgrid-product-related > .wp-block-heading {
+	margin-bottom: calc(var(--pixelgrid-u) * 0.6);
+}
+
+/* 3. Prices and labels: the condensed face ---------------------------- */
+
+.wc-block-components-product-price,
+.wp-block-woocommerce-product-price,
+.woocommerce-Price-amount,
+.wc-block-components-totals-item__value,
+.wc-block-components-product-sale-badge,
+.wc-block-components-product-sale-badge__text,
+.woocommerce span.onsale,
+.wc-block-components-title,
+.wc-block-components-checkout-step__title,
+.wc-block-cart-items__header,
+.wc-block-mini-cart__title,
+.wc-block-mini-cart__badge,
+.pixelgrid-shop-label {
+	font-family: var(--wp--preset--font-family--heading);
+	font-weight: 800;
+	letter-spacing: 0.01em;
+}
+
+.wc-block-components-product-price,
+.wp-block-woocommerce-product-price {
+	font-size: var(--wp--preset--font-size--large);
+	line-height: 1;
+}
+
+.wc-block-components-product-price del,
+.wp-block-woocommerce-product-price del {
+	opacity: 0.6;
+	font-size: 0.75em;
+}
+
+.wc-block-components-product-price ins,
+.wp-block-woocommerce-product-price ins {
+	text-decoration: none;
+}
+
+.wc-block-components-product-sale-badge,
+.woocommerce span.onsale {
+	background-color: var(--pixelgrid-ac);
+	color: var(--pixelgrid-on-ac);
+	border: 0;
+	border-radius: 0;
+	padding: 6px 10px;
+	text-transform: uppercase;
+	font-size: var(--wp--preset--font-size--medium);
+	line-height: 1;
+	min-height: 0;
+	min-width: 0;
+}
+
+/* Below the notch, so the knocked-out cell stays clear. */
+.wc-block-components-product-image .wc-block-components-product-sale-badge {
+	margin: calc(var(--pixelgrid-u) * 0.6) 0 0;
+}
+
+.wc-block-components-title,
+.wc-block-components-checkout-step__title,
+.wc-block-cart-items__header,
+.pixelgrid-shop-label {
+	text-transform: uppercase;
+}
+
+/* 4. Buttons and forms ------------------------------------------------ */
+
+.wc-block-components-button:not(.is-link),
+.wc-block-components-product-button__button,
+.wp-block-woocommerce-product-button .wp-element-button,
+.single_add_to_cart_button,
+.woocommerce button.button,
+.woocommerce a.button,
+.wc-block-mini-cart__footer-actions .wc-block-components-button {
+	background-color: var(--pixelgrid-fg);
+	color: var(--pixelgrid-bg);
+	border: 2px solid var(--pixelgrid-fg);
+	border-radius: 0;
+	font-family: var(--wp--preset--font-family--body);
+	font-weight: 600;
+	font-size: 1.05rem;
+	line-height: 1.2;
+	padding: 14px 24px;
+	min-height: 0;
+	text-decoration: none;
+	box-shadow: none;
+	transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.wc-block-components-button:not(.is-link):hover,
+.wc-block-components-button:not(.is-link):focus-visible,
+.wc-block-components-product-button__button:hover,
+.wp-block-woocommerce-product-button .wp-element-button:hover,
+.single_add_to_cart_button:hover,
+.woocommerce button.button:hover,
+.woocommerce a.button:hover {
+	background-color: var(--pixelgrid-ac);
+	border-color: var(--pixelgrid-ac);
+	color: var(--pixelgrid-on-ac);
+}
+
+/* The secondary mini-cart and cart buttons: outline, as the theme's outline button. */
+.wc-block-components-button.outlined,
+.wc-block-mini-cart__footer-cart.wc-block-components-button {
+	background-color: transparent;
+	color: var(--pixelgrid-fg);
+}
+
+.wc-block-components-button .wc-block-components-button__text {
+	color: inherit;
+}
+
+.wc-block-components-text-input input,
+.wc-block-components-text-input textarea,
+.wc-blocks-components-select__select,
+.wc-block-components-combobox .wc-block-components-combobox-control input,
+.wc-block-components-textarea,
+.wc-block-components-quantity-selector,
+.wc-block-catalog-sorting select,
+.woocommerce-ordering select,
+.wp-block-woocommerce-catalog-sorting select,
+.quantity input.qty,
+.wc-block-components-totals-coupon__input input {
+	border: 2px solid var(--pixelgrid-fg);
+	border-radius: 0;
+	background-color: var(--pixelgrid-bg);
+	color: var(--pixelgrid-fg);
+	font-family: inherit;
+	box-shadow: none;
+}
+
+.wc-blocks-components-select .wc-blocks-components-select__container,
+.wc-block-components-quantity-selector input,
+.wc-block-components-quantity-selector button,
+.wc-block-components-radio-control__option,
+.wc-block-components-checkbox__input,
+.wc-block-components-radio-control__input,
+.wc-block-checkout__shipping-method-option,
+.wc-block-components-express-payment__event-buttons > li,
+.wc-block-components-address-card {
+	border-radius: 0;
+}
+
+/* WooCommerce sets fields with type selectors inside its form; the site wrapper outranks them. */
+.wp-site-blocks .wc-block-components-form .wc-block-components-text-input input[type],
+.wp-site-blocks .wc-block-components-text-input input[type],
+.wp-site-blocks .wc-blocks-components-select .wc-blocks-components-select__select,
+.wp-site-blocks .wc-block-components-textarea {
+	border: 2px solid var(--pixelgrid-fg);
+	border-radius: 0;
+	background-color: var(--pixelgrid-bg);
+	color: var(--pixelgrid-fg);
+}
+
+.wp-site-blocks .wp-block-woocommerce-checkout-order-summary-block,
+.wp-site-blocks .wc-block-components-express-payment .wc-block-components-express-payment__event-buttons > li,
+.wp-site-blocks .wc-block-checkout__shipping-method-option,
+.wp-site-blocks .wc-block-components-radio-control--highlight-checked label.wc-block-components-radio-control__option--checked-option-highlighted {
+	border-color: var(--pixelgrid-fg);
+	border-radius: 0;
+}
+
+.wc-block-components-text-input label,
+.wc-blocks-components-select__label {
+	color: var(--pixelgrid-fg);
+	opacity: 0.75;
+}
+
+.wc-block-components-text-input.is-active input,
+.wc-block-components-text-input input:focus,
+.wc-blocks-components-select__select:focus {
+	border-color: var(--pixelgrid-ac);
+	box-shadow: none;
+	outline: 3px solid var(--pixelgrid-ac);
+	outline-offset: 0;
+}
+
+.wc-block-components-checkbox .wc-block-components-checkbox__input[type="checkbox"],
+.wc-block-components-radio-control .wc-block-components-radio-control__input {
+	border: 2px solid var(--pixelgrid-fg);
+	background-color: var(--pixelgrid-bg);
+}
+
+.wc-block-components-checkbox .wc-block-components-checkbox__input[type="checkbox"]:checked,
+.wc-block-components-radio-control .wc-block-components-radio-control__input:checked {
+	background-color: var(--pixelgrid-fg);
+}
+
+.wc-block-components-checkbox .wc-block-components-checkbox__mark {
+	fill: var(--pixelgrid-bg);
+}
+
+.wc-block-components-radio-control .wc-block-components-radio-control__input:checked::before {
+	background-color: var(--pixelgrid-bg);
+	border-radius: 0;
+}
+
+/* 5. Notices: each kind reads a tone ---------------------------------- */
+
+.wc-block-components-notice-banner.wc-block-components-notice-banner,
+.woocommerce-message,
+.woocommerce-info,
+.woocommerce-error {
+	--pixelgrid-bg: var(--wp--preset--color--fog-background);
+	--pixelgrid-fg: var(--wp--preset--color--fog-text);
+	--pixelgrid-ac: var(--wp--preset--color--fog-hover);
+	--pixelgrid-on-ac: var(--wp--preset--color--fog-on-hover);
+	background-color: var(--pixelgrid-bg);
+	color: var(--pixelgrid-fg);
+	border: 2px solid var(--pixelgrid-fg);
+	border-radius: 0;
+	font-size: 1rem;
+}
+
+.wc-block-components-notice-banner.wc-block-components-notice-banner.is-success,
+.woocommerce-message {
+	--pixelgrid-bg: var(--wp--preset--color--sun-background);
+	--pixelgrid-fg: var(--wp--preset--color--sun-text);
+	--pixelgrid-ac: var(--wp--preset--color--sun-hover);
+	--pixelgrid-on-ac: var(--wp--preset--color--sun-on-hover);
+}
+
+.wc-block-components-notice-banner.wc-block-components-notice-banner.is-error,
+.woocommerce-error {
+	--pixelgrid-bg: var(--wp--preset--color--red-background);
+	--pixelgrid-fg: var(--wp--preset--color--red-text);
+	--pixelgrid-ac: var(--wp--preset--color--red-hover);
+	--pixelgrid-on-ac: var(--wp--preset--color--red-on-hover);
+}
+
+.wc-block-components-notice-banner.wc-block-components-notice-banner.wc-block-components-notice-banner > svg {
+	background-color: var(--pixelgrid-fg);
+	fill: var(--pixelgrid-bg);
+	border-radius: 0;
+}
+
+.wc-block-components-notice-banner .wc-forward,
+.wc-block-components-notice-banner a {
+	color: inherit;
+	opacity: 1;
+}
+
+/* 6. Single product --------------------------------------------------- */
+
+.wp-block-columns.pixelgrid-product {
+	gap: calc(var(--pixelgrid-u) * 2);
+	align-items: flex-start;
+}
+
+.pixelgrid-product-summary > * + * {
+	margin-block-start: 18px;
+}
+
+.pixelgrid-product-summary .wp-block-post-title {
+	line-height: 0.95;
+}
+
+.pixelgrid-product-summary .wp-block-woocommerce-product-price {
+	font-size: var(--wp--preset--font-size--x-large);
+}
+
+.pixelgrid-product-summary form.cart {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: stretch;
+}
+
+.pixelgrid-product-summary form.cart .quantity input.qty {
+	height: 100%;
+	min-height: 52px;
+	width: 5em;
+	text-align: center;
+}
+
+.woocommerce .pixelgrid-product .wp-block-woocommerce-product-image-gallery {
+	max-width: none;
+}
+
+.woocommerce .pixelgrid-product .wp-block-woocommerce-product-image-gallery span.onsale {
+	left: 0;
+	top: calc(var(--pixelgrid-u) + 8px);
+}
+
+.woocommerce .pixelgrid-product .woocommerce-product-gallery.images {
+	width: 100%;
+	float: none;
+	margin: 0;
+}
+
+/* The zoom trigger sits under the notch, not on it. */
+.wp-block-woocommerce-product-image-gallery.is-style-notch .woocommerce-product-gallery__trigger {
+	top: calc(var(--pixelgrid-u) + 8px);
+	right: 8px;
+}
+
+.pixelgrid-product-summary form.cart .quantity {
+	margin: 0;
+}
+
+.woocommerce-product-gallery .flex-control-thumbs {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 12px;
+	margin: 12px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.wp-block-woocommerce-product-image-gallery .woocommerce-product-gallery__trigger {
+	border-radius: 0;
+	background-color: var(--pixelgrid-fg);
+	color: var(--pixelgrid-bg);
+}
+
+/* Tabs: square, on a 2px rule, labels in the condensed face. WooCommerce's minimal
+   style sets these with "html body", so the theme matches that and adds one class. */
+html body .pixelgrid-shop-main .wp-block-woocommerce-product-details.is-style-minimal ul.tabs.wc-tabs {
+	display: flex;
+	flex-wrap: wrap;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	border-bottom: 2px solid var(--pixelgrid-fg);
+}
+
+html body .pixelgrid-shop-main .wp-block-woocommerce-product-details.is-style-minimal ul.tabs.wc-tabs li {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	background: none;
+	opacity: 1;
+}
+
+html body .pixelgrid-shop-main .wp-block-woocommerce-product-details.is-style-minimal ul.tabs.wc-tabs li a {
+	display: block;
+	padding: 10px 18px;
+	font-family: var(--wp--preset--font-family--heading);
+	font-weight: 800;
+	font-size: var(--wp--preset--font-size--large);
+	text-transform: uppercase;
+	text-decoration: none;
+	color: var(--pixelgrid-fg);
+}
+
+html body .pixelgrid-shop-main .wp-block-woocommerce-product-details.is-style-minimal ul.tabs.wc-tabs li.active a,
+html body .pixelgrid-shop-main .wp-block-woocommerce-product-details.is-style-minimal ul.tabs.wc-tabs li:hover a {
+	background-color: var(--pixelgrid-fg);
+	color: var(--pixelgrid-bg);
+}
+
+.wp-block-woocommerce-product-meta,
+.wp-block-woocommerce-product-sku {
+	font-size: var(--wp--preset--font-size--small);
+}
+
+@media (max-width: 781px) {
+	.wp-block-columns.pixelgrid-product {
+		gap: var(--pixelgrid-u);
+	}
+
+	.pixelgrid-products .wc-block-product-template.wc-block-product-template {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--pixelgrid-u) calc(var(--pixelgrid-u) * 0.5);
+	}
+}
+
+/* 7. Cart and checkout ------------------------------------------------ */
+
+.wc-block-cart .wc-block-cart-items,
+.wc-block-cart .wc-block-cart-items th,
+.wc-block-cart .wc-block-cart-items td,
+.wc-block-components-totals-wrapper,
+.wc-block-components-order-summary,
+.wc-block-checkout__sidebar .wc-block-components-panel {
+	border-color: var(--pixelgrid-fg);
+}
+
+.wc-block-cart-items__header,
+.wc-block-cart .wc-block-cart-items {
+	border-bottom: 2px solid var(--pixelgrid-fg);
+}
+
+.wc-block-components-sidebar-layout .wc-block-components-sidebar .wc-block-components-panel,
+.wc-block-components-sidebar-layout .wc-block-components-sidebar .wc-block-components-totals-wrapper {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.wc-block-cart-item__image img,
+.wc-block-components-order-summary-item__image img {
+	border-radius: 0;
+}
+
+.wc-block-components-product-name {
+	color: inherit;
+	font-weight: 600;
+}
+
+.wc-block-components-order-summary-item__quantity {
+	background-color: var(--pixelgrid-fg);
+	color: var(--pixelgrid-bg);
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+}
+
+.wc-block-components-checkout-step__container::after {
+	border-color: var(--pixelgrid-fg);
+}
+
+.wc-block-components-checkout-step__heading-content a {
+	color: inherit;
+}
+
+.wc-block-checkout__actions_row .wc-block-components-checkout-return-to-cart-button,
+.wc-block-components-totals-coupon-link {
+	color: inherit;
+}
+
+/* 8. Mini-cart -------------------------------------------------------- */
+
+.wc-block-mini-cart__button {
+	color: inherit;
+	border-radius: 0;
+}
+
+.wc-block-mini-cart__button:hover:not([disabled]) {
+	opacity: 1;
+	background-color: var(--pixelgrid-ac);
+	color: var(--pixelgrid-on-ac);
+}
+
+.wc-block-mini-cart__badge {
+	background-color: var(--pixelgrid-ac);
+	color: var(--pixelgrid-on-ac);
+	border: 0;
+	border-radius: 0;
+}
+
+.wc-block-mini-cart__drawer .components-modal__content,
+.wc-block-mini-cart__drawer .wc-block-mini-cart__template-part {
+	background-color: var(--pixelgrid-bg);
+	color: var(--pixelgrid-fg);
+}
+
+.wc-block-mini-cart__drawer .wc-block-mini-cart__footer {
+	border-top: 2px solid var(--pixelgrid-fg);
+	box-shadow: none;
+}
+
+.wc-block-mini-cart__title {
+	text-transform: uppercase;
+}

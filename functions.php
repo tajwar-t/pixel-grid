@@ -42,6 +42,24 @@ if ( ! function_exists( 'pixelgrid_enqueue_assets' ) ) :
 endif;
 add_action( 'wp_enqueue_scripts', 'pixelgrid_enqueue_assets' );
 
+if ( ! function_exists( 'pixelgrid_enqueue_woocommerce' ) ) :
+	/**
+	 * Enqueues the grid styles for WooCommerce blocks, only when WooCommerce is active.
+	 */
+	function pixelgrid_enqueue_woocommerce() {
+		if ( ! class_exists( 'WooCommerce' ) ) {
+			return;
+		}
+		wp_enqueue_style(
+			'pixelgrid-woocommerce',
+			get_parent_theme_file_uri( 'assets/css/woocommerce.css' ),
+			array( 'pixelgrid-style' ),
+			wp_get_theme()->get( 'Version' )
+		);
+	}
+endif;
+add_action( 'wp_enqueue_scripts', 'pixelgrid_enqueue_woocommerce' );
+
 if ( ! function_exists( 'pixelgrid_register_block_styles' ) ) :
 	/**
 	 * Registers block styles. The CSS for every style is in style.css, which also loads in the editor.
@@ -108,6 +126,15 @@ if ( ! function_exists( 'pixelgrid_register_block_styles' ) ) :
 				'label' => __( 'Pixel notch', 'pixelgrid' ),
 			)
 		);
+		if ( class_exists( 'WooCommerce' ) ) {
+			register_block_style(
+				'woocommerce/product-image',
+				array(
+					'name'  => 'notch',
+					'label' => __( 'Pixel notch', 'pixelgrid' ),
+				)
+			);
+		}
 
 		register_block_style(
 			'core/paragraph',
