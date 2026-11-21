@@ -1,0 +1,69 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/theme.json",
+	"version": 3,
+	"title": "Shop",
+	"settings": {
+		"color": {
+			"palette": [
+				{"slug": "paper-background", "color": "#F4EEE3", "name": "Light section: background"},
+				{"slug": "paper-text", "color": "#173D2E", "name": "Light section: text"},
+				{"slug": "paper-hover", "color": "#E8621A", "name": "Light section: hover"},
+				{"slug": "paper-on-hover", "color": "#14261E", "name": "Light section: text on hover"},
+				{"slug": "blue-background", "color": "#173D2E", "name": "Bold section: background"},
+				{"slug": "blue-text", "color": "#FBF6EC", "name": "Bold section: text"},
+				{"slug": "blue-hover", "color": "#E8621A", "name": "Bold section: hover"},
+				{"slug": "blue-on-hover", "color": "#14261E", "name": "Bold section: text on hover"},
+				{"slug": "sun-background", "color": "#E8621A", "name": "Bright section: background"},
+				{"slug": "sun-text", "color": "#14261E", "name": "Bright section: text"},
+				{"slug": "sun-hover", "color": "#173D2E", "name": "Bright section: hover"},
+				{"slug": "sun-on-hover", "color": "#FBF6EC", "name": "Bright section: text on hover"},
+				{"slug": "night-background", "color": "#0E241B", "name": "Dark section: background"},
+				{"slug": "night-text", "color": "#FBF6EC", "name": "Dark section: text"},
+				{"slug": "night-hover", "color": "#F08A4B", "name": "Dark section: hover"},
+				{"slug": "night-on-hover", "color": "#0E241B", "name": "Dark section: text on hover"},
+				{"slug": "fog-background", "color": "#E5D9C3", "name": "Soft section: background"},
+				{"slug": "fog-text", "color": "#173D2E", "name": "Soft section: text"},
+				{"slug": "fog-hover", "color": "#173D2E", "name": "Soft section: hover"},
+				{"slug": "fog-on-hover", "color": "#FBF6EC", "name": "Soft section: text on hover"},
+				{"slug": "red-background", "color": "#A93A08", "name": "Alert section: background"},
+				{"slug": "red-text", "color": "#FBF6EC", "name": "Alert section: text"},
+				{"slug": "red-hover", "color": "#FBF6EC", "name": "Alert section: hover"},
+				{"slug": "red-on-hover", "color": "#7A2705", "name": "Alert section: text on hover"},
+				{"slug": "footer-background", "color": "#0A1B14", "name": "Footer: background"},
+				{"slug": "footer-text", "color": "#FBF6EC", "name": "Footer: text"},
+				{"slug": "footer-hover", "color": "#E8621A", "name": "Footer: hover"},
+				{"slug": "footer-on-hover", "color": "#14261E", "name": "Footer: text on hover"}
+			]
+		},
+		"typography": {
+			"fontSizes": [
+				{"slug": "xx-large", "size": "calc(var(--pixelgrid-u) * 1.1)", "name": "Headline"},
+				{"slug": "display", "size": "min(calc(var(--pixelgrid-u) * 1.6), 11vw)", "name": "Display"},
+				{"slug": "huge", "size": "min(calc(var(--pixelgrid-u) * 2.2), 13vw)", "name": "Huge"}
+			]
+		}
+	},
+	"styles": {
+		"css": "body :is(.pixelgrid-shop-label,.pixelgrid-shop-price,.wc-block-components-product-price,.wc-block-components-product-sale-badge,.wp-block-woocommerce-product-price,.woocommerce-Price-amount){font-family:var(--wp--preset--font-family--heading);font-weight:800;letter-spacing:0.04em}body .pixelgrid-shop-label{text-transform:uppercase}",
+		"elements": {
+			"heading": {
+				"typography": {
+					"fontFamily": "var:preset|font-family|body",
+					"fontWeight": "700",
+					"letterSpacing": "-0.03em",
+					"lineHeight": "1.05",
+					"textTransform": "none"
+				}
+			},
+			"h1": {
+				"typography": { "fontSize": "calc(var(--pixelgrid-u) * 1.3)", "lineHeight": "1.02" }
+			},
+			"h2": {
+				"typography": { "fontSize": "calc(var(--pixelgrid-u) * 1.1)", "lineHeight": "1.04" }
+			},
+			"h3": {
+				"typography": { "lineHeight": "1.1" }
+			}
+		}
+	}
+}

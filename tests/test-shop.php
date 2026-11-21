@@ -3,7 +3,7 @@
  * Shop starter content tests: products and product categories.
  *
  * Run on a site made with `bash tests/bin/site.sh up --woo` for the full set. Without
- * WooCommerce only the "without WooCommerce" checks run.
+ * WooCommerce only the "without WooCommerce" checks run. The Shop style checks always run.
  */
 
 // Collects PHP notices and warnings raised by the code under test.
@@ -74,6 +74,110 @@ $pg_marked_products = function ( $statuses = array( 'publish', 'draft', 'private
 };
 
 pg_assert( function_exists( 'pixelgrid_starter_product_categories' ), 'pixelgrid_starter_product_categories exists' );
+
+// Shop look: style variation, contrast and fonts. These run with or without WooCommerce.
+require_once __DIR__ . '/lib/contrast.php';
+$pg_theme_json = json_decode( file_get_contents( get_parent_theme_file_path( 'theme.json' ) ), true );
+$pg_agency     = json_decode( file_get_contents( get_parent_theme_file_path( 'styles/agency.json' ) ), true );
+$pg_shop_path  = get_parent_theme_file_path( 'styles/shop.json' );
+$pg_shop_raw   = file_exists( $pg_shop_path ) ? (string) file_get_contents( $pg_shop_path ) : '';
+$pg_shop       = json_decode( $pg_shop_raw, true );
+pg_assert( is_array( $pg_shop ), 'styles/shop.json exists and decodes' );
+$pg_shop = is_array( $pg_shop ) ? $pg_shop : array();
+pg_assert_same( 3, $pg_shop['version'] ?? null, 'shop is version 3' );
+pg_assert_same( 'Shop', $pg_shop['title'] ?? null, 'shop is titled Shop' );
+
+$pg_shop_palette = $pg_shop['settings']['color']['palette'] ?? array();
+$pg_names_of     = function ( $palette ) {
+	$out = array();
+	foreach ( $palette as $entry ) {
+		$out[ $entry['slug'] ] = $entry['name'];
+	}
+	ksort( $out );
+	return $out;
+};
+pg_assert_same( 28, count( $pg_shop_palette ), 'shop has 28 palette entries' );
+pg_assert_same( $pg_names_of( $pg_agency['settings']['color']['palette'] ), $pg_names_of( $pg_shop_palette ), 'shop has the agency.json slugs with the same names and no others' );
+$pg_shop_colors = array();
+foreach ( $pg_shop_palette as $entry ) {
+	pg_assert( (bool) preg_match( '/^#[0-9A-Fa-f]{6}$/', $entry['color'] ?? '' ), "shop {$entry['slug']} is a hex colour" );
+	$pg_shop_colors[ $entry['slug'] ] = strtoupper( $entry['color'] ?? '' );
+}
+
+$pg_min = INF;
+foreach ( pixelgrid_test_palette_pairs( $pg_shop_palette ) as $pair ) {
+	list( $tone, $text_ratio, $hover_ratio ) = $pair;
+	$pg_min = min( $pg_min, $text_ratio, $hover_ratio );
+	printf( "INFO: Shop %s text/bg %.2f on-hover/hover %.2f\n", $tone, $text_ratio, $hover_ratio );
+	pg_assert( $text_ratio >= 4.5, "Shop $tone text on background reaches 4.5:1" );
+	pg_assert( $hover_ratio >= 4.5, "Shop $tone text on hover reaches 4.5:1" );
+}
+printf( "INFO: Shop minimum contrast %.2f\n", $pg_min );
+
+// The direction: warm paper, deep green, tangerine and cream.
+pg_assert_same( '#F4EEE3', $pg_shop_colors['paper-background'] ?? null, 'shop light background is warm paper' );
+pg_assert_same( '#173D2E', $pg_shop_colors['paper-text'] ?? null, 'shop light text is deep green' );
+pg_assert_same( '#E8621A', $pg_shop_colors['paper-hover'] ?? null, 'shop light hover is tangerine' );
+pg_assert_same( '#173D2E', $pg_shop_colors['blue-background'] ?? null, 'shop bold background is deep green' );
+pg_assert_same( '#FBF6EC', $pg_shop_colors['blue-text'] ?? null, 'shop bold text is cream' );
+
+// Typography: Instrument Sans (the body family) at 700 for headings, sentence case; labels and prices on the condensed face.
+$pg_heading = $pg_shop['styles']['elements']['heading']['typography'] ?? array();
+pg_assert_same( 'var:preset|font-family|body', $pg_heading['fontFamily'] ?? null, 'shop headings use the body family' );
+pg_assert_same( '700', $pg_heading['fontWeight'] ?? null, 'shop headings are weight 700' );
+pg_assert_same( 'none', $pg_heading['textTransform'] ?? null, 'shop headings are sentence case' );
+pg_assert_same( '-0.03em', $pg_heading['letterSpacing'] ?? null, 'shop headings letter spacing is -0.03em' );
+pg_assert( false === strpos( $pg_shop_raw, 'fontFace' ), 'shop variation declares no fontFace' );
+$pg_shop_css = (string) ( $pg_shop['styles']['css'] ?? '' );
+foreach ( array( '.pixelgrid-shop-label', '.pixelgrid-shop-price', '.wc-block-components-product-price', '.wc-block-components-product-sale-badge' ) as $pg_sel ) {
+	pg_assert( false !== strpos( $pg_shop_css, $pg_sel ), "shop css styles $pg_sel" );
+}
+pg_assert( false !== strpos( $pg_shop_css, 'font-family:var(--wp--preset--font-family--heading)' ), 'shop labels and prices use the condensed heading family' );
+
+// Sizes safe at 390px: Instrument Sans 700 is about 0.58em per letter and a phone column is
+// about 11 grid units, so h1 and h2 stay small enough for a 14-letter word on one line.
+foreach ( array( 'h1' => 1.35, 'h2' => 1.2 ) as $pg_level => $pg_max ) {
+	$pg_size = $pg_shop['styles']['elements'][ $pg_level ]['typography']['fontSize'] ?? '';
+	$pg_line = $pg_shop['styles']['elements'][ $pg_level ]['typography']['lineHeight'] ?? '';
+	pg_assert( '' !== $pg_line && $pg_line !== ( $pg_theme_json['styles']['elements'][ $pg_level ]['typography']['lineHeight'] ?? '' ), "shop $pg_level line height is its own" );
+	pg_assert( (bool) preg_match( '/^calc\(var\(--pixelgrid-u\) \* ([0-9.]+)\)$/', $pg_size, $pg_m ) && (float) $pg_m[1] <= $pg_max, "shop $pg_level size is at most $pg_max grid units" );
+}
+$pg_sizes = array();
+foreach ( (array) ( $pg_shop['settings']['typography']['fontSizes'] ?? array() ) as $pg_entry ) {
+	$pg_sizes[ $pg_entry['slug'] ] = $pg_entry['size'];
+}
+pg_assert_same( $pg_shop['styles']['elements']['h2']['typography']['fontSize'] ?? null, $pg_sizes['xx-large'] ?? '', 'shop Headline preset matches its h2 size' );
+pg_assert( false !== strpos( $pg_sizes['display'] ?? '', 'vw' ), 'shop Display preset is capped by the window width for phones' );
+pg_assert( false !== strpos( $pg_sizes['huge'] ?? '', 'vw' ), 'shop Huge preset is capped by the window width for phones' );
+
+// Every font family the variation uses is registered in theme.json, and the body family has a 700 face.
+$pg_families = wp_get_global_settings( array( 'typography', 'fontFamilies', 'theme' ) );
+$pg_by_slug  = array();
+foreach ( (array) $pg_families as $family ) {
+	$pg_by_slug[ $family['slug'] ?? '' ] = $family;
+}
+preg_match_all( '/var:preset\|font-family\|([a-z0-9-]+)|--wp--preset--font-family--([a-z0-9-]+)/', $pg_shop_raw, $pg_uses );
+$pg_used = array_values( array_unique( array_filter( array_merge( $pg_uses[1], $pg_uses[2] ) ) ) );
+sort( $pg_used );
+pg_assert_same( array( 'body', 'heading' ), $pg_used, 'shop uses the body and heading families' );
+foreach ( $pg_used as $pg_slug ) {
+	pg_assert( isset( $pg_by_slug[ $pg_slug ] ), "shop font family $pg_slug is registered in theme.json" );
+}
+pg_assert( false !== strpos( $pg_by_slug['body']['fontFamily'] ?? '', 'Instrument Sans' ), 'the body family is Instrument Sans' );
+$pg_body_700 = false;
+foreach ( (array) ( $pg_by_slug['body']['fontFace'] ?? array() ) as $face ) {
+	$pg_w = array_map( 'intval', explode( ' ', (string) ( $face['fontWeight'] ?? '' ) ) );
+	if ( min( $pg_w ) <= 700 && max( $pg_w ) >= 700 ) {
+		$pg_body_700 = true;
+	}
+}
+pg_assert( $pg_body_700, 'the body family has a face that covers weight 700' );
+
+$pg_titles = array();
+foreach ( WP_Theme_JSON_Resolver::get_style_variations() as $variation ) {
+	$pg_titles[] = $variation['title'] ?? '';
+}
+pg_assert( in_array( 'Shop', $pg_titles, true ), 'style variations list Shop' );
 
 if ( ! class_exists( 'WC_Product_Simple' ) ) {
 	echo "INFO: WooCommerce is not active; running only the without-WooCommerce checks. Use 'site.sh up --woo' for the rest.\n";
