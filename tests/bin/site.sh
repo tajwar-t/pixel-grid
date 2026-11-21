@@ -72,8 +72,8 @@ up() {
 	wpq option update fresh_site 1
 	if [ -n "$woo" ]; then
 		# A real copy, not a junction, so 'down' can delete the site folder safely.
-		cp -r "$WOO_CACHE" "$SITE_DIR/wp-content/plugins/woocommerce"
-		wpq plugin activate woocommerce
+		cp -r "$WOO_CACHE" "$SITE_DIR/wp-content/plugins/woocommerce" || { echo "ERROR: could not copy WooCommerce from $WOO_CACHE" >&2; exit 1; }
+		wpq plugin activate woocommerce || { echo "ERROR: could not activate WooCommerce" >&2; exit 1; }
 		# Skip the onboarding wizard and the task list.
 		wpq option update woocommerce_onboarding_profile '{"skipped":true}' --format=json
 		# WooCommerce maps this deprecated option to woocommerce_task_list_hidden_lists, so the
@@ -81,8 +81,9 @@ up() {
 		wpq option update woocommerce_task_list_hidden yes >/dev/null 2>&1 || true
 		wpq option get woocommerce_task_list_hidden | grep -q '^yes' || { echo "ERROR: could not hide the WooCommerce task list" >&2; exit 1; }
 		if ! wpq wc tool run install_pages --user=freshadmin >/dev/null; then
-			wpq eval 'WC_Install::create_pages();' --user=freshadmin
+			wpq eval 'WC_Install::create_pages();' --user=freshadmin || { echo "ERROR: could not create the WooCommerce pages" >&2; exit 1; }
 		fi
+		wpq option get woocommerce_cart_page_id | grep -q '^[1-9]' || { echo "ERROR: WooCommerce pages are missing" >&2; exit 1; }
 	fi
 	# Drop the cached list of theme pattern files, so each test reads the patterns folder as it is now.
 	# mysql directly: wp db query goes through cmd on Windows, which expands the % wildcards.

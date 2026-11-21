@@ -69,7 +69,8 @@ function pixelgrid_starter_exists(): bool {
 }
 
 /**
- * Finds an item created earlier by its starter marker. Trashed items are not found.
+ * Finds an item created earlier by its starter marker, also when the user set it to pending
+ * or scheduled it. Trashed items are not found.
  *
  * @param string $post_type Post type.
  * @param string $full_key  Starter marker, for example it:page-home.
@@ -79,7 +80,7 @@ function pixelgrid_starter_find( string $post_type, string $full_key ): int {
 	$found = get_posts(
 		array(
 			'post_type'      => $post_type,
-			'post_status'    => array( 'publish', 'draft', 'private', 'inherit' ),
+			'post_status'    => array( 'publish', 'draft', 'pending', 'future', 'private', 'inherit' ),
 			'meta_key'       => '_pixelgrid_starter', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- runs only on the setup page.
 			'meta_value'     => $full_key, // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value -- runs only on the setup page.
 			'posts_per_page' => 1,
@@ -350,6 +351,9 @@ function pixelgrid_starter_product_categories( array $def ): array {
 		if ( ! is_wp_error( $new ) ) {
 			$cats[ $slug ] = (int) $new['term_id'];
 			$terms[]       = (int) $new['term_id'];
+		} elseif ( 'term_exists' === $new->get_error_code() && (int) $new->get_error_data() > 0 ) {
+			// The user has a category with this name under another slug: use it, never record it.
+			$cats[ $slug ] = (int) $new->get_error_data();
 		}
 	}
 	update_option( 'pixelgrid_starter_product_cats', array_values( array_unique( $terms ) ), false );
@@ -485,9 +489,12 @@ function pixelgrid_starter_fill_category_blocks( array $blocks, array $cats, boo
  */
 function pixelgrid_starter_term_in_use( int $term_id, string $taxonomy ): bool {
 	$statuses = array_values( array_diff( get_post_stati(), array( 'trash', 'auto-draft' ) ) );
-	$found    = get_posts(
+	// The taxonomy's own post types: 'any' would skip types excluded from search.
+	$object = get_taxonomy( $taxonomy );
+	$types  = ( $object && ! empty( $object->object_type ) ) ? array_values( (array) $object->object_type ) : 'any';
+	$found  = get_posts(
 		array(
-			'post_type'        => 'any',
+			'post_type'        => $types,
 			'post_status'      => $statuses,
 			'posts_per_page'   => 1,
 			'fields'           => 'ids',

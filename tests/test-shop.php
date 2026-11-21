@@ -233,4 +233,60 @@ $pg_draft->save();
 pixelgrid_starter_remove();
 pg_assert( get_term( $pg_new, 'product_cat' ) instanceof WP_Term, 'a starter product category used by a draft survives remove' );
 
+// Clean slate for the checks below.
+$pg_draft_id = $pg_draft->get_id();
+wp_delete_post( $pg_draft_id, true );
+wp_delete_term( $pg_new, 'product_cat' );
+
+// A starter product the user set to pending is found on a re-run, not made again.
+pixelgrid_starter_create( 'shopfix', array( 'posts' => true ) );
+$pg_mug_id = pixelgrid_starter_find( 'product', 'shopfix:product-pixel-mug' );
+wp_update_post(
+	array(
+		'ID'          => $pg_mug_id,
+		'post_status' => 'pending',
+	)
+);
+pg_assert_same( $pg_mug_id, pixelgrid_starter_find( 'product', 'shopfix:product-pixel-mug' ), 'find locates a pending starter product' );
+$made = pixelgrid_starter_create( 'shopfix', array( 'posts' => true ) );
+pg_assert_same( 0, is_array( $made ) && isset( $made['products'] ) ? $made['products'] : null, 'a re-run with a pending product makes 0 products' );
+pg_assert_same( 2, count( $pg_marked_products( array( 'publish', 'draft', 'pending', 'private' ) ) ), 'a re-run with a pending product makes no duplicate' );
+pixelgrid_starter_remove();
+pg_assert_same( 'trash', get_post_status( $pg_mug_id ), 'remove trashes the pending product' );
+
+// A user category with the same name under another slug. Core makes a second term with the
+// starter slug here; setup records only that one, and the user's category survives remove.
+$pg_named = wp_insert_term( 'Fixture prints', 'product_cat', array( 'slug' => 'my-prints' ) );
+$pg_named = is_wp_error( $pg_named ) ? 0 : (int) $pg_named['term_id'];
+pixelgrid_starter_create( 'shopfix', array( 'posts' => true ) );
+$pg_print_id = pixelgrid_starter_find( 'product', 'shopfix:product-grid-print' );
+$pg_print    = wc_get_product( $pg_print_id );
+pg_assert( $pg_named > 0 && 1 === count( $pg_print->get_category_ids() ), 'the print gets one category when the name is taken' );
+pg_assert( ! in_array( $pg_named, array_map( 'intval', (array) get_option( 'pixelgrid_starter_product_cats', array() ) ), true ), 'the user category with the same name is not recorded' );
+pixelgrid_starter_remove();
+pg_assert( get_term( $pg_named, 'product_cat' ) instanceof WP_Term, 'the user category with the same name survives remove' );
+
+// When inserting reports term_exists (as it does for a same-name category in some setups),
+// the existing term is used for the product and never recorded as created.
+$pg_block = function ( $term, $taxonomy ) use ( $pg_named ) {
+	if ( 'product_cat' === $taxonomy && 'Fixture prints' === $term ) {
+		return new WP_Error( 'term_exists', 'A term with the name provided already exists.', $pg_named );
+	}
+	return $term;
+};
+add_filter( 'pre_insert_term', $pg_block, 10, 2 );
+$made = $pg_watch(
+	function () {
+		return pixelgrid_starter_create( 'shopfix', array( 'posts' => true ) );
+	}
+);
+remove_filter( 'pre_insert_term', $pg_block, 10 );
+$pg_print_id = pixelgrid_starter_find( 'product', 'shopfix:product-grid-print' );
+pg_assert_same( 2, is_array( $made ) && isset( $made['products'] ) ? $made['products'] : null, 'term_exists: both products are made' );
+pg_assert_same( array( $pg_named ), array_map( 'intval', wc_get_product( $pg_print_id )->get_category_ids() ), 'term_exists: the print gets the existing category' );
+pg_assert_same( array(), get_option( 'pixelgrid_starter_product_cats' ), 'term_exists: the existing category is not recorded' );
+pg_assert_same( array(), $GLOBALS['pg_shop_notices'], 'term_exists: no notice' );
+pixelgrid_starter_remove();
+pg_assert( get_term( $pg_named, 'product_cat' ) instanceof WP_Term, 'term_exists: the existing category survives remove' );
+
 pg_done();
