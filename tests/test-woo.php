@@ -159,6 +159,35 @@ pg_assert_same( array(), array_values( $pg_unscoped ), 'the colour exception is 
 $pg_style = (string) file_get_contents( get_stylesheet_directory() . '/style.css' );
 pg_assert( false !== strpos( $pg_style, 'filter: grayscale(1)' ), 'style.css keeps black and white thumbnails elsewhere' );
 
+// Review fixes: no faded text, success notices off the coloured tones, reduced motion.
+pg_assert( ! preg_match( '/opacity\s*:\s*0?\.\d/', $pg_css_code ), 'woocommerce.css fades no text with opacity below 1' );
+pg_assert( (bool) preg_match( '/notice-banner\.is-success,\s*\.woocommerce-message\s*\{[^}]*--pixelgrid-bg: var\(--wp--preset--color--paper-background\)/', $pg_css_code ), 'success notices use the light tone' );
+pg_assert( false === strpos( $pg_css_code, 'sun-background' ), 'no notice uses the bright tone, which is red in News' );
+pg_assert( (bool) preg_match( '/@media \(prefers-reduced-motion: reduce\)\s*\{[^@]*transition: none/', $pg_css_code ), 'woocommerce.css turns off transitions for reduced motion' );
+pg_assert( false !== strpos( $pg_css_code, '.woocommerce .wp-block-woocommerce-product-image-gallery.is-style-notch div.images .woocommerce-product-gallery__trigger' ), 'the zoom trigger rule outranks WooCommerce\'s own' );
+
+// Contrast in all four palettes: notice text on its background, and the light tone's hover
+// (focus outlines, accent edges) at 3:1 or more against the page.
+require_once __DIR__ . '/lib/contrast.php';
+$pg_palettes = array( 'IT' => 'theme.json', 'Agency' => 'styles/agency.json', 'News' => 'styles/news-portal.json', 'Shop' => 'styles/shop.json' );
+foreach ( $pg_palettes as $pg_label => $pg_file ) {
+	$pg_json   = json_decode( (string) file_get_contents( get_parent_theme_file_path( $pg_file ) ), true );
+	$pg_colors = array();
+	foreach ( (array) ( $pg_json['settings']['color']['palette'] ?? array() ) as $pg_entry ) {
+		$pg_colors[ $pg_entry['slug'] ] = $pg_entry['color'];
+	}
+	foreach ( array( 'paper' => 'success', 'fog' => 'info', 'red' => 'error' ) as $pg_tone => $pg_kind ) {
+		$pg_ratio = pixelgrid_test_contrast( $pg_colors[ "$pg_tone-text" ], $pg_colors[ "$pg_tone-background" ] );
+		pg_assert( $pg_ratio >= 4.5, sprintf( '%s %s notice text reaches 4.5:1 (%.2f)', $pg_label, $pg_kind, $pg_ratio ) );
+	}
+	$pg_ratio = pixelgrid_test_contrast( $pg_colors['paper-hover'], $pg_colors['paper-background'] );
+	pg_assert( $pg_ratio >= 3, sprintf( '%s light hover against the page reaches 3:1 (%.2f)', $pg_label, $pg_ratio ) );
+}
+
+// The editor loads woocommerce.css only with WooCommerce.
+$pg_editor = (array) ( $GLOBALS['editor_styles'] ?? array() );
+pg_assert_same( $pg_woo, in_array( 'assets/css/woocommerce.css', $pg_editor, true ), $pg_woo ? 'the editor loads woocommerce.css with WooCommerce' : 'the editor does not load woocommerce.css without WooCommerce' );
+
 // The enqueue: only with WooCommerce, with the theme version.
 global $wp_styles;
 $wp_styles = new WP_Styles();

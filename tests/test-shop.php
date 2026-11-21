@@ -117,7 +117,7 @@ printf( "INFO: Shop minimum contrast %.2f\n", $pg_min );
 // The direction: warm paper, deep green, tangerine and cream.
 pg_assert_same( '#F4EEE3', $pg_shop_colors['paper-background'] ?? null, 'shop light background is warm paper' );
 pg_assert_same( '#173D2E', $pg_shop_colors['paper-text'] ?? null, 'shop light text is deep green' );
-pg_assert_same( '#E8621A', $pg_shop_colors['paper-hover'] ?? null, 'shop light hover is tangerine' );
+pg_assert_same( '#B84A0E', $pg_shop_colors['paper-hover'] ?? null, 'shop light hover is burnt tangerine, dark enough for focus outlines on paper' );
 pg_assert_same( '#173D2E', $pg_shop_colors['blue-background'] ?? null, 'shop bold background is deep green' );
 pg_assert_same( '#FBF6EC', $pg_shop_colors['blue-text'] ?? null, 'shop bold text is cream' );
 

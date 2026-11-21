@@ -11,10 +11,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! function_exists( 'pixelgrid_setup' ) ) :
 	/**
-	 * Sets up theme defaults.
+	 * Sets up theme defaults. With WooCommerce active, the editor also loads the WooCommerce grid styles.
 	 */
 	function pixelgrid_setup() {
 		add_editor_style( get_stylesheet_uri() );
+		if ( class_exists( 'WooCommerce' ) ) {
+			add_editor_style( 'assets/css/woocommerce.css' );
+		}
 	}
 endif;
 add_action( 'after_setup_theme', 'pixelgrid_setup' );
@@ -62,7 +65,9 @@ add_action( 'wp_enqueue_scripts', 'pixelgrid_enqueue_woocommerce' );
 
 if ( ! function_exists( 'pixelgrid_register_block_styles' ) ) :
 	/**
-	 * Registers block styles. The CSS for every style is in style.css, which also loads in the editor.
+	 * Registers block styles. The CSS for every style is in style.css, which also loads in the editor;
+	 * the WooCommerce product image notch is in assets/css/woocommerce.css, which loads in the editor
+	 * when WooCommerce is active.
 	 */
 	function pixelgrid_register_block_styles() {
 		$tones = array(

@@ -7,8 +7,8 @@
 			"palette": [
 				{"slug": "paper-background", "color": "#F4EEE3", "name": "Light section: background"},
 				{"slug": "paper-text", "color": "#173D2E", "name": "Light section: text"},
-				{"slug": "paper-hover", "color": "#E8621A", "name": "Light section: hover"},
-				{"slug": "paper-on-hover", "color": "#14261E", "name": "Light section: text on hover"},
+				{"slug": "paper-hover", "color": "#B84A0E", "name": "Light section: hover"},
+				{"slug": "paper-on-hover", "color": "#FBF6EC", "name": "Light section: text on hover"},
 				{"slug": "blue-background", "color": "#173D2E", "name": "Bold section: background"},
 				{"slug": "blue-text", "color": "#FBF6EC", "name": "Bold section: text"},
 				{"slug": "blue-hover", "color": "#E8621A", "name": "Bold section: hover"},

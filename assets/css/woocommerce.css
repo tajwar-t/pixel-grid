@@ -3,9 +3,9 @@
  * Loaded only when WooCommerce is active. Theme tokens only: the --pixelgrid-* tone
  * colours, the --pixelgrid-u grid unit and the theme.json presets.
  *
- * 1. Product pictures   4. Forms        7. Cart and checkout
- * 2. Product grid       5. Notices      8. Mini-cart
- * 3. Prices and labels  6. Single product
+ * 1. Product pictures   4. Forms            7. Cart and checkout
+ * 2. Product grid       5. Notices          8. Mini-cart
+ * 3. Prices and labels  6. Single product   9. Motion
  */
 
 /* 1. Product pictures ------------------------------------------------- */
@@ -179,7 +179,6 @@
 
 .wc-block-components-product-price del,
 .wp-block-woocommerce-product-price del {
-	opacity: 0.6;
 	font-size: 0.75em;
 }
 
@@ -314,7 +313,7 @@
 .wc-block-components-text-input label,
 .wc-blocks-components-select__label {
 	color: var(--pixelgrid-fg);
-	opacity: 0.75;
+	opacity: 1;
 }
 
 .wc-block-components-text-input.is-active input,
@@ -363,12 +362,15 @@
 	font-size: 1rem;
 }
 
+/* Success sits on the page's light tone with an accent edge: in some palettes the bright tone
+   is red, so a success notice never borrows a coloured tone. */
 .wc-block-components-notice-banner.wc-block-components-notice-banner.is-success,
 .woocommerce-message {
-	--pixelgrid-bg: var(--wp--preset--color--sun-background);
-	--pixelgrid-fg: var(--wp--preset--color--sun-text);
-	--pixelgrid-ac: var(--wp--preset--color--sun-hover);
-	--pixelgrid-on-ac: var(--wp--preset--color--sun-on-hover);
+	--pixelgrid-bg: var(--wp--preset--color--paper-background);
+	--pixelgrid-fg: var(--wp--preset--color--paper-text);
+	--pixelgrid-ac: var(--wp--preset--color--paper-hover);
+	--pixelgrid-on-ac: var(--wp--preset--color--paper-on-hover);
+	border-left: 10px solid var(--pixelgrid-ac);
 }
 
 .wc-block-components-notice-banner.wc-block-components-notice-banner.is-error,
@@ -439,10 +441,27 @@
 	margin: 0;
 }
 
-/* The zoom trigger sits under the notch, not on it. */
-.wp-block-woocommerce-product-image-gallery.is-style-notch .woocommerce-product-gallery__trigger {
+/* The zoom trigger: a square under the notch, not on it. WooCommerce sets it with
+   ".woocommerce div.product div.images", so these selectors carry one more class. */
+.woocommerce .wp-block-woocommerce-product-image-gallery.is-style-notch div.images .woocommerce-product-gallery__trigger {
 	top: calc(var(--pixelgrid-u) + 8px);
 	right: 8px;
+}
+
+.woocommerce .wp-block-woocommerce-product-image-gallery div.images.woocommerce-product-gallery .woocommerce-product-gallery__trigger {
+	border-radius: 0;
+	background-color: var(--pixelgrid-fg);
+	color: var(--pixelgrid-bg);
+}
+
+.woocommerce .wp-block-woocommerce-product-image-gallery div.images.woocommerce-product-gallery .woocommerce-product-gallery__trigger::before {
+	border-color: var(--pixelgrid-bg);
+	border-radius: 0;
+}
+
+.woocommerce .wp-block-woocommerce-product-image-gallery div.images.woocommerce-product-gallery .woocommerce-product-gallery__trigger::after {
+	background-color: var(--pixelgrid-bg);
+	border-radius: 0;
 }
 
 .pixelgrid-product-summary form.cart .quantity {
@@ -456,12 +475,6 @@
 	margin: 12px 0 0;
 	padding: 0;
 	list-style: none;
-}
-
-.wp-block-woocommerce-product-image-gallery .woocommerce-product-gallery__trigger {
-	border-radius: 0;
-	background-color: var(--pixelgrid-fg);
-	color: var(--pixelgrid-bg);
 }
 
 /* Tabs: square, on a 2px rule, labels in the condensed face. WooCommerce's minimal
@@ -603,4 +616,21 @@ html body .pixelgrid-shop-main .wp-block-woocommerce-product-details.is-style-mi
 
 .wc-block-mini-cart__title {
 	text-transform: uppercase;
+}
+
+/* 9. Motion ----------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+	.wc-block-components-product-image::before,
+	.wc-block-components-product-image::after,
+	.woocommerce-product-gallery__wrapper::before,
+	.woocommerce-product-gallery__wrapper::after,
+	.wc-block-components-button,
+	.wc-block-components-product-button__button,
+	.wp-block-woocommerce-product-button .wp-element-button,
+	.single_add_to_cart_button,
+	.woocommerce button.button,
+	.woocommerce a.button {
+		transition: none;
+	}
 }
