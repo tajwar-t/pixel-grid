@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Throwaway WordPress site for theme tests.
-# Usage: tests/bin/site.sh up|down
+# Usage: tests/bin/site.sh up [--woo]|down
+#   --woo  also installs WooCommerce from a local, already downloaded copy (never fetched here):
+#          $PIXELGRID_WOO_CACHE, or the default path below, must hold the unpacked woocommerce/ folder.
 set -u
 
 SITE_DIR="E:/laragon/www/unique/fresh"
@@ -13,6 +15,7 @@ THEME_LINK="$SITE_DIR/wp-content/themes/pixelgrid"
 THEME_LINK_WIN="$SITE_WIN"'\wp-content\themes\pixelgrid'
 CRED_FILE="$THEME_DIR/.superpowers/test-site.txt"
 SNAPSHOT="$THEME_DIR/tests/.clean.sql"
+WOO_CACHE="${PIXELGRID_WOO_CACHE:-C:/Users/BITBIR~1/AppData/Local/Temp/claude/15f55f0ab9153879/01673bcc-b1b8-42d1-8678-d2f2fd9a7330/scratchpad/woo-download/extract/woocommerce}"
 
 wpq() { wp --path="$SITE_DIR" "$@" 2> >(grep -v Deprecated >&2) | grep -v Deprecated; return "${PIPESTATUS[0]}"; }
 
@@ -28,6 +31,15 @@ remove_junction() {
 }
 
 up() {
+	local woo="${1:-}"
+	if [ -n "$woo" ] && [ "$woo" != "--woo" ]; then
+		echo "Usage: $0 up [--woo]|down" >&2
+		exit 2
+	fi
+	if [ -n "$woo" ] && [ ! -f "$WOO_CACHE/woocommerce.php" ]; then
+		echo "ERROR: no WooCommerce at $WOO_CACHE (set PIXELGRID_WOO_CACHE)." >&2
+		exit 1
+	fi
 	if [ -e "$SITE_DIR" ]; then
 		echo "ERROR: $SITE_DIR already exists. Run 'site.sh down' first." >&2
 		exit 1
@@ -58,11 +70,25 @@ up() {
 
 	wpq theme activate pixelgrid
 	wpq option update fresh_site 1
+	if [ -n "$woo" ]; then
+		# A real copy, not a junction, so 'down' can delete the site folder safely.
+		cp -r "$WOO_CACHE" "$SITE_DIR/wp-content/plugins/woocommerce"
+		wpq plugin activate woocommerce
+		# Skip the onboarding wizard and the task list.
+		wpq option update woocommerce_onboarding_profile '{"skipped":true}' --format=json
+		# WooCommerce maps this deprecated option to woocommerce_task_list_hidden_lists, so the
+		# update reports a failure even when it worked: check the value instead.
+		wpq option update woocommerce_task_list_hidden yes >/dev/null 2>&1 || true
+		wpq option get woocommerce_task_list_hidden | grep -q '^yes' || { echo "ERROR: could not hide the WooCommerce task list" >&2; exit 1; }
+		if ! wpq wc tool run install_pages --user=freshadmin >/dev/null; then
+			wpq eval 'WC_Install::create_pages();' --user=freshadmin
+		fi
+	fi
 	# Drop the cached list of theme pattern files, so each test reads the patterns folder as it is now.
 	# mysql directly: wp db query goes through cmd on Windows, which expands the % wildcards.
 	mysql -uroot "$DB_NAME" -e "DELETE FROM $(wpq db prefix)options WHERE option_name LIKE '\_site\_transient\_%wp\_theme\_files\_patterns-%';"
 	wpq db export "$SNAPSHOT" --quiet
-	echo "Site up at $SITE_URL (snapshot: $SNAPSHOT)"
+	echo "Site up at $SITE_URL${woo:+ with WooCommerce} (snapshot: $SNAPSHOT)"
 }
 
 down() {
@@ -77,7 +103,7 @@ down() {
 }
 
 case "${1:-}" in
-	up) up ;;
+	up) up "${2:-}" ;;
 	down) down ;;
-	*) echo "Usage: $0 up|down" >&2; exit 2 ;;
+	*) echo "Usage: $0 up [--woo]|down" >&2; exit 2 ;;
 esac

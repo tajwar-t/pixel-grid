@@ -325,6 +325,38 @@ function pixelgrid_starter_categories( array $def ): array {
 }
 
 /**
+ * Makes sure a variant's product categories exist. Missing ones are created and recorded in
+ * pixelgrid_starter_product_cats, so remove can delete them while they are empty. Product
+ * categories that already exist are reused and never recorded. Needs the product_cat taxonomy,
+ * which WooCommerce registers; without it nothing is made.
+ *
+ * @param array $def Variant definition.
+ * @return array Term IDs keyed by product category slug.
+ */
+function pixelgrid_starter_product_categories( array $def ): array {
+	$wanted = (array) ( $def['product_categories'] ?? array() );
+	if ( ! $wanted || ! taxonomy_exists( 'product_cat' ) ) {
+		return array();
+	}
+	$terms = array_map( 'intval', (array) get_option( 'pixelgrid_starter_product_cats', array() ) );
+	$cats  = array();
+	foreach ( $wanted as $slug => $name ) {
+		$term = get_term_by( 'slug', $slug, 'product_cat' );
+		if ( $term ) {
+			$cats[ $slug ] = (int) $term->term_id;
+			continue;
+		}
+		$new = wp_insert_term( $name, 'product_cat', array( 'slug' => $slug ) );
+		if ( ! is_wp_error( $new ) ) {
+			$cats[ $slug ] = (int) $new['term_id'];
+			$terms[]       = (int) $new['term_id'];
+		}
+	}
+	update_option( 'pixelgrid_starter_product_cats', array_values( array_unique( $terms ) ), false );
+	return $cats;
+}
+
+/**
  * Records tags that setup created, in pixelgrid_starter_tags, so remove can delete them while
  * they are empty. Tags that existed before setup are never passed here.
  *
@@ -478,8 +510,10 @@ function pixelgrid_starter_term_in_use( int $term_id, string $taxonomy ): bool {
  * Creates the starter content the user picked for one variant.
  *
  * @param string $variant Variant slug.
- * @param array  $options Keys: design, pages, posts, menu, reading (booleans).
- * @return array|WP_Error Counts of what was created (pages, posts, menu), or an error when
+ * @param array  $options Keys: design, pages, posts, menu, reading (booleans). posts also
+ *                        covers the variant's products, made only when WooCommerce is active.
+ * @return array|WP_Error Counts of what was created (pages, posts, menu, and products for a
+ *                        variant that has products), or an error when
  *                        the variant is unknown, unavailable or another variant is in use, or
  *                        pixelgrid_style_missing from the design apply (nothing is created).
  */
@@ -518,11 +552,14 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 		$any = true;
 	}
 
-	$made  = array(
+	$made = array(
 		'pages' => 0,
 		'posts' => 0,
 		'menu'  => 0,
 	);
+	if ( ! empty( $def['products'] ) ) {
+		$made['products'] = 0;
+	}
 	$pages = array();
 
 	// Categories come first, so the pages' query blocks can point at them. With Pages alone they
@@ -627,6 +664,53 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 			if ( $image ) {
 				set_post_thumbnail( $id, $image );
 			}
+		}
+	}
+
+	// Products, through WooCommerce's own product objects. An existing marked product is left
+	// alone, so prices and text the user changed are kept.
+	if ( $options['posts'] && ! empty( $def['products'] ) && class_exists( 'WC_Product_Simple' ) ) {
+		$product_cats = pixelgrid_starter_product_categories( $def );
+		foreach ( (array) $def['products'] as $item ) {
+			if ( empty( $item['key'] ) ) {
+				continue;
+			}
+			$key      = pixelgrid_starter_key( $variant, 'product-' . $item['key'] );
+			$existing = pixelgrid_starter_find( 'product', $key );
+			if ( $existing ) {
+				$any = true;
+				continue;
+			}
+			$in = array();
+			foreach ( (array) ( $item['category'] ?? array() ) as $cat ) {
+				if ( isset( $product_cats[ $cat ] ) && ! in_array( $product_cats[ $cat ], $in, true ) ) {
+					$in[] = $product_cats[ $cat ];
+				}
+			}
+			$product = new WC_Product_Simple();
+			$product->set_name( (string) ( $item['name'] ?? '' ) );
+			$product->set_slug( (string) $item['key'] );
+			$product->set_regular_price( (string) ( $item['price'] ?? '' ) );
+			if ( isset( $item['sale'] ) && '' !== (string) $item['sale'] ) {
+				$product->set_sale_price( (string) $item['sale'] );
+			}
+			$product->set_short_description( (string) ( $item['short'] ?? '' ) );
+			$product->set_description( (string) ( $item['content'] ?? '' ) );
+			if ( $in ) {
+				$product->set_category_ids( $in );
+			}
+			$image = ! empty( $item['image'] ) ? pixelgrid_starter_image( $variant, $item['image'] ) : 0;
+			if ( $image ) {
+				$product->set_image_id( $image );
+			}
+			$product->set_status( 'publish' );
+			$id = (int) $product->save();
+			if ( ! $id ) {
+				continue;
+			}
+			update_post_meta( $id, '_pixelgrid_starter', $key );
+			$any = true;
+			++$made['products'];
 		}
 	}
 
@@ -737,6 +821,21 @@ function pixelgrid_starter_remove(): array {
 			}
 		}
 	}
+	// Products are found by post type and trashed without WooCommerce, which may be inactive now.
+	$products = get_posts(
+		array(
+			'post_type'      => 'product',
+			'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+			'meta_key'       => '_pixelgrid_starter', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- runs only on the setup page.
+			'posts_per_page' => 200, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- bounded list of starter items, admin setup page only.
+			'fields'         => 'ids',
+		)
+	);
+	foreach ( $products as $id ) {
+		if ( wp_trash_post( (int) $id ) ) {
+			++$count;
+		}
+	}
 	foreach ( get_option( 'pixelgrid_starter_terms', array() ) as $term_id ) {
 		$term = get_term( (int) $term_id, 'category' );
 		if ( $term && ! is_wp_error( $term ) && 0 === (int) $term->count && ! pixelgrid_starter_term_in_use( (int) $term_id, 'category' ) ) {
@@ -747,6 +846,16 @@ function pixelgrid_starter_remove(): array {
 		$term = get_term( (int) $term_id, 'post_tag' );
 		if ( $term && ! is_wp_error( $term ) && 0 === (int) $term->count && ! pixelgrid_starter_term_in_use( (int) $term_id, 'post_tag' ) ) {
 			wp_delete_term( (int) $term_id, 'post_tag' );
+		}
+	}
+	// Without the product_cat taxonomy (WooCommerce inactive) the record is kept for a later run.
+	$product_cats_done = taxonomy_exists( 'product_cat' );
+	if ( $product_cats_done ) {
+		foreach ( (array) get_option( 'pixelgrid_starter_product_cats', array() ) as $term_id ) {
+			$term = get_term( (int) $term_id, 'product_cat' );
+			if ( $term && ! is_wp_error( $term ) && 0 === (int) $term->count && ! pixelgrid_starter_term_in_use( (int) $term_id, 'product_cat' ) ) {
+				wp_delete_term( (int) $term_id, 'product_cat' );
+			}
 		}
 	}
 	$reading = get_option( 'pixelgrid_starter_reading' );
@@ -760,6 +869,9 @@ function pixelgrid_starter_remove(): array {
 
 	delete_option( 'pixelgrid_starter_terms' );
 	delete_option( 'pixelgrid_starter_tags' );
+	if ( $product_cats_done ) {
+		delete_option( 'pixelgrid_starter_product_cats' );
+	}
 	delete_option( 'pixelgrid_starter_reading' );
 	delete_option( 'pixelgrid_starter_done' );
 	delete_option( 'pixelgrid_starter_variant' );

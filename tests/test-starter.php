@@ -559,4 +559,34 @@ foreach ( array( 'it', 'agency', 'news' ) as $slug ) {
 	pg_assert_same( $pg_before, $pg_tag_ids(), "$slug remove leaves no starter tags" );
 }
 
+// Products: a variant with products reports a products count; one without keeps the 1.5.0 result.
+add_filter(
+	'pixelgrid_variants',
+	function ( $variants ) {
+		$variants['goods'] = array(
+			'slug'               => 'goods',
+			'label'              => 'Goods',
+			'product_categories' => array( 'goods-cat' => 'Goods' ),
+			'products'           => array(
+				array(
+					'key'      => 'thing',
+					'name'     => 'Thing',
+					'category' => 'goods-cat',
+					'price'    => '1.00',
+					'short'    => '',
+					'content'  => '',
+					'image'    => '',
+				),
+			),
+		);
+		return $variants;
+	}
+);
+pg_assert_same( array(), function_exists( 'pixelgrid_starter_product_categories' ) ? pixelgrid_starter_product_categories( array() ) : null, 'a variant without product categories gets none' );
+$made = pixelgrid_starter_create( 'goods', array( 'posts' => true ) );
+pg_assert( is_array( $made ) && array_key_exists( 'products', $made ), 'a variant with products reports a products count' );
+pg_assert_same( class_exists( 'WC_Product_Simple' ) ? 1 : 0, is_array( $made ) && isset( $made['products'] ) ? $made['products'] : null, 'products are made only with WooCommerce' );
+pixelgrid_starter_remove();
+pg_assert_same( false, get_option( 'pixelgrid_starter_product_cats' ), 'remove leaves no product category record' );
+
 pg_done();
