@@ -275,5 +275,5 @@ return array(
 				. $pixelgrid_p( __( 'Entries open on the first of the month and are capped at 5,000. Places for local running clubs are held back until the week before.', 'pixelgrid' ) ),
 		),
 	),
-	'preview'        => '',
+	'preview'        => 'assets/images/variants/news.webp',
 );

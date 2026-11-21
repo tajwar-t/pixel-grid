@@ -6,13 +6,13 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-A block theme for IT companies and design studios, built on one pixel grid.
+A block theme for IT companies, design studios and news sites, built on one pixel grid.
 
 == Description ==
 
-Pixelgrid is a block theme for IT companies and design studios. Every page sits on one pixel grid: bold headlines, full-page colour sections that change as you scroll, and photos shown through pixel icons.
+Pixelgrid is a block theme for IT companies, design studios and news sites. Every page sits on one pixel grid: bold headlines, full-page colour sections that change as you scroll, and photos shown through pixel icons.
 
-Two starting points are included: IT services, which uses the theme's default design, and Agency, a design studio with its own colours, the Bricolage Grotesque display face, header, footer and journal template. Each adds its own pages and sample posts, only when you choose; more starting points come in later versions.
+Three starting points are included: IT services, which uses the theme's default design; Agency, a design studio with its own colours, the Bricolage Grotesque display face, header, footer and journal template; and News, a city newspaper with the Newsreader serif, a masthead with today's date, section fronts and related articles. Each adds its own pages and sample posts, only when you choose. More starting points come in later versions.
 
 Features:
 
@@ -25,7 +25,7 @@ Features:
 
 = Starter content =
 
-On a new site, a notice on the Dashboard offers to set up the pages shown in the theme preview. You can also go to Appearance, Pixelgrid setup at any time. Choose a starting point (IT services or Agency; more starting points come in later versions), tick what you want and click "Add starter content". Each starting point is shown with a preview.
+On a new site, a notice on the Dashboard offers to set up the pages shown in the theme preview. You can also go to Appearance, Pixelgrid setup at any time. Choose a starting point (IT services, Agency or News; more starting points come in later versions), tick what you want and click "Add starter content". Each starting point is shown with a preview.
 
 IT services adds:
 
@@ -37,13 +37,21 @@ Agency adds:
 * Pages: Home, Work, Services, Studio, Contact and Journal, plus six case studies under Work, built from the theme's patterns
 * Six sample journal posts with categories, tags and images
 
-Both also add:
+News adds:
 
-* A menu linking the new pages
-* Optionally, the new Home page as the homepage and the blog page (Notes or Journal) as the posts page
+* Pages: Home, Latest, About, Contact and Tips. Home is a front page with a lead story, top stories, a row for each section, most read and opinion, filled with the new categories.
+* 15 sample articles in World, Business, Technology, Culture and Sport, with standfirsts, tags and images. An article can be in more than one category.
+* The design adds a masthead with today's date, section fronts (category pages) and a row of related articles under each article.
+
+"Most read" is a category you fill yourself: the theme does not count page views. Add an article to the Most read category to list it there; a few sample articles start in it. The category is not shown in the category labels on articles.
+
+All starting points also add:
+
+* A menu linking the new pages (for News: the five sections, About and Tips)
+* Optionally, the new Home page as the homepage and the blog page (Notes, Journal or Latest) as the posts page
 * Optionally, the starting point's design: its styles, header, footer and templates
 
-Nothing is added until you click the button, and nothing is downloaded: the content is built from the theme's own patterns and images. Clicking again does not create duplicates. When you apply a design, your current styles, header, footer and templates are backed up first. The IT services starting point uses the theme's default design, so applying its design does not change your Styles. The Agency design changes the colours, fonts, header, footer and blog template. Applying a design again only changes the styles, header, footer and templates you have not edited since setup. The same screen shows the starting point in use, lists what was added and has a "Remove starter content" button, which moves the starter pages, posts and menu to the trash, deletes the starter images, removes empty starter categories, puts your homepage setting back and restores the backed-up design. Edits you made to the design after setup are kept; if your styles are kept, the styles you had before setup can still be found in Styles, Revisions.
+Nothing is added until you click the button, and nothing is downloaded: the content is built from the theme's own patterns and images. Clicking again does not create duplicates. When you apply a design, your current styles, header, footer and templates are backed up first. The IT services starting point uses the theme's default design, so applying its design does not change your Styles. The Agency design changes the colours, fonts, header, footer and blog template. The News design changes the colours and fonts (the Newsreader serif for headlines and articles), the header, the footer, and the templates for the posts page, single articles and category pages. Applying a design again only changes the styles, header, footer and templates you have not edited since setup. The same screen shows the starting point in use, lists what was added and has a "Remove starter content" button, which moves the starter pages, posts and menu to the trash, deletes the starter images, removes the starter categories and tags that are no longer used, puts your homepage setting back and restores the backed-up design. Edits you made to the design after setup are kept; if your styles are kept, the styles you had before setup can still be found in Styles, Revisions.
 
 = Setting up a page like the demo by hand =
 
@@ -80,6 +88,11 @@ Go to Appearance, Editor, Styles, Colours, Palette. Open the menu next to Theme 
 Changes apply to the whole site. Keep enough contrast between each background and its text, and between each hover colour and its text on hover.
 
 == Changelog ==
+
+= 1.5.0 =
+* Released: November 21, 2026
+
+New News starting point for a city newspaper: Home, Latest, About, Contact and Tips pages and 15 articles in five sections, with its own design: colours, the Newsreader serif, a masthead with today's date, footer, and templates for the posts page, articles and category pages. Starter posts can now be in several categories, and menus can link to categories. The rows on the News Home page are filled with the real categories when you set it up. A new "Today's date" block binding shows the current date, and articles end with a row of related articles that share a category. The "Most read" category is hidden from category labels, since it is a list you keep yourself. Removing the starter content now also removes the tags that setup created, for all starting points, when no other post uses them. Starter posts are now dated from today, so the newest one is the lead story.
 
 = 1.4.0 =
 * Released: November 19, 2026
@@ -152,7 +165,7 @@ Images in assets/images (plate-1.webp to plate-8.webp, agency-01.webp to agency-
 Copyright 2026 bitBirds Solutions. Original abstract images made for this theme, generated by code (tools/make-plates.php in the source repository).
 License: GPLv2 or later
 
-Setup screen previews in assets/images/variants (it.webp, agency.webp)
+Setup screen previews in assets/images/variants (it.webp, agency.webp, news.webp)
 Copyright 2026 bitBirds Solutions. Captures of the theme's own starting points using its bundled images.
 License: GPLv2 or later
 
