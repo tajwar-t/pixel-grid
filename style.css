@@ -1405,3 +1405,136 @@ body .is-layout-constrained > :where(:not(.alignleft):not(.alignright):not(.alig
 		grid-template-columns: minmax(0, 1fr);
 	}
 }
+
+/* Shop: the masthead, section heads and category tiles of the Shop patterns (inc/shop-patterns.php).
+   Here rather than in woocommerce.css so pages made from them still read well without WooCommerce. */
+.wp-block-group.pixelgrid-shop-header {
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
+.wp-block-group.pixelgrid-shop-announce {
+	background-color: var(--wp--preset--color--blue-background);
+	color: var(--wp--preset--color--blue-text);
+	padding-top: 8px;
+	padding-bottom: 8px;
+	margin-block: 0;
+}
+
+.pixelgrid-shop-announce p {
+	margin: 0;
+	font-family: var(--wp--preset--font-family--heading);
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	font-size: var(--wp--preset--font-size--small);
+}
+
+.wp-block-group.pixelgrid-shop-bar {
+	margin-block-start: 0;
+	align-items: center;
+	gap: 12px 28px;
+}
+
+.pixelgrid-shop-bar .wp-block-site-title {
+	margin: 0;
+}
+
+.pixelgrid-shop-bar .pixelgrid-shop-nav {
+	flex: 1 1 auto;
+}
+
+.wp-block-group.pixelgrid-shop-tools {
+	gap: 10px;
+	align-items: center;
+}
+
+.pixelgrid-shop-search {
+	margin: 0;
+	min-width: 0;
+}
+
+.pixelgrid-shop-search .wp-block-search__input {
+	width: 14em;
+	min-width: 0;
+}
+
+.pixelgrid-shop-head {
+	align-items: flex-end;
+	gap: 8px 24px;
+}
+
+.pixelgrid-shop-head > * {
+	margin: 0;
+}
+
+:is(p, h3).pixelgrid-shop-label {
+	font-family: var(--wp--preset--font-family--heading);
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.pixelgrid-shop-label a {
+	text-decoration: none;
+	border-bottom: 2px solid currentColor;
+}
+
+.pixelgrid-shop-label a:hover {
+	color: var(--pixelgrid-ac);
+}
+
+.wp-block-columns.pixelgrid-shop-tiles {
+	gap: calc(var(--pixelgrid-u) * 0.6);
+	margin-bottom: 0;
+}
+
+.pixelgrid-shop-tile > * {
+	margin: 0;
+}
+
+.pixelgrid-shop-tile > * + * {
+	margin-block-start: 12px;
+}
+
+.pixelgrid-shop-tile h3 a {
+	text-decoration: none;
+}
+
+.pixelgrid-shop-tile h3 a:hover {
+	text-decoration: underline;
+}
+
+/* Product pictures are pixel art: they keep their colours and their square pixels. */
+.wp-block-image.pixelgrid-shop-pic img {
+	width: 100%;
+	filter: none;
+	image-rendering: pixelated;
+}
+
+@media (max-width: 781px) {
+	.wp-block-columns.pixelgrid-shop-tiles {
+		flex-wrap: wrap !important;
+	}
+
+	.wp-block-columns.pixelgrid-shop-tiles > .wp-block-column {
+		flex-basis: calc(50% - var(--pixelgrid-u) * 0.3) !important;
+	}
+
+	.pixelgrid-shop-bar .pixelgrid-shop-nav {
+		flex: 0 0 auto;
+	}
+
+	.wp-block-group.pixelgrid-shop-tools {
+		flex: 1 1 100%;
+		justify-content: flex-start;
+	}
+
+	.pixelgrid-shop-tools .pixelgrid-shop-search {
+		flex: 1 1 auto;
+	}
+
+	.pixelgrid-shop-search .wp-block-search__input {
+		width: 100%;
+	}
+}

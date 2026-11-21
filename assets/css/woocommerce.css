@@ -92,6 +92,12 @@
 	gap: calc(var(--pixelgrid-u) * 1.2) calc(var(--pixelgrid-u) * 2);
 }
 
+/* Four across on the Shop home page sections. */
+.pixelgrid-products.pixelgrid-products-four .wc-block-product-template.wc-block-product-template {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: calc(var(--pixelgrid-u) * 1.2) calc(var(--pixelgrid-u) * 0.6);
+}
+
 .pixelgrid-products .wc-block-product-template > .wc-block-product {
 	width: auto;
 	max-width: none;
@@ -524,7 +530,8 @@ html body .pixelgrid-shop-main .wp-block-woocommerce-product-details.is-style-mi
 		gap: var(--pixelgrid-u);
 	}
 
-	.pixelgrid-products .wc-block-product-template.wc-block-product-template {
+	.pixelgrid-products .wc-block-product-template.wc-block-product-template,
+	.pixelgrid-products.pixelgrid-products-four .wc-block-product-template.wc-block-product-template {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: var(--pixelgrid-u) calc(var(--pixelgrid-u) * 0.5);
 	}

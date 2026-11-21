@@ -111,6 +111,7 @@ if ( ! function_exists( 'pixelgrid_register_block_styles' ) ) :
 			'mosaic-chart'  => __( 'Pixel chart', 'pixelgrid' ),
 			'mosaic-people' => __( 'Pixel people', 'pixelgrid' ),
 			'mosaic-mail'   => __( 'Pixel envelope', 'pixelgrid' ),
+			'mosaic-heart'  => __( 'Pixel heart', 'pixelgrid' ),
 			'mosaic-note'   => __( 'Pixel note', 'pixelgrid' ),
 			'mosaic-lost'   => __( 'Pixel 404', 'pixelgrid' ),
 			'mosaic-cycle'  => __( 'Pixel, changing', 'pixelgrid' ),
@@ -227,6 +228,7 @@ endif;
 add_action( 'init', 'pixelgrid_pattern_categories' );
 
 require get_parent_theme_file_path( 'inc/front.php' );
+require get_parent_theme_file_path( 'inc/shop-patterns.php' );
 
 if ( is_admin() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
 	require get_parent_theme_file_path( 'inc/variants.php' );
