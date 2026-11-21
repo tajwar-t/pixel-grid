@@ -179,6 +179,34 @@ foreach ( WP_Theme_JSON_Resolver::get_style_variations() as $variation ) {
 }
 pg_assert( in_array( 'Shop', $pg_titles, true ), 'style variations list Shop' );
 
+// Shop images: 12 pixel-art products and 3 journal plates, all valid 1200x1200 WebP and small.
+for ( $i = 1; $i <= 15; $i++ ) {
+	$pg_rel  = sprintf( 'assets/images/shop-%02d.webp', $i );
+	$pg_path = get_parent_theme_file_path( $pg_rel );
+	pg_assert( file_exists( $pg_path ), "$pg_rel exists" );
+	$pg_info = file_exists( $pg_path ) ? getimagesize( $pg_path ) : false;
+	pg_assert( is_array( $pg_info ) && 'image/webp' === $pg_info['mime'], "$pg_rel is a valid WebP" );
+	pg_assert( is_array( $pg_info ) && 1200 === $pg_info[0] && 1200 === $pg_info[1], "$pg_rel is 1200x1200" );
+	pg_assert( file_exists( $pg_path ) && filesize( $pg_path ) <= 150 * 1024, "$pg_rel is at most 150 KB" );
+	if ( $i > 12 ) {
+		continue;
+	}
+	// Product pictures: sample the centre of each of the 16x16 drawing cells (64 px each, from 88 px in).
+	$pg_img    = file_exists( $pg_path ) ? imagecreatefromwebp( $pg_path ) : false;
+	$pg_colors = array();
+	if ( $pg_img ) {
+		for ( $py = 0; $py < 16; $py++ ) {
+			for ( $px = 0; $px < 16; $px++ ) {
+				$pg_colors[ imagecolorat( $pg_img, 88 + $px * 64 + 32, 88 + $py * 64 + 32 ) & 0xFFFFFF ] = true;
+			}
+		}
+		pg_assert_same( 0xFBF6EC, imagecolorat( $pg_img, 2, 2 ) & 0xFFFFFF, "$pg_rel sits on a cream ground" );
+	}
+	printf( "INFO: %s colours %d size %d\n", $pg_rel, count( $pg_colors ), file_exists( $pg_path ) ? filesize( $pg_path ) : 0 );
+	pg_assert( count( $pg_colors ) >= 3, "$pg_rel has at least 3 distinct colours" );
+	pg_assert( file_exists( $pg_path ) && filesize( $pg_path ) <= 80 * 1024, "$pg_rel is at most 80 KB" );
+}
+
 if ( ! class_exists( 'WC_Product_Simple' ) ) {
 	echo "INFO: WooCommerce is not active; running only the without-WooCommerce checks. Use 'site.sh up --woo' for the rest.\n";
 
