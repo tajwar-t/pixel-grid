@@ -364,7 +364,7 @@ pg_assert_same(
 	$pg_def['categories'],
 	'news categories'
 );
-pg_assert_same( '', $pg_def['preview'], 'news has no preview image yet' );
+pg_assert_same( 'assets/images/variants/news.webp', $pg_def['preview'], 'news preview is the setup capture' );
 foreach ( array( 'pages', 'posts', 'reading' ) as $pg_key ) {
 	pg_assert( ! empty( $pg_def['content_labels'][ $pg_key ] ), "news has content label $pg_key" );
 }
