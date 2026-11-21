@@ -565,7 +565,9 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 					'post_excerpt'  => $item['excerpt'],
 					'post_content'  => $item['content'],
 					'post_category' => $in,
-					'post_date'     => gmdate( 'Y-m-d H:i:s', time() - ( $step + 1 ) * 3 * DAY_IN_SECONDS ),
+					// The first post is the newest, so it leads a News front page ahead of the default post.
+					// Dated in GMT so no site timezone turns it into a scheduled post.
+					'post_date_gmt' => gmdate( 'Y-m-d H:i:s', time() - $step * 3 * DAY_IN_SECONDS ),
 				)
 			);
 			++$step;

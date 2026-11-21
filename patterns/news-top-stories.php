@@ -22,7 +22,7 @@
 
 <!-- wp:post-terms {"term":"category","className":"pixelgrid-news-label"} /-->
 
-<!-- wp:post-title {"level":3,"isLink":true} /-->
+<!-- wp:post-title {"level":3,"isLink":true,"fontSize":"x-large"} /-->
 
 <!-- wp:post-excerpt {"excerptLength":24} /-->
 

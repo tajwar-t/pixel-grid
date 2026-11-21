@@ -4,7 +4,7 @@
  * Slug: pixelgrid/news-row-world
  * Categories: pixelgrid-news
  * Inserter: no
- * Description: The World label linking to its category, then its four latest posts. Setup points the row at the World category.
+ * Description: The World label linking to its category, then its three latest posts. Setup points the row at the World category.
  *
  * @package pixelgrid
  */

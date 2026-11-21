@@ -4,7 +4,7 @@
  * Slug: pixelgrid/news-row-technology
  * Categories: pixelgrid-news
  * Inserter: no
- * Description: The Technology label linking to its category, then its four latest posts. Setup points the row at the Technology category.
+ * Description: The Technology label linking to its category, then its three latest posts. Setup points the row at the Technology category.
  *
  * @package pixelgrid
  */

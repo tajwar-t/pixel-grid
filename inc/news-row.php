@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! function_exists( 'pixelgrid_news_row' ) ) :
 	/**
-	 * Prints a row of the four latest posts under a condensed section label.
+	 * Prints a row of the three latest posts under a condensed section label.
 	 *
 	 * With a category slug, the label links to the category archive and the query carries the
 	 * pixelgrid-cat-{slug} marker class, which setup turns into a filter on the real category.
@@ -37,7 +37,7 @@ if ( ! function_exists( 'pixelgrid_news_row' ) ) :
 		$query     = array(
 			'queryId'   => $query_id,
 			'query'     => array(
-				'perPage'  => 4,
+				'perPage'  => 3,
 				'pages'    => 0,
 				'offset'   => 0,
 				'postType' => 'post',
@@ -58,10 +58,10 @@ if ( ! function_exists( 'pixelgrid_news_row' ) ) :
 <!-- /wp:heading -->
 
 <!-- wp:query <?php echo wp_json_encode( $query ); ?> -->
-<div class="wp-block-query <?php echo esc_attr( $classes ); ?>"><!-- wp:post-template {"layout":{"type":"grid","columnCount":4}} -->
+<div class="wp-block-query <?php echo esc_attr( $classes ); ?>"><!-- wp:post-template {"layout":{"type":"grid","columnCount":3}} -->
 <!-- wp:post-featured-image {"isLink":true,"aspectRatio":"3/2"} /-->
 
-<!-- wp:post-title {"level":3,"isLink":true} /-->
+<!-- wp:post-title {"level":3,"isLink":true,"fontSize":"large"} /-->
 
 <!-- wp:post-date /-->
 <!-- /wp:post-template -->

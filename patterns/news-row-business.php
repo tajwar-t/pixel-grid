@@ -4,7 +4,7 @@
  * Slug: pixelgrid/news-row-business
  * Categories: pixelgrid-news
  * Inserter: no
- * Description: The Business label linking to its category, then its four latest posts. Setup points the row at the Business category.
+ * Description: The Business label linking to its category, then its three latest posts. Setup points the row at the Business category.
  *
  * @package pixelgrid
  */

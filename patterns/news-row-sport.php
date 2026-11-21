@@ -4,7 +4,7 @@
  * Slug: pixelgrid/news-row-sport
  * Categories: pixelgrid-news
  * Inserter: no
- * Description: The Sport label linking to its category, then its four latest posts. Setup points the row at the Sport category.
+ * Description: The Sport label linking to its category, then its three latest posts. Setup points the row at the Sport category.
  *
  * @package pixelgrid
  */

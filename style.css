@@ -1399,14 +1399,8 @@ body .is-layout-constrained > :where(:not(.alignleft):not(.alignright):not(.alig
 	}
 }
 
-/* News rows: four columns are too tight on tablets; two up to 781px, and one on phones as core does. */
+/* News rows: three posts in three columns from 782px, one column below (two would orphan the third). */
 @media (max-width: 781px) {
-	.pixelgrid-news-row .wp-block-post-template.is-layout-grid {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
-}
-
-@media (max-width: 600px) {
 	.pixelgrid-news-row .wp-block-post-template.is-layout-grid {
 		grid-template-columns: minmax(0, 1fr);
 	}

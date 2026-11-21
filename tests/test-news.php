@@ -253,7 +253,13 @@ pg_assert( $pg_has( 'news-most-read', '"perPage":5' ), 'news-most-read lists 5 p
 pg_assert( false !== stripos( is_array( $pg_most_read ) ? $pg_most_read['description'] : '', 'does not count views' ), 'news-most-read says the theme does not count views' );
 pg_assert( $pg_has( 'news-opinion', 'pixelgrid-cat-opinion' ) && $pg_has( 'news-opinion', '"perPage":2' ), 'news-opinion lists 2 opinion posts' );
 pg_assert( $pg_has( 'news-opinion', 'wp:pullquote' ), 'news-opinion has a pull quote' );
-pg_assert( ! $pg_has( 'news-category-row', 'pixelgrid-cat-' ) && $pg_has( 'news-category-row', '"perPage":4' ), 'news-category-row lists 4 posts with no category marker' );
+pg_assert( ! $pg_has( 'news-category-row', 'pixelgrid-cat-' ) && $pg_has( 'news-category-row', '"perPage":3' ), 'news-category-row lists 3 posts with no category marker' );
+foreach ( array_merge( array( 'news-category-row' ), array_map( function ( $c ) { return 'news-row-' . $c; }, $pg_news_cats ) ) as $pg_slug ) {
+	pg_assert( $pg_has( $pg_slug, '"perPage":3' ) && $pg_has( $pg_slug, '"columnCount":3' ) && ! $pg_has( $pg_slug, '"columnCount":4' ), "$pg_slug shows 3 posts in 3 columns" );
+	pg_assert( $pg_has( $pg_slug, '<!-- wp:post-title {"level":3,"isLink":true,"fontSize":"large"} /-->' ), "$pg_slug card titles use the large size" );
+}
+pg_assert( $pg_has( 'news-top-stories', '<!-- wp:post-title {"level":3,"isLink":true,"fontSize":"x-large"} /-->' ), 'news-top-stories card titles use the x-large size' );
+pg_assert( $pg_has( 'news-lead', '"fontSize":"xx-large"' ), 'news-lead keeps its big headline' );
 pg_assert( $pg_has( 'news-lead', '"perPage":1' ), 'news-lead lists 1 post' );
 pg_assert( $pg_has( 'news-top-stories', '"perPage":3' ) && $pg_has( 'news-top-stories', '"offset":1' ), 'news-top-stories lists posts 2 to 4' );
 pg_assert( $pg_has( 'news-tips-cta', esc_url( add_query_arg( 'pagename', 'tips', home_url( '/' ) ) ) ), 'news-tips-cta links to the tips page' );
@@ -306,7 +312,8 @@ pg_assert_same( count( $pg_home_imgs[1] ), count( array_unique( $pg_home_imgs[1]
 pg_assert( (bool) preg_match( '/wp:query-title \{[^}]*"fontSize":"xx-large"/', $pg_news['news-template-category'] ?? '' ), 'section front title uses the Headline size' );
 pg_assert( (bool) preg_match( '/wp:heading \{"level":1[^}]*"fontSize":"xx-large"/', $pg_news['news-template-home'] ?? '' ), 'Latest page title uses the Headline size' );
 $pg_style = (string) file_get_contents( get_parent_theme_file_path( 'style.css' ) );
-pg_assert( (bool) preg_match( '/@media \(max-width: 781px\) \{\s*\.pixelgrid-news-row \.wp-block-post-template\.is-layout-grid \{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/', $pg_style ), 'News rows drop to 2 columns below 782px' );
+pg_assert( (bool) preg_match( '/@media \(max-width: 781px\) \{\s*\.pixelgrid-news-row \.wp-block-post-template\.is-layout-grid \{\s*grid-template-columns: minmax\(0, 1fr\);/', $pg_style ), 'News rows drop to 1 column below 782px' );
+pg_assert( false === strpos( $pg_style, 'repeat(2, minmax(0, 1fr))' ), 'News rows have no 2-column step' );
 
 // News variant: definition, end-to-end setup and removal.
 $pg_def = pixelgrid_variant( 'news' );
@@ -513,6 +520,23 @@ foreach ( array_keys( $pg_def['categories'] ) as $pg_slug ) {
 $pg_post_ids = array();
 foreach ( $pg_def['posts'] as $pg_post ) {
 	$pg_post_ids[ $pg_post['key'] ] = pixelgrid_starter_find( 'post', 'news:post-' . $pg_post['key'] );
+}
+
+// The lead story is the first News article, not WordPress's default post.
+$pg_hello = get_page_by_path( 'hello-world', OBJECT, 'post' );
+pg_assert( $pg_hello instanceof WP_Post && 'publish' === $pg_hello->post_status, 'the default Hello world post is present' );
+$pg_newest = get_posts(
+	array(
+		'numberposts' => 1,
+		'orderby'     => 'date',
+		'order'       => 'DESC',
+	)
+);
+pg_assert_same( $pg_post_ids[ $pg_def['posts'][0]['key'] ], isset( $pg_newest[0] ) ? (int) $pg_newest[0]->ID : 0, 'the newest post is the first News article' );
+$pg_lead_html = do_blocks( pixelgrid_starter_expand( '<!-- wp:pattern {"slug":"pixelgrid/news-lead"} /-->' ) );
+pg_assert( false !== strpos( $pg_lead_html, esc_html( $pg_def['posts'][0]['title'] ) ) && false === strpos( $pg_lead_html, 'Hello world' ), 'the lead query shows the first News article' );
+foreach ( $pg_post_ids as $pg_key => $pg_id ) {
+	pg_assert_same( 'publish', get_post_status( $pg_id ), "news post $pg_key is published, not scheduled" );
 }
 
 // Menu: the five sections by real term ID, then About and Tips.

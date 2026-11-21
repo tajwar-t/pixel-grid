@@ -4,7 +4,7 @@
  * Slug: pixelgrid/news-row-culture
  * Categories: pixelgrid-news
  * Inserter: no
- * Description: The Culture label linking to its category, then its four latest posts. Setup points the row at the Culture category.
+ * Description: The Culture label linking to its category, then its three latest posts. Setup points the row at the Culture category.
  *
  * @package pixelgrid
  */
