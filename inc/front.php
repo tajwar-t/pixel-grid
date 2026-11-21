@@ -97,9 +97,12 @@ add_filter( 'render_block_context', 'pixelgrid_related_context', 10, 3 );
  *
  * @param array    $query Query vars built from the query block.
  * @param WP_Block $block A block inside the query: post template, no results, pagination or total.
- * @return array
+ * @return array|mixed The query vars; anything that is not an array comes back unchanged.
  */
-function pixelgrid_related_query_vars( array $query, WP_Block $block ): array {
+function pixelgrid_related_query_vars( $query, $block ) {
+	if ( ! is_array( $query ) || ! $block instanceof WP_Block ) {
+		return $query;
+	}
 	if ( empty( $block->context['query']['pixelgridRelated'] ) || ! is_singular( 'post' ) ) {
 		return $query;
 	}

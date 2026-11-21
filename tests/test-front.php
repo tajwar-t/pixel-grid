@@ -120,6 +120,7 @@ $vars  = array(
 	'posts_per_page' => 3,
 );
 pg_assert_same( $vars, pixelgrid_related_query_vars( $vars, $block ), 'related filter leaves an unmarked query unchanged' );
+pg_assert_same( array(), pixelgrid_related_query_vars( array(), null ), 'related filter given no block returns the query unchanged' );
 
 // Most read is a list, not a section: post-terms labels never show it, but the post keeps it.
 $pg_business  = (int) wp_insert_term( 'Business', 'category', array( 'slug' => 'business' ) )['term_id'];

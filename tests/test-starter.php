@@ -321,6 +321,33 @@ pixelgrid_starter_create( 'cats', $all_cats );
 $q = $cat_page_query();
 pg_assert_same( array( $one_id ), isset( $q['taxQuery']['category'] ) ? $q['taxQuery']['category'] : null, 'running setup again fills the ID into a page made earlier' );
 
+// A category the user chose is kept when setup runs again; an empty list is still filled.
+$pg_page_a = pixelgrid_starter_find( 'page', 'cats:page-a' );
+$pg_set_cat = function ( $value ) use ( $pg_page_a ) {
+	$blocks = parse_blocks( (string) get_post_field( 'post_content', $pg_page_a ) );
+	$blocks[0]['attrs']['query']['taxQuery']['category'] = $value;
+	wp_update_post(
+		wp_slash(
+			array(
+				'ID'           => $pg_page_a,
+				'post_content' => serialize_blocks( $blocks ),
+			)
+		)
+	);
+};
+$pg_set_cat( array( $two_id ) );
+pixelgrid_starter_create( 'cats', $all_cats );
+$q = $cat_page_query();
+pg_assert_same( array( $two_id ), $q['taxQuery']['category'] ?? null, 'setup run again keeps a category the user chose' );
+$pg_set_cat( array( $two_id, 98765 ) );
+pixelgrid_starter_create( 'cats', $all_cats );
+$q = $cat_page_query();
+pg_assert_same( array( $two_id, 98765 ), $q['taxQuery']['category'] ?? null, 'setup run again keeps several chosen categories' );
+$pg_set_cat( array() );
+pixelgrid_starter_create( 'cats', $all_cats );
+$q = $cat_page_query();
+pg_assert_same( array( $one_id ), $q['taxQuery']['category'] ?? null, 'an empty category list is still filled' );
+
 $p1      = pixelgrid_starter_find( 'post', 'cats:post-p1' );
 $p1_cats = wp_get_post_categories( $p1 );
 pg_assert( in_array( $one_id, $p1_cats, true ) && in_array( $two_id, $p1_cats, true ), 'post p1 is in categories one and two' );
@@ -383,16 +410,16 @@ $longer = str_replace( 'other', 'pixelgrid-cat-one-more', $plain );
 pg_assert_same( $longer, pixelgrid_starter_fill_categories( $longer, array( 'one' => 5 ) ), 'a class that only starts with a marker is not a match' );
 
 // The include/exclude taxQuery form (WordPress 6.8+, migrated by the editor) is filled in place.
-$include_form = '<!-- wp:query {"queryId":1,"query":{"perPage":3,"taxQuery":{"include":{"category":[99]}}},"className":"pixelgrid-cat-one"} --><div class="wp-block-query pixelgrid-cat-one"></div><!-- /wp:query -->';
+$include_form = '<!-- wp:query {"queryId":1,"query":{"perPage":3,"taxQuery":{"include":{"category":[]}}},"className":"pixelgrid-cat-one"} --><div class="wp-block-query pixelgrid-cat-one"></div><!-- /wp:query -->';
 $filled       = parse_blocks( pixelgrid_starter_fill_categories( $include_form, array( 'one' => 5 ) ) );
 pg_assert_same( array( 'include' => array( 'category' => array( 5 ) ) ), $filled[0]['attrs']['query']['taxQuery'], 'include form gets include.category = [id] and no sibling category key' );
-$include_done = str_replace( '[99]', '[5]', $include_form );
+$include_done = str_replace( '[]', '[5]', $include_form );
 pg_assert_same( $include_done, pixelgrid_starter_fill_categories( $include_done, array( 'one' => 5 ) ), 'include form already holding the ID is unchanged' );
 $exclude_form = str_replace( '"include"', '"exclude"', $include_form );
 $filled       = parse_blocks( pixelgrid_starter_fill_categories( $exclude_form, array( 'one' => 5 ) ) );
 pg_assert_same(
 	array(
-		'exclude' => array( 'category' => array( 99 ) ),
+		'exclude' => array( 'category' => array() ),
 		'include' => array( 'category' => array( 5 ) ),
 	),
 	$filled[0]['attrs']['query']['taxQuery'],
@@ -479,6 +506,25 @@ pg_assert( $pg_removed['removed'] >= 2, 'remove without recorded tags still remo
 pg_assert( get_term_by( 'name', 'New test tag', 'post_tag' ) instanceof WP_Term, 'without a record, no tag is deleted' );
 pg_assert( get_term( $pg_existing_id, 'post_tag' ) instanceof WP_Term, 'without a record, the existing tag is kept' );
 wp_delete_term( (int) get_term_by( 'name', 'New test tag', 'post_tag' )->term_id, 'post_tag' );
+
+// A starter tag that a user's draft still uses survives removal; an unused one is deleted.
+pixelgrid_starter_create( 'tagged', array( 'posts' => true ) );
+$pg_new_id = (int) get_term_by( 'name', 'New test tag', 'post_tag' )->term_id;
+$pg_draft  = wp_insert_post(
+	array(
+		'post_title'  => 'My draft',
+		'post_status' => 'draft',
+	)
+);
+wp_set_post_tags( $pg_draft, array( $pg_new_id ) );
+pixelgrid_starter_remove();
+pg_assert( get_term( $pg_new_id, 'post_tag' ) instanceof WP_Term, 'a starter tag used by a draft survives removal' );
+wp_delete_post( $pg_draft, true );
+wp_delete_term( $pg_new_id, 'post_tag' );
+pixelgrid_starter_create( 'tagged', array( 'posts' => true ) );
+$pg_new_id = (int) get_term_by( 'name', 'New test tag', 'post_tag' )->term_id;
+pixelgrid_starter_remove();
+pg_assert( null === get_term( $pg_new_id, 'post_tag' ), 'an unused starter tag is still deleted' );
 
 // IT, Agency and News leave no tags behind.
 add_filter(

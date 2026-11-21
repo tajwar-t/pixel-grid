@@ -415,17 +415,20 @@ function pixelgrid_starter_fill_category_blocks( array $blocks, array $cats, boo
 				if ( isset( $tax['include'] ) || isset( $tax['exclude'] ) ) {
 					$include = isset( $tax['include'] ) && is_array( $tax['include'] ) ? $tax['include'] : array();
 					$current = isset( $include['category'] ) ? $include['category'] : null;
-					if ( $current !== $ids ) {
+					$fill    = empty( $current );
+					if ( $fill ) {
 						$include['category'] = $ids;
 						$tax['include']      = $include;
 					}
 				} else {
 					$current = isset( $tax['category'] ) ? $tax['category'] : null;
-					if ( $current !== $ids ) {
+					$fill    = empty( $current );
+					if ( $fill ) {
 						$tax['category'] = $ids;
 					}
 				}
-				if ( $current !== $ids ) {
+				// Only an empty list is filled: a category the user chose is never put back.
+				if ( $fill ) {
 					$query['taxQuery']              = $tax;
 					$blocks[ $i ]['attrs']['query'] = $query;
 					$changed                        = true;
@@ -438,6 +441,37 @@ function pixelgrid_starter_fill_category_blocks( array $blocks, array $cats, boo
 		}
 	}
 	return $blocks;
+}
+
+/**
+ * Tells whether any post that is not in the trash still uses a term. A term count covers
+ * published posts only, so drafts, scheduled and private posts are checked here.
+ *
+ * @param int    $term_id  Term ID.
+ * @param string $taxonomy Taxonomy name.
+ * @return bool
+ */
+function pixelgrid_starter_term_in_use( int $term_id, string $taxonomy ): bool {
+	$statuses = array_values( array_diff( get_post_stati(), array( 'trash', 'auto-draft' ) ) );
+	$found    = get_posts(
+		array(
+			'post_type'        => 'any',
+			'post_status'      => $statuses,
+			'posts_per_page'   => 1,
+			'fields'           => 'ids',
+			'no_found_rows'    => true,
+			'suppress_filters' => true,
+			'tax_query'        => array( // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query
+				array(
+					'taxonomy'         => $taxonomy,
+					'field'            => 'term_id',
+					'terms'            => array( $term_id ),
+					'include_children' => false,
+				),
+			),
+		)
+	);
+	return ! empty( $found );
 }
 
 /**
@@ -705,13 +739,13 @@ function pixelgrid_starter_remove(): array {
 	}
 	foreach ( get_option( 'pixelgrid_starter_terms', array() ) as $term_id ) {
 		$term = get_term( (int) $term_id, 'category' );
-		if ( $term && ! is_wp_error( $term ) && 0 === (int) $term->count ) {
+		if ( $term && ! is_wp_error( $term ) && 0 === (int) $term->count && ! pixelgrid_starter_term_in_use( (int) $term_id, 'category' ) ) {
 			wp_delete_term( (int) $term_id, 'category' );
 		}
 	}
 	foreach ( (array) get_option( 'pixelgrid_starter_tags', array() ) as $term_id ) {
 		$term = get_term( (int) $term_id, 'post_tag' );
-		if ( $term && ! is_wp_error( $term ) && 0 === (int) $term->count ) {
+		if ( $term && ! is_wp_error( $term ) && 0 === (int) $term->count && ! pixelgrid_starter_term_in_use( (int) $term_id, 'post_tag' ) ) {
 			wp_delete_term( (int) $term_id, 'post_tag' );
 		}
 	}
