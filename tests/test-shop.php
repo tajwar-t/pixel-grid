@@ -51,6 +51,7 @@ add_filter(
 					'category' => 'fix-prints',
 					'price'    => '40.00',
 					'sale'     => '32.00',
+					'featured' => true,
 					'short'    => 'A print of the grid.',
 					'content'  => '<!-- wp:paragraph --><p>Hangs on a wall.</p><!-- /wp:paragraph -->',
 					'image'    => 'assets/images/agency-02.webp',
@@ -207,6 +208,136 @@ for ( $i = 1; $i <= 15; $i++ ) {
 	pg_assert( file_exists( $pg_path ) && filesize( $pg_path ) <= 80 * 1024, "$pg_rel is at most 80 KB" );
 }
 
+// The Shop variant definition. These checks run with or without WooCommerce.
+require_once get_parent_theme_file_path( 'inc/starter-screen.php' );
+$pg_screen_with = function ( $get ) {
+	$saved = $_GET;
+	$_GET  = $get;
+	ob_start();
+	pixelgrid_starter_screen();
+	$out  = ob_get_clean();
+	$_GET = $saved;
+	return $out;
+};
+$pg_def = pixelgrid_variant( 'shop' );
+pg_assert( is_array( $pg_def ), 'the shop variant is registered' );
+$pg_def = is_array( $pg_def ) ? $pg_def : pixelgrid_variant_defaults( array() );
+pg_assert_same( 'Shop', $pg_def['label'], 'shop label is Shop' );
+pg_assert_same( array( 'woocommerce' ), $pg_def['requires'], 'shop requires WooCommerce' );
+pg_assert_same( 'styles/shop.json', $pg_def['style'], 'shop uses styles/shop.json' );
+pg_assert_same(
+	array(
+		'header' => 'pixelgrid/shop-header',
+		'footer' => 'pixelgrid/shop-footer',
+	),
+	$pg_def['parts'],
+	'shop parts are the shop header and footer'
+);
+pg_assert_same( array( 'home' => 'pixelgrid/shop-template-home' ), $pg_def['templates'], 'shop templates: home' );
+pg_assert_same( array( 'home', 'about', 'contact', 'journal' ), array_keys( $pg_def['pages'] ), 'shop pages: home, about, contact, journal' );
+foreach ( array( 'home', 'about', 'contact' ) as $pg_slug ) {
+	pg_assert_same( array( 'pixelgrid/shop-page-' . $pg_slug, 'page-sections' ), array_slice( (array) ( $pg_def['pages'][ $pg_slug ] ?? array() ), 1, 2 ), "shop $pg_slug page uses its pattern and page-sections" );
+}
+pg_assert_same( array( 'Journal', '', '' ), $pg_def['pages']['journal'] ?? null, 'shop journal page is empty' );
+pg_assert_same( 'home', $pg_def['front'], 'shop front is home' );
+pg_assert_same( 'journal', $pg_def['posts_page'], 'shop posts page is journal' );
+pg_assert_same( array( 'woo:shop', 'about', 'journal', 'contact' ), $pg_def['menu'], 'shop menu: shop, about, journal, contact' );
+pg_assert_same( array( 'news', 'guides' ), array_keys( $pg_def['categories'] ), 'shop categories: news, guides' );
+pg_assert_same( array( 'kitchen', 'home', 'outdoor', 'tech' ), array_keys( (array) ( $pg_def['product_categories'] ?? array() ) ), 'shop product categories: kitchen, home, outdoor, tech' );
+pg_assert_same( '', $pg_def['preview'], 'shop has no preview yet' );
+pg_assert( '' !== $pg_def['design_note'] && ! empty( $pg_def['content_labels']['pages'] ) && ! empty( $pg_def['content_labels']['posts'] ) && ! empty( $pg_def['content_labels']['reading'] ), 'shop has its own content labels and design note' );
+pg_assert_same( array(), pixelgrid_variant_defaults( array() )['product_categories'] ?? null, 'variant defaults include an empty product_categories' );
+
+pg_assert_same( 3, count( $pg_def['posts'] ), 'shop has 3 journal posts' );
+$pg_post_images = array();
+foreach ( $pg_def['posts'] as $pg_post ) {
+	$pg_post_images[] = $pg_post['image'];
+	pg_assert( in_array( $pg_post['category'], array( 'news', 'guides' ), true ), "journal post {$pg_post['key']} is in news or guides" );
+	pg_assert( substr_count( $pg_post['content'], '<!-- wp:paragraph -->' ) >= 3, "journal post {$pg_post['key']} has real text" );
+}
+pg_assert_same( array( 'assets/images/shop-13.webp', 'assets/images/shop-14.webp', 'assets/images/shop-15.webp' ), $pg_post_images, 'journal posts use shop-13 to shop-15' );
+$pg_used_cats = array_values( array_unique( wp_list_pluck( $pg_def['posts'], 'category' ) ) );
+sort( $pg_used_cats );
+pg_assert_same( array( 'guides', 'news' ), $pg_used_cats, 'journal posts use both news and guides' );
+
+$pg_names = array( 'Everyday stoneware mug', 'Round teapot', 'Deep serving bowl', 'Desk lamp', 'Wall clock', 'Ribbed vase', 'Potted fern', 'Watering can', 'Day backpack', 'Over-ear headphones', 'Simple watch', 'Pocket radio' );
+pg_assert_same( $pg_names, wp_list_pluck( $pg_def['products'], 'name' ), 'shop has the 12 Common Goods products in picture order' );
+$pg_images = array();
+$pg_sale   = array();
+$pg_feat   = array();
+foreach ( $pg_def['products'] as $pg_item ) {
+	$pg_images[] = $pg_item['image'];
+	if ( isset( $pg_item['sale'] ) ) {
+		$pg_sale[] = $pg_item['name'];
+		pg_assert( (float) $pg_item['sale'] < (float) $pg_item['price'], "{$pg_item['name']} sale price is below its price" );
+	}
+	if ( ! empty( $pg_item['featured'] ) ) {
+		$pg_feat[] = $pg_item['name'];
+	}
+	pg_assert( (bool) preg_match( '/^[0-9]+(\.[0-9]{1,2})?$/', (string) $pg_item['price'] ), "{$pg_item['name']} price is a plain number" );
+	pg_assert( isset( $pg_def['product_categories'][ $pg_item['category'] ] ), "{$pg_item['name']} is in a shop product category" );
+	pg_assert( '' !== $pg_item['short'] && false !== strpos( $pg_item['content'], '<!-- wp:paragraph -->' ), "{$pg_item['name']} has a short and a long description" );
+	pg_assert( ! preg_match( '/[$\x{20AC}\x{00A3}\x{00A5}]|USD|EUR|GBP/u', $pg_item['short'] . $pg_item['content'] ), "{$pg_item['name']} copy names no currency" );
+}
+$pg_want_images = array();
+for ( $pg_i = 1; $pg_i <= 12; $pg_i++ ) {
+	$pg_want_images[] = sprintf( 'assets/images/shop-%02d.webp', $pg_i );
+}
+pg_assert_same( $pg_want_images, $pg_images, 'products use shop-01 to shop-12 in order' );
+pg_assert_same( array( 'Round teapot', 'Desk lamp', 'Watering can', 'Over-ear headphones' ), $pg_sale, 'teapot, lamp, watering can and headphones are on sale' );
+pg_assert_same( 4, count( $pg_feat ), '4 products are featured' );
+
+// The success notice counts products when the variant has them.
+pg_assert( function_exists( 'pixelgrid_starter_created_args' ), 'pixelgrid_starter_created_args exists' );
+if ( function_exists( 'pixelgrid_starter_created_args' ) ) {
+	pg_assert_same(
+		array( 'pixelgrid_created' => '4-3-1' ),
+		pixelgrid_starter_created_args(
+			array(
+				'pages' => 4,
+				'posts' => 3,
+				'menu'  => 1,
+			)
+		),
+		'created args without products keep three counts'
+	);
+	pg_assert_same(
+		array( 'pixelgrid_created' => '4-3-1-12' ),
+		pixelgrid_starter_created_args(
+			array(
+				'pages'    => 4,
+				'posts'    => 3,
+				'menu'     => 1,
+				'products' => 12,
+			)
+		),
+		'created args carry the products count'
+	);
+}
+$pg_html = $pg_screen_with( array( 'pixelgrid_created' => '4-3-1-12' ) );
+pg_assert( false !== strpos( $pg_html, 'Starter content added: 4 pages, 3 posts and 1 menu.' ) && false !== strpos( $pg_html, '12 products were added to the shop.' ), 'success notice counts the products' );
+$pg_html = $pg_screen_with( array( 'pixelgrid_created' => '4-3-1-1' ) );
+pg_assert( false !== strpos( $pg_html, '1 product was added to the shop.' ), 'success notice uses the singular for one product' );
+$pg_html = $pg_screen_with( array( 'pixelgrid_created' => '4-3-1' ) );
+pg_assert( false === strpos( $pg_html, 'added to the shop' ), 'success notice has no products sentence for a variant without products' );
+
+// The Shop card on the setup screen.
+$pg_shop_card_of = function ( $html ) {
+	foreach ( explode( '<label class="pixelgrid-card', $html ) as $pg_part ) {
+		if ( false !== strpos( $pg_part, 'value="shop"' ) ) {
+			return (string) strstr( $pg_part, '</label>', true );
+		}
+	}
+	return '';
+};
+$pg_shop_radio_of = function ( $html ) {
+	return preg_match( '/<input[^>]*value="shop"[^>]*>/', $html, $m ) ? $m[0] : '';
+};
+$pg_html       = $pg_screen_with( array() );
+$pg_shop_card  = $pg_shop_card_of( $pg_html );
+$pg_shop_radio = $pg_shop_radio_of( $pg_html );
+pg_assert( false !== strpos( $pg_shop_card, '<strong>Shop</strong>' ), 'screen has the shop card labelled Shop' );
+
 if ( ! class_exists( 'WC_Product_Simple' ) ) {
 	echo "INFO: WooCommerce is not active; running only the without-WooCommerce checks. Use 'site.sh up --woo' for the rest.\n";
 
@@ -240,6 +371,13 @@ if ( ! class_exists( 'WC_Product_Simple' ) ) {
 	pg_assert( $removed['removed'] >= 1, 'without WooCommerce, remove counts the product' );
 	pg_assert_same( array( 987654 ), get_option( 'pixelgrid_starter_product_cats' ), 'without WooCommerce, the product category record is kept for a later run' );
 	pg_assert_same( array(), $GLOBALS['pg_shop_notices'], 'without WooCommerce, remove raises no notice' );
+
+	// The Shop starting point without WooCommerce: shown, disabled, with the install link.
+	pg_assert( '' !== $pg_shop_radio && false !== strpos( $pg_shop_radio, 'disabled' ), 'without WooCommerce, the shop radio is disabled' );
+	pg_assert( false === strpos( $pg_shop_radio, 'checked' ), 'without WooCommerce, the shop radio is not chosen' );
+	pg_assert( false !== strpos( $pg_shop_card, 'plugin-install.php?s=woocommerce' ) && false !== strpos( $pg_shop_card, 'Install the required plugin' ), 'without WooCommerce, the shop card has the install link' );
+	$pg_err = pixelgrid_starter_create( 'shop', array( 'pages' => true ) );
+	pg_assert( is_wp_error( $pg_err ) && 'pixelgrid_variant_unavailable' === $pg_err->get_error_code(), 'without WooCommerce, shop create gives pixelgrid_variant_unavailable' );
 	pg_done();
 }
 
@@ -281,6 +419,8 @@ pg_assert_same( '', $pg_mug->get_sale_price(), 'mug has no sale price' );
 pg_assert_same( '40.00', $pg_print->get_regular_price(), 'print regular price' );
 pg_assert_same( '32.00', $pg_print->get_sale_price(), 'print sale price' );
 pg_assert_same( 'A mug with a pixel.', $pg_mug->get_short_description(), 'mug short description' );
+pg_assert_same( false, $pg_mug->get_featured(), 'mug, with no featured field, is not featured' );
+pg_assert_same( true, $pg_print->get_featured(), 'print, with a truthy featured field, is featured' );
 pg_assert( false !== strpos( $pg_print->get_description(), 'Hangs on a wall.' ), 'print description holds its block markup' );
 pg_assert_same( array( $pg_existing ), array_map( 'intval', $pg_mug->get_category_ids() ), 'mug is in the existing, reused category' );
 pg_assert( $pg_new > 0 && $pg_new !== $pg_existing, 'setup created the missing product category' );
@@ -420,5 +560,275 @@ pg_assert_same( array(), get_option( 'pixelgrid_starter_product_cats' ), 'term_e
 pg_assert_same( array(), $GLOBALS['pg_shop_notices'], 'term_exists: no notice' );
 pixelgrid_starter_remove();
 pg_assert( get_term( $pg_named, 'product_cat' ) instanceof WP_Term, 'term_exists: the existing category survives remove' );
+
+// The Shop starting point, end to end.
+pg_assert( '' !== $pg_shop_radio && false === strpos( $pg_shop_radio, 'disabled' ), 'with WooCommerce, the shop radio is enabled' );
+pg_assert( false === strpos( $pg_shop_card, 'Install the required plugin' ), 'with WooCommerce, the shop card has no install link' );
+
+// Plain permalinks for the HTTP checks below.
+$GLOBALS['wp_rewrite']->set_permalink_structure( '' );
+flush_rewrite_rules( false );
+
+$pg_get = function ( $url, $cookies = array() ) {
+	$res = wp_remote_get(
+		$url,
+		array(
+			'timeout' => 60,
+			'cookies' => $cookies,
+		)
+	);
+	return array( (int) wp_remote_retrieve_response_code( $res ), (string) wp_remote_retrieve_body( $res ) );
+};
+require_once ABSPATH . 'wp-admin/includes/plugin.php';
+// The HTTP requests run with WP_DEBUG and WP_DEBUG_LOG on, so notices land in the log.
+$pg_config_path = ABSPATH . 'wp-config.php';
+$pg_config_orig = (string) file_get_contents( $pg_config_path );
+$pg_debug_log   = WP_CONTENT_DIR . '/debug.log';
+$pg_probe_path  = WP_CONTENT_DIR . '/mu-plugins/pixelgrid-test-probe.php';
+register_shutdown_function(
+	function () use ( $pg_config_path, $pg_config_orig, $pg_probe_path ) {
+		file_put_contents( $pg_config_path, $pg_config_orig );
+		if ( file_exists( $pg_probe_path ) ) {
+			unlink( $pg_probe_path );
+		}
+		// WooCommerce is always active again when this file ends.
+		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
+			activate_plugin( 'woocommerce/woocommerce.php' );
+		}
+	}
+);
+$pg_debug_defs = "if ( ! defined( 'WP_DEBUG' ) ) { define( 'WP_DEBUG', true ); }\nif ( ! defined( 'WP_DEBUG_LOG' ) ) { define( 'WP_DEBUG_LOG', true ); }\nif ( ! defined( 'WP_DEBUG_DISPLAY' ) ) { define( 'WP_DEBUG_DISPLAY', false ); }\n";
+$pg_config_new = preg_replace( "/define\(\s*'WP_DEBUG',\s*false\s*\);\s*/", '', $pg_config_orig );
+$pg_config_new = preg_replace( '/^<\?php\s*/', "<?php\n" . $pg_debug_defs, $pg_config_new, 1 );
+file_put_contents( $pg_config_path, $pg_config_new );
+$pg_log_lines = function () use ( $pg_debug_log ) {
+	if ( ! file_exists( $pg_debug_log ) ) {
+		return array();
+	}
+	clearstatcache();
+	$out = array();
+	foreach ( preg_split( '/\R/', (string) file_get_contents( $pg_debug_log ) ) as $line ) {
+		// Only PHP 8.5 deprecations raised inside WordPress core are noise; any other line counts.
+		$core_deprecation = false !== strpos( $line, 'Deprecated' ) && preg_match( '#[\\\\/]wp-(includes|admin)[\\\\/]#', $line );
+		// WooCommerce's Action Scheduler logs this core cron message once it is deactivated; it is not the theme's.
+		$woo_cron = false !== strpos( $line, 'Cron reschedule event error for hook: action_scheduler_run_queue' );
+		if ( '' !== trim( $line ) && ! $core_deprecation && ! $woo_cron ) {
+			$out[] = $line;
+		}
+	}
+	return $out;
+};
+// The log check proves itself: a probe notice raised over HTTP lands in the log.
+if ( ! is_dir( dirname( $pg_probe_path ) ) ) {
+	mkdir( dirname( $pg_probe_path ) );
+}
+file_put_contents( $pg_probe_path, "<?php\nif ( isset( \$_GET['pixelgrid_probe'] ) ) { trigger_error( 'pixelgrid test probe', E_USER_NOTICE ); }\n" );
+$pg_probe_start = count( $pg_log_lines() );
+$pg_get( add_query_arg( 'pixelgrid_probe', '1', home_url( '/' ) ) );
+$pg_probe_new = array_slice( $pg_log_lines(), $pg_probe_start );
+pg_assert( 1 === count( $pg_probe_new ) && false !== strpos( $pg_probe_new[0], 'pixelgrid test probe' ), 'the debug log catches a notice raised over HTTP' );
+unlink( $pg_probe_path );
+$pg_no_php_message = function ( $html ) {
+	return false === strpos( $html, 'Warning:' ) && false === strpos( $html, 'Notice:' ) && false === strpos( $html, 'Fatal error' ) && false === strpos( $html, 'critical error' );
+};
+
+$pg_theme        = get_stylesheet();
+$pg_header_block = '<!-- wp:template-part {"slug":"header","theme":"' . $pg_theme . '"} /-->';
+$pg_styles_id    = (int) WP_Theme_JSON_Resolver::get_user_data_from_wp_global_styles( wp_get_theme(), true )['ID'];
+$pg_styles_prev  = get_post( $pg_styles_id )->post_content;
+$pg_wc_pages     = array();
+foreach ( array( 'shop', 'cart', 'checkout', 'myaccount' ) as $pg_slug ) {
+	$pg_wc_pages[ $pg_slug ] = (int) wc_get_page_id( $pg_slug );
+	pg_assert( $pg_wc_pages[ $pg_slug ] > 0 && 'publish' === get_post_status( $pg_wc_pages[ $pg_slug ] ), "the WooCommerce $pg_slug page exists before setup" );
+}
+$pg_all       = array(
+	'design'  => true,
+	'pages'   => true,
+	'posts'   => true,
+	'menu'    => true,
+	'reading' => true,
+);
+$pg_log_start = count( $pg_log_lines() );
+
+$pg_made = $pg_watch(
+	function () use ( $pg_all ) {
+		return pixelgrid_starter_create( 'shop', $pg_all );
+	}
+);
+pg_assert_same(
+	array(
+		'pages'    => 4,
+		'posts'    => 3,
+		'menu'     => 1,
+		'products' => 12,
+	),
+	$pg_made,
+	'shop create makes 4 pages, 3 posts, 12 products and 1 menu'
+);
+pg_assert_same( array(), $GLOBALS['pg_shop_notices'], 'shop create raises no notice' );
+
+// Products: prices, sale prices, featured flags and categories.
+$pg_product_ids = array();
+$pg_featured    = array();
+foreach ( $pg_def['products'] as $pg_item ) {
+	$pg_id                              = pixelgrid_starter_find( 'product', 'shop:product-' . $pg_item['key'] );
+	$pg_product_ids[ $pg_item['key'] ] = $pg_id;
+	$pg_p                               = $pg_id ? wc_get_product( $pg_id ) : null;
+	pg_assert( $pg_p instanceof WC_Product, "product {$pg_item['key']} exists" );
+	if ( ! $pg_p ) {
+		continue;
+	}
+	pg_assert_same( (string) $pg_item['price'], $pg_p->get_regular_price(), "product {$pg_item['key']} price" );
+	pg_assert_same( isset( $pg_item['sale'] ) ? (string) $pg_item['sale'] : '', $pg_p->get_sale_price(), "product {$pg_item['key']} sale price" );
+	pg_assert_same( ! empty( $pg_item['featured'] ), $pg_p->get_featured(), "product {$pg_item['key']} featured flag" );
+	$pg_cat = get_term_by( 'slug', $pg_item['category'], 'product_cat' );
+	pg_assert( $pg_cat && array( (int) $pg_cat->term_id ) === array_map( 'intval', $pg_p->get_category_ids() ), "product {$pg_item['key']} is in {$pg_item['category']}" );
+	pg_assert( (int) $pg_p->get_image_id() > 0, "product {$pg_item['key']} has its picture" );
+	if ( $pg_p->get_featured() ) {
+		$pg_featured[] = $pg_p->get_name();
+	}
+}
+pg_assert_same( 4, count( $pg_featured ), '4 products are featured in WooCommerce' );
+
+// The menu links to the WooCommerce shop page first.
+$pg_menu_id = pixelgrid_starter_find( 'wp_navigation', 'shop:menu' );
+$pg_menu    = $pg_menu_id ? parse_blocks( get_post_field( 'post_content', $pg_menu_id ) ) : array();
+$pg_links   = array();
+foreach ( $pg_menu as $pg_block ) {
+	if ( 'core/navigation-link' === $pg_block['blockName'] ) {
+		$pg_links[] = $pg_block['attrs'];
+	}
+}
+pg_assert_same( 4, count( $pg_links ), 'the menu has 4 links' );
+$pg_first_link = $pg_links[0] ?? array();
+pg_assert_same( get_the_title( $pg_wc_pages['shop'] ), $pg_first_link['label'] ?? null, 'the first menu link is labelled with the shop page title' );
+pg_assert_same( wc_get_page_permalink( 'shop' ), $pg_first_link['url'] ?? null, 'the first menu link goes to the WooCommerce shop page' );
+pg_assert_same( $pg_wc_pages['shop'], $pg_first_link['id'] ?? null, 'the first menu link carries the shop page id' );
+pg_assert( 'page' === ( $pg_first_link['type'] ?? '' ) && 'post-type' === ( $pg_first_link['kind'] ?? '' ), 'the first menu link is a page link' );
+pg_assert_same( array( 'About', 'Journal', 'Contact' ), array_slice( wp_list_pluck( $pg_links, 'label' ), 1 ), 'the other links are About, Journal and Contact' );
+
+// Home: 4 featured products and 4 category tiles.
+list( $pg_code, $pg_home ) = $pg_get( home_url( '/' ) );
+pg_assert_same( 200, $pg_code, 'Home returns 200' );
+pg_assert( $pg_no_php_message( $pg_home ), 'Home shows no PHP message' );
+// The featured collection is the first product collection on Home (the class also appears in an inline style).
+$pg_featured_at = strpos( $pg_home, 'class="wp-block-woocommerce-product-collection' );
+$pg_featured_to = false !== $pg_featured_at ? strpos( $pg_home, '</ul>', $pg_featured_at ) : false;
+$pg_featured_ul = false !== $pg_featured_to ? substr( $pg_home, $pg_featured_at, $pg_featured_to - $pg_featured_at ) : '';
+preg_match_all( '/<li[^>]*class="[^"]*wc-block-product[^"]*"/', $pg_featured_ul, $pg_items );
+pg_assert_same( 4, count( $pg_items[0] ), 'Home featured section lists 4 products' );
+foreach ( $pg_featured as $pg_name ) {
+	pg_assert( false !== strpos( $pg_featured_ul, esc_html( $pg_name ) ), "Home featured section lists $pg_name" );
+}
+pg_assert_same( 4, substr_count( $pg_home, 'wp-block-column pixelgrid-shop-tile' ), 'Home has 4 category tiles' );
+pg_assert( false !== strpos( $pg_home, 'wc-block-mini-cart' ), 'the header renders the mini-cart' );
+pg_assert( false !== strpos( do_blocks( $pg_header_block ), 'wc-block-mini-cart' ), 'the header part holds the mini-cart' );
+
+// The shop page lists the 12 products.
+list( $pg_code, $pg_shop_html ) = $pg_get( home_url( '/?post_type=product' ) );
+pg_assert_same( 200, $pg_code, 'the shop page returns 200' );
+pg_assert( $pg_no_php_message( $pg_shop_html ), 'the shop page shows no PHP message' );
+$pg_listed = 0;
+foreach ( $pg_def['products'] as $pg_item ) {
+	if ( false !== strpos( $pg_shop_html, esc_html( $pg_item['name'] ) ) ) {
+		++$pg_listed;
+	}
+}
+pg_assert_same( 12, $pg_listed, 'the shop page lists the 12 products' );
+
+// A product page: its price and an add-to-cart form.
+$pg_teapot                   = wc_get_product( $pg_product_ids['round-teapot'] ?? 0 );
+$pg_teapot_url               = $pg_teapot ? get_permalink( $pg_teapot->get_id() ) : home_url( '/' );
+list( $pg_code, $pg_single ) = $pg_get( $pg_teapot_url );
+pg_assert_same( 200, $pg_code, 'the teapot page returns 200' );
+pg_assert( $pg_no_php_message( $pg_single ), 'the teapot page shows no PHP message' );
+pg_assert( false !== strpos( $pg_single, 'woocommerce-Price-amount' ) && false !== strpos( $pg_single, '29' ) && false !== strpos( $pg_single, '38' ), 'the teapot page shows its sale and regular price' );
+pg_assert( (bool) preg_match( '/<form[^>]*class="[^"]*\bcart\b/', $pg_single ) && false !== strpos( $pg_single, 'add-to-cart' ), 'the teapot page has an add-to-cart form' );
+
+// Cart and checkout.
+list( $pg_code, $pg_cart ) = $pg_get( wc_get_page_permalink( 'cart' ) );
+pg_assert_same( 200, $pg_code, 'the cart page returns 200' );
+pg_assert( false !== strpos( $pg_cart, 'wp-block-woocommerce-cart' ), 'the cart page holds the cart block' );
+list( $pg_code, $pg_checkout ) = $pg_get( wc_get_page_permalink( 'checkout' ) );
+pg_assert_same( 200, $pg_code, 'the checkout page returns 200' );
+pg_assert( false !== strpos( $pg_checkout, 'wp-block-woocommerce-checkout' ) || false !== strpos( $pg_checkout, 'wp-block-woocommerce-cart' ), 'the checkout page holds the WooCommerce block markup' );
+
+// The user styles hold the Shop palette.
+$pg_user_styles = json_decode( get_post( $pg_styles_id )->post_content, true );
+$pg_user_colors = array();
+foreach ( (array) ( $pg_user_styles['settings']['color']['palette'] ?? array() ) as $pg_entry ) {
+	$pg_user_colors[ $pg_entry['slug'] ?? '' ] = strtoupper( $pg_entry['color'] ?? '' );
+}
+pg_assert_same( $pg_shop_colors, $pg_user_colors, 'the user styles hold the Shop palette' );
+pg_assert_same( array(), array_slice( $pg_log_lines(), $pg_log_start ), 'no PHP notices logged during Shop setup and page views' );
+
+// The setup screen counts the products in the redirect.
+pg_assert_same( array( 'pixelgrid_created' => '4-3-1-12' ), pixelgrid_starter_created_args( $pg_made ), 'the redirect after Shop setup carries 12 products' );
+
+// Another starting point cannot be added on top.
+$pg_busy = pixelgrid_starter_create( 'news', array( 'pages' => true ) );
+pg_assert( is_wp_error( $pg_busy ) && 'pixelgrid_variant_busy' === $pg_busy->get_error_code(), 'news on top of shop gives pixelgrid_variant_busy' );
+
+// Remove.
+$pg_cat_ids = array();
+foreach ( array_keys( $pg_def['product_categories'] ) as $pg_slug ) {
+	$pg_cat_ids[ $pg_slug ] = (int) get_term_by( 'slug', $pg_slug, 'product_cat' )->term_id;
+}
+$pg_removed = $pg_watch( 'pixelgrid_starter_remove' );
+pg_assert( $pg_removed['removed'] >= 30, 'shop remove removes at least 30 items (got ' . $pg_removed['removed'] . ')' );
+pg_assert_same( array(), $pg_removed['kept'], 'shop remove keeps nothing' );
+pg_assert_same( array(), $GLOBALS['pg_shop_notices'], 'shop remove raises no notice' );
+$pg_left = array();
+foreach ( $pg_product_ids as $pg_key => $pg_id ) {
+	if ( 'trash' !== get_post_status( $pg_id ) ) {
+		$pg_left[] = $pg_key;
+	}
+}
+pg_assert_same( array(), $pg_left, 'shop remove trashes the 12 products' );
+foreach ( $pg_cat_ids as $pg_slug => $pg_term_id ) {
+	pg_assert( null === get_term( $pg_term_id, 'product_cat' ), "shop remove deletes the empty product category $pg_slug" );
+}
+pg_assert_same( $pg_styles_prev, get_post( $pg_styles_id )->post_content, 'the user styles are back to the pre-setup content' );
+$pg_header_now = do_blocks( $pg_header_block );
+pg_assert( false !== strpos( $pg_header_now, 'Get a quote' ) && false === strpos( $pg_header_now, 'wc-block-mini-cart' ), 'the header renders the theme default after removal' );
+foreach ( $pg_wc_pages as $pg_slug => $pg_id ) {
+	pg_assert_same( 'publish', get_post_status( $pg_id ), "the WooCommerce $pg_slug page stays after remove" );
+}
+
+// Review Focus 1: WooCommerce is deactivated after setup.
+pg_assert( is_array( pixelgrid_starter_create( 'shop', $pg_all ) ), 'shop created again' );
+$pg_teapot_id  = pixelgrid_starter_find( 'product', 'shop:product-round-teapot' );
+$pg_teapot_url = get_permalink( $pg_teapot_id );
+deactivate_plugins( 'woocommerce/woocommerce.php' );
+pg_assert( ! is_plugin_active( 'woocommerce/woocommerce.php' ), 'WooCommerce deactivated' );
+$pg_log_before             = count( $pg_log_lines() );
+list( $pg_code, $pg_after ) = $pg_get( home_url( '/' ) );
+pg_assert_same( 200, $pg_code, 'without WooCommerce, Home returns 200' );
+pg_assert( $pg_no_php_message( $pg_after ), 'without WooCommerce, Home shows no PHP message' );
+pg_assert( false === strpos( $pg_after, 'wc-block-mini-cart' ), 'without WooCommerce, the header renders no mini-cart' );
+list( $pg_code, $pg_after_product ) = $pg_get( $pg_teapot_url );
+pg_assert( in_array( $pg_code, array( 200, 404 ), true ), 'without WooCommerce, the product address answers with 200 or 404 (got ' . $pg_code . ')' );
+pg_assert( $pg_no_php_message( $pg_after_product ), 'without WooCommerce, the product address shows no PHP message' );
+// The setup screen over HTTP, signed in: Shop is disabled with the install link, and the admin shows no PHP message.
+$pg_uid     = get_current_user_id();
+$pg_expires = time() + HOUR_IN_SECONDS;
+$pg_cookies = array(
+	AUTH_COOKIE      => wp_generate_auth_cookie( $pg_uid, $pg_expires, 'auth' ),
+	LOGGED_IN_COOKIE => wp_generate_auth_cookie( $pg_uid, $pg_expires, 'logged_in' ),
+);
+list( $pg_code, $pg_admin ) = $pg_get( admin_url( 'themes.php?page=pixelgrid-setup' ), $pg_cookies );
+pg_assert_same( 200, $pg_code, 'without WooCommerce, the setup screen returns 200' );
+pg_assert( $pg_no_php_message( $pg_admin ), 'without WooCommerce, the setup screen shows no PHP message' );
+$pg_off_radio = $pg_shop_radio_of( $pg_admin );
+$pg_off_card  = $pg_shop_card_of( $pg_admin );
+pg_assert( '' !== $pg_off_radio && false !== strpos( $pg_off_radio, 'disabled' ), 'without WooCommerce, the setup screen shows the shop radio disabled' );
+pg_assert( false !== strpos( $pg_off_card, 'Install the required plugin' ), 'without WooCommerce, the setup screen shows the install link' );
+pg_assert_same( array(), array_slice( $pg_log_lines(), $pg_log_before ), 'without WooCommerce, no PHP notice is logged for Home, the product address and the setup screen' );
+$pg_removed = $pg_watch( 'pixelgrid_starter_remove' );
+pg_assert_same( 'trash', get_post_status( $pg_teapot_id ), 'without WooCommerce, remove still trashes the products' );
+pg_assert( $pg_removed['removed'] >= 30, 'without WooCommerce, remove still counts at least 30 items' );
+pg_assert_same( array(), $GLOBALS['pg_shop_notices'], 'without WooCommerce, remove raises no notice' );
+activate_plugin( 'woocommerce/woocommerce.php' );
+pg_assert( is_plugin_active( 'woocommerce/woocommerce.php' ), 'WooCommerce reactivated' );
 
 pg_done();

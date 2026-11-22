@@ -88,6 +88,21 @@ function pixelgrid_starter_removed_args( array $result ): array {
 }
 
 /**
+ * Query args for the redirect after setup: the counts of pages, posts and menus, then products
+ * for a variant that has them, joined by dashes.
+ *
+ * @param array $made Result of pixelgrid_starter_create().
+ * @return array
+ */
+function pixelgrid_starter_created_args( array $made ): array {
+	$counts = array( (int) $made['pages'], (int) $made['posts'], (int) $made['menu'] );
+	if ( isset( $made['products'] ) ) {
+		$counts[] = (int) $made['products'];
+	}
+	return array( 'pixelgrid_created' => implode( '-', $counts ) );
+}
+
+/**
  * Handles the create and remove buttons.
  */
 function pixelgrid_starter_handle() {
@@ -118,7 +133,7 @@ function pixelgrid_starter_handle() {
 			wp_safe_redirect( add_query_arg( array( 'pixelgrid_error' => str_replace( 'pixelgrid_variant_', '', $made->get_error_code() ) ), $back ) );
 			exit;
 		}
-		wp_safe_redirect( add_query_arg( array( 'pixelgrid_created' => $made['pages'] . '-' . $made['posts'] . '-' . $made['menu'] ), $back ) );
+		wp_safe_redirect( add_query_arg( pixelgrid_starter_created_args( $made ), $back ) );
 		exit;
 	}
 	if ( 'remove' === $task && pixelgrid_starter_ticked( 'pixelgrid_confirm' ) ) {
@@ -280,7 +295,8 @@ function pixelgrid_starter_screen() {
 		// Status messages after a redirect; they only pick which message to show.
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['pixelgrid_created'] ) ) {
-			$counts = array_map( 'absint', explode( '-', sanitize_text_field( wp_unslash( $_GET['pixelgrid_created'] ) ) ) + array( 0, 0, 0 ) );
+			$parts  = explode( '-', sanitize_text_field( wp_unslash( $_GET['pixelgrid_created'] ) ) );
+			$counts = array_map( 'absint', $parts + array( 0, 0, 0 ) );
 			echo '<div class="notice notice-success"><p>';
 			printf(
 				/* translators: 1: number of pages, 2: number of posts, 3: number of menus. */
@@ -289,6 +305,15 @@ function pixelgrid_starter_screen() {
 				(int) $counts[1],
 				(int) $counts[2]
 			);
+			// A fourth count is there only for a variant with products.
+			if ( isset( $parts[3] ) ) {
+				echo ' ';
+				printf(
+					/* translators: %d: number of products. */
+					esc_html( _n( '%d product was added to the shop.', '%d products were added to the shop.', (int) $counts[3], 'pixelgrid' ) ),
+					(int) $counts[3]
+				);
+			}
 			echo ' <a href="' . esc_url( home_url( '/' ) ) . '">' . esc_html__( 'View the site', 'pixelgrid' ) . '</a></p></div>';
 		}
 		if ( isset( $_GET['pixelgrid_removed'] ) ) {

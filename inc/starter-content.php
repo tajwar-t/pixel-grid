@@ -701,6 +701,9 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 			if ( isset( $item['sale'] ) && '' !== (string) $item['sale'] ) {
 				$product->set_sale_price( (string) $item['sale'] );
 			}
+			if ( ! empty( $item['featured'] ) ) {
+				$product->set_featured( true );
+			}
 			$product->set_short_description( (string) ( $item['short'] ?? '' ) );
 			$product->set_description( (string) ( $item['content'] ?? '' ) );
 			if ( $in ) {
@@ -724,6 +727,23 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 	if ( $options['menu'] && $pages ) {
 		$links = array();
 		foreach ( $def['menu'] as $slug ) {
+			if ( 'woo:shop' === (string) $slug ) {
+				// The WooCommerce shop page, linked only while WooCommerce is active and the page exists.
+				$shop_page = function_exists( 'wc_get_page_id' ) ? (int) wc_get_page_id( 'shop' ) : 0;
+				if ( $shop_page <= 0 ) {
+					continue;
+				}
+				$links[] = '<!-- wp:navigation-link ' . wp_json_encode(
+					array(
+						'label' => get_the_title( $shop_page ),
+						'type'  => 'page',
+						'id'    => $shop_page,
+						'url'   => wc_get_page_permalink( 'shop' ),
+						'kind'  => 'post-type',
+					)
+				) . ' /-->';
+				continue;
+			}
 			if ( 0 === strpos( (string) $slug, 'cat:' ) ) {
 				// A category entry, linked only when the category exists.
 				$term = get_term_by( 'slug', substr( (string) $slug, 4 ), 'category' );
