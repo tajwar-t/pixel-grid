@@ -437,6 +437,24 @@ ul.is-style-pixel li::before {
 	display: none;
 }
 
+/* Narrow screens: the content box can be narrower than 11 grid cells, so the mosaic measures its
+   own box (a size container) and shrinks its cells to fit. The cells read --pixelgrid-u, so the
+   mosaic redefines it locally from a copy of the page unit taken on the figure. */
+@media (max-width: 781px) {
+	.wp-block-image[class*="is-style-mosaic-"] {
+		container-type: inline-size;
+		--pixelgrid-page-u: var(--pixelgrid-u);
+	}
+
+	.wp-block-image[class*="is-style-mosaic-"] img {
+		max-width: 100%;
+	}
+
+	.wp-block-image[class*="is-style-mosaic-"] .pixelgrid-mosaic {
+		--pixelgrid-u: min(var(--pixelgrid-page-u), 100cqw / 11);
+	}
+}
+
 .pixelgrid-mosaic {
 	display: grid;
 	grid-template-columns: repeat(11, var(--pixelgrid-u));

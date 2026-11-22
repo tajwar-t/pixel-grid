@@ -225,7 +225,12 @@
 			var r = m.getBoundingClientRect();
 			var x = r.left;
 			var y = r.top + window.scrollY;
-			m.style.transform = 'translate(' + ( Math.round( x / U ) * U - x ) + 'px, ' + ( Math.round( y / U ) * U - y ) + 'px)';
+			var dx = Math.round( x / U ) * U - x;
+			// Never nudge a mosaic past the right edge of the page (narrow screens).
+			if ( r.right + dx > root.clientWidth ) {
+				dx = Math.floor( x / U ) * U - x;
+			}
+			m.style.transform = 'translate(' + dx + 'px, ' + ( Math.round( y / U ) * U - y ) + 'px)';
 		} );
 	}
 

@@ -160,4 +160,12 @@ pg_assert( false !== strpos( $pg_terms_out, 'Business' ) && false === strpos( $p
 pg_assert( false === has_filter( 'get_the_terms', 'pixelgrid_hide_most_read_term' ), 'the Most read filter is removed after a top-level render' );
 
 wp_reset_query();
+// Mosaics fit narrow screens: below 782px the figure is a size container and the mosaic caps its
+// cell at a eleventh of it; the script never nudges a mosaic past the right edge.
+$pg_css_m = (string) file_get_contents( get_stylesheet_directory() . '/style.css' );
+pg_assert( (bool) preg_match( '/@media \(max-width: 781px\)\s*\{\s*\.wp-block-image\[class\*="is-style-mosaic-"\]\s*\{[^}]*container-type: inline-size;[^}]*--pixelgrid-page-u: var\(--pixelgrid-u\);/', $pg_css_m ), 'mosaic figures are size containers on narrow screens' );
+pg_assert( false !== strpos( $pg_css_m, '--pixelgrid-u: min(var(--pixelgrid-page-u), 100cqw / 11);' ), 'mosaic cells shrink to fit the figure on narrow screens' );
+$pg_js_m = (string) file_get_contents( get_parent_theme_file_path( 'assets/js/pixelgrid.js' ) );
+pg_assert( false !== strpos( $pg_js_m, 'if ( r.right + dx > root.clientWidth ) {' ), 'the mosaic snap never pushes past the right edge' );
+
 pg_done();
