@@ -48,7 +48,7 @@ News adds:
 
 Shop adds:
 
-* Pages: Home, About, Contact and Journal, plus a Shop link in the menu. The shop, cart, checkout and account pages are WooCommerce's own pages, shown with the theme's grid templates.
+* Pages: Home, About, Contact and Journal, plus a Shop link in the menu. The shop, cart, checkout and account pages are WooCommerce's own pages; shop, cart and checkout use the theme's grid templates, and the account page uses the page template.
 * 12 sample products in four categories (Kitchen, Home, Outdoor and Tech), each with a pixel-art picture. Four are on sale and four are featured on the Home page.
 * 3 sample journal posts with images.
 * The design changes the colours, header (with product search, account link and a mini-cart), footer and the posts page template.
@@ -84,7 +84,7 @@ Pixelgrid works with plugins that follow WordPress standards. For a contact form
 
 = Does the theme work with WooCommerce? =
 
-Yes. With WooCommerce active, the shop, product, cart, checkout and account pages are styled on the theme's grid, whichever starting point you use, or none. The Shop starting point needs WooCommerce, and the theme does not install it for you. Currency, payments, shipping and taxes are WooCommerce settings, under WooCommerce, Settings.
+Yes. With WooCommerce active, the shop, product, cart, checkout and order pages are styled on the theme's grid, whichever starting point you use, or none. The Shop starting point needs WooCommerce, and the theme does not install it for you. Currency, payments, shipping and taxes are WooCommerce settings, under WooCommerce, Settings.
 
 = How do I change a section's colour? =
 
@@ -106,12 +106,12 @@ Changes apply to the whole site. Keep enough contrast between each background an
 = 1.6.0 =
 * Released: November 22, 2026
 
-New Shop starting point for a small shop of everyday things: Home, About, Contact and Journal pages, 12 products in four categories with pixel-art pictures, and 3 journal posts, with its own design: colours, a header with a mini-cart, footer and posts page template. It needs WooCommerce, which the theme does not install; without it the Shop is shown on the setup screen but cannot be chosen, with a link to the plugin installer. WooCommerce's shop, product, cart, checkout and order pages are now styled on the grid for every starting point, with new Pixelgrid Shop patterns and a Pixel heart mosaic. Starter content can now include products, and removing it moves them to the trash and deletes the product categories it created once nothing else uses them. Menus can link to the WooCommerce shop page, and the link is only added while that page is published. Picture mosaics now fit narrow screens, so phones no longer scroll sideways. Running setup again no longer resets a category you picked for a row on the starter Home page, and removal keeps categories and tags that drafts or scheduled posts still use. The Dashboard notice now says there are four starting points and when the Shop needs WooCommerce. The screenshot now shows the home pages of all four starting points.
+New Shop starting point for a small shop of everyday things: Home, About, Contact and Journal pages, 12 products in four categories with pixel-art pictures, and 3 journal posts, with its own design: colours, a header with a mini-cart, footer and posts page template. It needs WooCommerce, which the theme does not install; without it the Shop is shown on the setup screen but cannot be chosen, with a link to the plugin installer. WooCommerce's shop, product, cart, checkout and order pages are now styled on the grid for every starting point, with new Pixelgrid Shop patterns and a Pixel heart mosaic. Starter content can now include products, and removing it moves them to the trash and deletes the product categories it created once nothing else uses them. Menus can link to the WooCommerce shop page, and the link is only added while that page is published. Picture mosaics now fit narrow screens, so phones no longer scroll sideways. The Dashboard notice now says there are four starting points and when the Shop needs WooCommerce. The screenshot now shows the home pages of all four starting points.
 
 = 1.5.0 =
 * Released: November 21, 2026
 
-New News starting point for a city newspaper: Home, Latest, About, Contact and Tips pages and 15 articles in five sections, with its own design: colours, the Newsreader serif, a masthead with today's date, footer, and templates for the posts page, articles and category pages. Starter posts can now be in several categories, and menus can link to categories. The rows on the News Home page are filled with the real categories when you set it up. A new "Today's date" block binding shows the current date, and articles end with a row of related articles that share a category. The "Most read" category is hidden from category labels, since it is a list you keep yourself. Removing the starter content now also removes the tags that setup created, for all starting points, when no other post uses them. Starter posts are now dated from today, so the newest one is the lead story.
+New News starting point for a city newspaper: Home, Latest, About, Contact and Tips pages and 15 articles in five sections, with its own design: colours, the Newsreader serif, a masthead with today's date, footer, and templates for the posts page, articles and category pages. Starter posts can now be in several categories, and menus can link to categories. The rows on the News Home page are filled with the real categories when you set it up. A new "Today's date" block binding shows the current date, and articles end with a row of related articles that share a category. The "Most read" category is hidden from category labels, since it is a list you keep yourself. Removing the starter content now also removes the tags that setup created, for all starting points, when no other post uses them. Starter posts are now dated from today, so the newest one is the lead story. Running setup again no longer resets a category you picked for a row on the starter Home page, and removal keeps categories and tags that drafts or scheduled posts still use.
 
 = 1.4.0 =
 * Released: November 19, 2026
