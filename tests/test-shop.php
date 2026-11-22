@@ -561,6 +561,86 @@ pg_assert_same( array(), $GLOBALS['pg_shop_notices'], 'term_exists: no notice' )
 pixelgrid_starter_remove();
 pg_assert( get_term( $pg_named, 'product_cat' ) instanceof WP_Term, 'term_exists: the existing category survives remove' );
 
+// A starter product duplicated with WooCommerce's Duplicate is the user's own: no marker, and
+// remove keeps it and its shared starter image.
+require_once WC()->plugin_path() . '/includes/admin/class-wc-admin-duplicate-product.php';
+pixelgrid_starter_create( 'shopfix', array( 'posts' => true ) );
+$pg_mug_id    = pixelgrid_starter_find( 'product', 'shopfix:product-pixel-mug' );
+$pg_mug_image = (int) wc_get_product( $pg_mug_id )->get_image_id();
+$pg_copy      = ( new WC_Admin_Duplicate_Product() )->product_duplicate( wc_get_product( $pg_mug_id ) );
+$pg_copy_id   = $pg_copy ? (int) $pg_copy->get_id() : 0;
+pg_assert( $pg_copy_id > 0 && $pg_copy_id !== $pg_mug_id, 'the starter mug is duplicated' );
+pg_assert_same( '', (string) get_post_meta( $pg_copy_id, '_pixelgrid_starter', true ), 'the duplicated product carries no starter marker' );
+pg_assert_same( $pg_mug_image, (int) get_post_thumbnail_id( $pg_copy_id ), 'the duplicated product shares the starter image' );
+pixelgrid_starter_remove();
+pg_assert_same( 'trash', get_post_status( $pg_mug_id ), 'remove trashes the starter mug' );
+pg_assert( 'trash' !== get_post_status( $pg_copy_id ) && false !== get_post_status( $pg_copy_id ), 'remove keeps the duplicated product' );
+pg_assert( get_post( $pg_mug_image ) instanceof WP_Post, 'remove keeps the starter image the duplicated product uses' );
+pg_assert_same( $pg_mug_image, (int) get_post_thumbnail_id( $pg_copy_id ), 'the duplicated product keeps its image' );
+wp_delete_post( $pg_copy_id, true );
+wp_delete_attachment( $pg_mug_image, true );
+
+// A starter image that a user's own post uses as its featured image is kept; one that only a
+// trashed user post uses is deleted.
+pixelgrid_starter_create( 'shopfix', array( 'posts' => true ) );
+$pg_mug_image   = (int) wc_get_product( pixelgrid_starter_find( 'product', 'shopfix:product-pixel-mug' ) )->get_image_id();
+$pg_print_image = (int) wc_get_product( pixelgrid_starter_find( 'product', 'shopfix:product-grid-print' ) )->get_image_id();
+$pg_user_post   = wp_insert_post(
+	array(
+		'post_title'  => 'My post with a starter image',
+		'post_status' => 'draft',
+	)
+);
+set_post_thumbnail( $pg_user_post, $pg_mug_image );
+$pg_trashed_post = wp_insert_post(
+	array(
+		'post_title'  => 'My trashed post',
+		'post_status' => 'publish',
+	)
+);
+set_post_thumbnail( $pg_trashed_post, $pg_print_image );
+wp_trash_post( $pg_trashed_post );
+pixelgrid_starter_remove();
+pg_assert( get_post( $pg_mug_image ) instanceof WP_Post, 'remove keeps a starter image a user draft uses as its featured image' );
+pg_assert_same( $pg_mug_image, (int) get_post_thumbnail_id( $pg_user_post ), 'the user draft keeps its featured image' );
+pg_assert( null === get_post( $pg_print_image ), 'remove deletes a starter image only a trashed user post uses' );
+wp_delete_post( $pg_user_post, true );
+wp_delete_post( $pg_trashed_post, true );
+wp_delete_attachment( $pg_mug_image, true );
+
+// The setup screen lists the starter products and mentions them in the remove text.
+pixelgrid_starter_create( 'shopfix', array( 'posts' => true ) );
+$pg_mug_id = pixelgrid_starter_find( 'product', 'shopfix:product-pixel-mug' );
+wp_update_post(
+	array(
+		'ID'          => $pg_mug_id,
+		'post_status' => 'pending',
+	)
+);
+$pg_html = $pg_screen_with( array() );
+pg_assert( false !== strpos( $pg_html, '<h3>Products</h3>' ), 'the starter content list has a Products group' );
+pg_assert( false !== strpos( $pg_html, esc_url( get_edit_post_link( $pg_mug_id ) ) . '">Pixel mug</a>' ), 'the Products group links the pending mug to its edit screen' );
+pg_assert( false !== strpos( $pg_html, esc_url( get_edit_post_link( pixelgrid_starter_find( 'product', 'shopfix:product-grid-print' ) ) ) . '">Grid print</a>' ), 'the Products group links the print to its edit screen' );
+pg_assert( false !== strpos( $pg_html, 'Moves the starter pages, posts, products and menu to the trash' ), 'the remove text mentions products' );
+pg_assert( false !== strpos( $pg_html, 'product categories' ), 'the remove text mentions product categories' );
+pg_assert( false === strpos( $pg_html, esc_url( get_edit_post_link( $pg_own_id ) ) ), 'the user\'s own product is not listed' );
+pixelgrid_starter_remove();
+
+// Products alone count as starter content on the screen, even with no variant recorded.
+$pg_lone = wp_insert_post(
+	array(
+		'post_type'   => 'product',
+		'post_title'  => 'Lone starter product',
+		'post_status' => 'publish',
+	)
+);
+update_post_meta( $pg_lone, '_pixelgrid_starter', 'shopfix:product-lone' );
+delete_option( 'pixelgrid_starter_variant' );
+$pg_html = $pg_screen_with( array() );
+pg_assert( false !== strpos( $pg_html, 'Starter content on this site' ) && false !== strpos( $pg_html, 'Lone starter product' ), 'a starter product alone shows the starter content section' );
+pixelgrid_starter_remove();
+pg_assert_same( 'trash', get_post_status( $pg_lone ), 'remove trashes the lone starter product' );
+
 // The Shop starting point, end to end.
 pg_assert( '' !== $pg_shop_radio && false === strpos( $pg_shop_radio, 'disabled' ), 'with WooCommerce, the shop radio is enabled' );
 pg_assert( false === strpos( $pg_shop_card, 'Install the required plugin' ), 'with WooCommerce, the shop card has no install link' );

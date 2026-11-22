@@ -275,12 +275,14 @@ function pixelgrid_starter_screen() {
 	if ( ! current_user_can( 'edit_theme_options' ) ) {
 		return;
 	}
-	$created  = pixelgrid_starter_created();
-	$total    = count( $created['page'] ) + count( $created['post'] ) + count( $created['wp_navigation'] );
-	$can      = pixelgrid_starter_can();
-	$variants = pixelgrid_variants();
-	$active   = pixelgrid_starter_active_variant();
-	$applied  = false !== get_option( 'pixelgrid_starter_design', false );
+	$created            = pixelgrid_starter_created();
+	$created['product'] = pixelgrid_starter_products();
+	$total              = count( $created['page'] ) + count( $created['post'] ) + count( $created['product'] ) + count( $created['wp_navigation'] );
+	$can                = pixelgrid_starter_can();
+	$variants           = pixelgrid_variants();
+	$active             = pixelgrid_starter_active_variant();
+	$has_products       = $created['product'] || ( '' !== $active && ! empty( $variants[ $active ]['products'] ) );
+	$applied            = false !== get_option( 'pixelgrid_starter_design', false );
 	?>
 	<style>
 		.pixelgrid-setup .pixelgrid-cards { display: flex; flex-wrap: wrap; gap: 12px; margin: 0; padding: 0; border: 0; }
@@ -468,8 +470,9 @@ function pixelgrid_starter_screen() {
 			<?php endif; ?>
 			<?php
 			$groups = array(
-				'page' => __( 'Pages', 'pixelgrid' ),
-				'post' => __( 'Posts', 'pixelgrid' ),
+				'page'    => __( 'Pages', 'pixelgrid' ),
+				'post'    => __( 'Posts', 'pixelgrid' ),
+				'product' => __( 'Products', 'pixelgrid' ),
 			);
 			foreach ( $groups as $type => $label ) :
 				if ( ! $created[ $type ] ) {
@@ -478,15 +481,31 @@ function pixelgrid_starter_screen() {
 				?>
 				<h3><?php echo esc_html( $label ); ?></h3>
 				<ul class="ul-disc">
-					<?php foreach ( $created[ $type ] as $id ) : ?>
-						<li><a href="<?php echo esc_url( get_edit_post_link( $id ) ); ?>"><?php echo esc_html( get_the_title( $id ) ); ?></a></li>
+					<?php
+					foreach ( $created[ $type ] as $id ) :
+						// Without WooCommerce a product has no edit screen: its title is listed alone.
+						$edit = (string) get_edit_post_link( $id );
+						?>
+						<?php if ( '' !== $edit ) : ?>
+						<li><a href="<?php echo esc_url( $edit ); ?>"><?php echo esc_html( get_the_title( $id ) ); ?></a></li>
+						<?php else : ?>
+						<li><?php echo esc_html( get_the_title( $id ) ); ?></li>
+						<?php endif; ?>
 					<?php endforeach; ?>
 				</ul>
 			<?php endforeach; ?>
 
 			<?php if ( $can ) : ?>
 			<h2><?php esc_html_e( 'Remove starter content', 'pixelgrid' ); ?></h2>
-			<p><?php esc_html_e( 'Moves the starter pages, posts and menu to the trash, deletes the starter images, removes empty starter categories, restores your homepage setting and puts back the styles, header, footer and templates that were replaced, unless you changed them after setup. Content you created yourself is not touched, but changes you made to starter pages are lost with them.', 'pixelgrid' ); ?></p>
+			<p>
+				<?php
+				if ( $has_products ) {
+					esc_html_e( 'Moves the starter pages, posts, products and menu to the trash, deletes the starter images, removes empty starter categories and product categories, restores your homepage setting and puts back the styles, header, footer and templates that were replaced, unless you changed them after setup. Content you created yourself is not touched, but changes you made to starter pages and products are lost with them.', 'pixelgrid' );
+				} else {
+					esc_html_e( 'Moves the starter pages, posts and menu to the trash, deletes the starter images, removes empty starter categories, restores your homepage setting and puts back the styles, header, footer and templates that were replaced, unless you changed them after setup. Content you created yourself is not touched, but changes you made to starter pages are lost with them.', 'pixelgrid' );
+				}
+				?>
+			</p>
 			<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 				<input type="hidden" name="action" value="pixelgrid_starter">
 				<input type="hidden" name="pixelgrid_task" value="remove">

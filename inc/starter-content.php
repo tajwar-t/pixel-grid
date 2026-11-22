@@ -99,7 +99,7 @@ function pixelgrid_starter_created() {
 	$ids = get_posts(
 		array(
 			'post_type'      => array( 'page', 'post', 'attachment', 'wp_navigation' ),
-			'post_status'    => array( 'publish', 'draft', 'private', 'inherit' ),
+			'post_status'    => array( 'publish', 'draft', 'pending', 'future', 'private', 'inherit' ),
 			'meta_key'       => '_pixelgrid_starter', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- runs only on the setup page.
 			'posts_per_page' => 200, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- bounded list of starter items, admin setup page only.
 			'fields'         => 'ids',
@@ -116,6 +116,59 @@ function pixelgrid_starter_created() {
 	}
 	return $out;
 }
+
+/**
+ * Lists the starter products. Found by post type, so this works while WooCommerce is inactive.
+ *
+ * @return int[] Product IDs.
+ */
+function pixelgrid_starter_products(): array {
+	$ids = get_posts(
+		array(
+			'post_type'      => 'product',
+			'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
+			'meta_key'       => '_pixelgrid_starter', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- runs only on the setup page.
+			'posts_per_page' => 200, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- bounded list of starter items, admin setup page only.
+			'fields'         => 'ids',
+		)
+	);
+	return array_map( 'intval', $ids );
+}
+
+/**
+ * Whether a post that is not in the trash and is not starter content uses an image as its
+ * featured image, for example a product the user duplicated from a starter product.
+ *
+ * @param int $attachment_id Attachment ID.
+ * @return bool
+ */
+function pixelgrid_starter_image_in_use( int $attachment_id ): bool {
+	global $wpdb;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- runs only when starter content is removed.
+	$found = $wpdb->get_var(
+		$wpdb->prepare(
+			"SELECT p.ID FROM {$wpdb->posts} p INNER JOIN {$wpdb->postmeta} t ON t.post_id = p.ID AND t.meta_key = %s LEFT JOIN {$wpdb->postmeta} s ON s.post_id = p.ID AND s.meta_key = %s WHERE t.meta_value = %s AND s.meta_id IS NULL AND p.post_type <> 'revision' AND p.post_status NOT IN ( 'trash', 'auto-draft' ) LIMIT 1",
+			'_thumbnail_id',
+			'_pixelgrid_starter',
+			(string) $attachment_id
+		)
+	);
+	return ! empty( $found );
+}
+
+/**
+ * Keeps the starter marker off products duplicated with WooCommerce's Duplicate, so a copy
+ * the user made is never removed with the starter content.
+ *
+ * @param array $exclude Meta keys WooCommerce does not copy.
+ * @return array
+ */
+function pixelgrid_starter_duplicate_exclude_meta( $exclude ) {
+	$exclude   = (array) $exclude;
+	$exclude[] = '_pixelgrid_starter';
+	return $exclude;
+}
+add_filter( 'woocommerce_duplicate_product_exclude_meta', 'pixelgrid_starter_duplicate_exclude_meta' );
 
 /**
  * Replaces pattern references with the pattern markup, so pages hold editable blocks.
@@ -733,7 +786,7 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 				if ( $shop_page <= 0 || 'publish' !== get_post_status( $shop_page ) ) {
 					continue;
 				}
-				$links[] = '<!-- wp:navigation-link ' . wp_json_encode(
+				$links[] = '<!-- wp:navigation-link ' . serialize_block_attributes(
 					array(
 						'label' => get_the_title( $shop_page ),
 						'type'  => 'page',
@@ -750,7 +803,7 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 				if ( ! $term ) {
 					continue;
 				}
-				$links[] = '<!-- wp:navigation-link ' . wp_json_encode(
+				$links[] = '<!-- wp:navigation-link ' . serialize_block_attributes(
 					array(
 						'label' => $term->name,
 						'type'  => 'category',
@@ -764,7 +817,7 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 			if ( empty( $pages[ $slug ] ) ) {
 				continue;
 			}
-			$links[] = '<!-- wp:navigation-link ' . wp_json_encode(
+			$links[] = '<!-- wp:navigation-link ' . serialize_block_attributes(
 				array(
 					'label' => get_the_title( $pages[ $slug ] ),
 					'type'  => 'page',
@@ -842,6 +895,10 @@ function pixelgrid_starter_remove(): array {
 	);
 	foreach ( $created as $type => $ids ) {
 		foreach ( $ids as $id ) {
+			// A starter image that the user's own content still shows is left in the library.
+			if ( 'attachment' === $type && pixelgrid_starter_image_in_use( (int) $id ) ) {
+				continue;
+			}
 			$done = 'attachment' === $type ? wp_delete_attachment( $id, true ) : wp_trash_post( $id );
 			if ( $done ) {
 				++$count;
@@ -849,16 +906,7 @@ function pixelgrid_starter_remove(): array {
 		}
 	}
 	// Products are found by post type and trashed without WooCommerce, which may be inactive now.
-	$products = get_posts(
-		array(
-			'post_type'      => 'product',
-			'post_status'    => array( 'publish', 'draft', 'private', 'pending', 'future' ),
-			'meta_key'       => '_pixelgrid_starter', // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- runs only on the setup page.
-			'posts_per_page' => 200, // phpcs:ignore WordPress.WP.PostsPerPage.posts_per_page_posts_per_page -- bounded list of starter items, admin setup page only.
-			'fields'         => 'ids',
-		)
-	);
-	foreach ( $products as $id ) {
+	foreach ( pixelgrid_starter_products() as $id ) {
 		if ( wp_trash_post( (int) $id ) ) {
 			++$count;
 		}

@@ -589,4 +589,60 @@ pg_assert_same( class_exists( 'WC_Product_Simple' ) ? 1 : 0, is_array( $made ) &
 pixelgrid_starter_remove();
 pg_assert_same( false, get_option( 'pixelgrid_starter_product_cats' ), 'remove leaves no product category record' );
 
+// Starter items the user set to pending or scheduled are still listed as starter content.
+pixelgrid_starter_create( 'it', array( 'posts' => true ) );
+$pg_listed  = pixelgrid_starter_created();
+$pg_pending = $pg_listed['post'][0] ?? 0;
+$pg_future  = $pg_listed['post'][1] ?? 0;
+wp_update_post(
+	array(
+		'ID'          => $pg_pending,
+		'post_status' => 'pending',
+	)
+);
+wp_update_post(
+	array(
+		'ID'            => $pg_future,
+		'post_status'   => 'future',
+		'post_date'     => gmdate( 'Y-m-d H:i:s', time() + 30 * DAY_IN_SECONDS ),
+		'post_date_gmt' => gmdate( 'Y-m-d H:i:s', time() + 30 * DAY_IN_SECONDS ),
+	)
+);
+pg_assert_same( array( 'pending', 'future' ), array( get_post_status( $pg_pending ), get_post_status( $pg_future ) ), 'one starter post is pending and one is scheduled' );
+$pg_listed = pixelgrid_starter_created();
+pg_assert( in_array( $pg_pending, $pg_listed['post'], true ), 'created lists a pending starter post' );
+pg_assert( in_array( $pg_future, $pg_listed['post'], true ), 'created lists a scheduled starter post' );
+pixelgrid_starter_remove();
+pg_assert_same( array( 'trash', 'trash' ), array( get_post_status( $pg_pending ), get_post_status( $pg_future ) ), 'remove trashes the pending and the scheduled starter post' );
+
+// Menu attributes are block-comment safe, also on a site that turns texturize off for titles.
+remove_filter( 'the_title', 'wptexturize' );
+add_filter(
+	'pixelgrid_variants',
+	function ( $variants ) {
+		$variants['navsafe'] = array(
+			'slug'  => 'navsafe',
+			'label' => 'Nav safe',
+			'pages' => array(
+				'dash'  => array( 'A -- B', '', '' ),
+				'brace' => array( 'C } --> D', '', '' ),
+			),
+			'menu'  => array( 'dash', 'brace' ),
+		);
+		return $variants;
+	}
+);
+pixelgrid_starter_create( 'navsafe', array( 'pages' => true, 'menu' => true ) );
+$pg_nav_raw    = (string) get_post_field( 'post_content', pixelgrid_starter_find( 'wp_navigation', 'navsafe:menu' ) );
+$pg_nav_labels = array();
+foreach ( parse_blocks( $pg_nav_raw ) as $b ) {
+	if ( 'core/navigation-link' === $b['blockName'] ) {
+		$pg_nav_labels[] = $b['attrs']['label'] ?? null;
+	}
+}
+pg_assert_same( array( 'A -- B', 'C } --> D' ), $pg_nav_labels, 'a page titled "A -- B" parses back to one navigation-link block with its label, and so does "C } --> D"' );
+pg_assert( false === strpos( preg_replace( '/<!-- wp:navigation-link | \/-->/', '', $pg_nav_raw ), '--' ), 'menu attributes hold no -- that would end the block comment' );
+pixelgrid_starter_remove();
+add_filter( 'the_title', 'wptexturize' );
+
 pg_done();
