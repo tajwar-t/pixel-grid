@@ -730,7 +730,7 @@ function pixelgrid_starter_create( string $variant, array $options ) {
 			if ( 'woo:shop' === (string) $slug ) {
 				// The WooCommerce shop page, linked only while WooCommerce is active and the page exists.
 				$shop_page = function_exists( 'wc_get_page_id' ) ? (int) wc_get_page_id( 'shop' ) : 0;
-				if ( $shop_page <= 0 ) {
+				if ( $shop_page <= 0 || 'publish' !== get_post_status( $shop_page ) ) {
 					continue;
 				}
 				$links[] = '<!-- wp:navigation-link ' . wp_json_encode(

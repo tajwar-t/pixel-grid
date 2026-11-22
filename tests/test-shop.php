@@ -831,4 +831,28 @@ pg_assert_same( array(), $GLOBALS['pg_shop_notices'], 'without WooCommerce, remo
 activate_plugin( 'woocommerce/woocommerce.php' );
 pg_assert( is_plugin_active( 'woocommerce/woocommerce.php' ), 'WooCommerce reactivated' );
 
+// woo:shop is skipped when the shop page is not published (trashed, deleted or unset).
+if ( class_exists( 'WooCommerce' ) ) {
+	add_filter(
+		'pixelgrid_variants',
+		function ( $variants ) {
+			$variants['wooskip'] = array(
+				'slug'  => 'wooskip',
+				'label' => 'Woo skip',
+				'pages' => array( 'about-skip' => array( 'About', '', '' ) ),
+				'menu'  => array( 'woo:shop', 'about-skip' ),
+			);
+			return $variants;
+		}
+	);
+	$pg_shop_id_before = (int) get_option( 'woocommerce_shop_page_id' );
+	update_option( 'woocommerce_shop_page_id', 0 );
+	pixelgrid_starter_remove();
+	pixelgrid_starter_create( 'wooskip', array( 'pages' => true, 'menu' => true, 'posts' => false, 'reading' => false, 'design' => false ) );
+	$pg_nav = get_posts( array( 'post_type' => 'wp_navigation', 'post_status' => 'any', 'numberposts' => 1, 'meta_key' => '_pixelgrid_starter', 'meta_value' => 'wooskip:menu' ) ); // phpcs:ignore WordPress.DB.SlowDBQuery
+	pg_assert( $pg_nav && 1 === substr_count( $pg_nav[0]->post_content, 'wp:navigation-link' ), 'woo:shop is skipped when no shop page is set' );
+	pixelgrid_starter_remove();
+	update_option( 'woocommerce_shop_page_id', $pg_shop_id_before );
+}
+
 pg_done();
