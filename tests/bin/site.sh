@@ -57,7 +57,14 @@ up() {
 	mysql -uroot -e "DROP DATABASE IF EXISTS $DB_NAME; CREATE DATABASE $DB_NAME CHARACTER SET utf8mb4;"
 
 	local pass
-	pass="$(head -c 24 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 20)"
+	# A fixed password can be kept in .superpowers/test-password (git-ignored) or PIXELGRID_TEST_PASS.
+	if [ -n "${PIXELGRID_TEST_PASS:-}" ]; then
+		pass="$PIXELGRID_TEST_PASS"
+	elif [ -s "$THEME_DIR/.superpowers/test-password" ]; then
+		pass="$(tr -d '\r\n' < "$THEME_DIR/.superpowers/test-password")"
+	else
+		pass="$(head -c 24 /dev/urandom | base64 | tr -dc 'A-Za-z0-9' | head -c 20)"
+	fi
 	mkdir -p "$(dirname "$CRED_FILE")"
 	printf 'user=freshadmin\npass=%s\n' "$pass" > "$CRED_FILE"
 

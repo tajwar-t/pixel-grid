@@ -897,6 +897,8 @@ function pixelgrid_starter_remove(): array {
 		foreach ( $ids as $id ) {
 			// A starter image that the user's own content still shows is left in the library.
 			if ( 'attachment' === $type && pixelgrid_starter_image_in_use( (int) $id ) ) {
+				// Still shown on one of the user's own posts: it becomes theirs, so drop the starter marker.
+				delete_post_meta( (int) $id, '_pixelgrid_starter' );
 				continue;
 			}
 			$done = 'attachment' === $type ? wp_delete_attachment( $id, true ) : wp_trash_post( $id );

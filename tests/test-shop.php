@@ -577,6 +577,8 @@ pg_assert_same( 'trash', get_post_status( $pg_mug_id ), 'remove trashes the star
 pg_assert( 'trash' !== get_post_status( $pg_copy_id ) && false !== get_post_status( $pg_copy_id ), 'remove keeps the duplicated product' );
 pg_assert( get_post( $pg_mug_image ) instanceof WP_Post, 'remove keeps the starter image the duplicated product uses' );
 pg_assert_same( $pg_mug_image, (int) get_post_thumbnail_id( $pg_copy_id ), 'the duplicated product keeps its image' );
+pg_assert_same( '', (string) get_post_meta( $pg_mug_image, '_pixelgrid_starter', true ), 'a kept starter image loses its starter marker' );
+pg_assert( ! pixelgrid_starter_exists(), 'after remove, a kept image does not count as starter content' );
 wp_delete_post( $pg_copy_id, true );
 wp_delete_attachment( $pg_mug_image, true );
 
