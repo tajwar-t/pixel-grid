@@ -39,13 +39,13 @@ $shoppy = pixelgrid_variant( 'shoppy' );
 pg_assert_same( array(), $shoppy['content_labels'] ?? null, 'filtered variant gets empty content_labels' );
 pg_assert_same( '', $shoppy['design_note'] ?? null, 'filtered variant gets an empty design_note' );
 
-// Every non-empty preview points at a file in the theme; IT, Agency and News have one.
+// Every non-empty preview points at a file in the theme; all four starting points have one.
 foreach ( pixelgrid_variants() as $slug => $variant ) {
 	if ( '' !== $variant['preview'] ) {
 		pg_assert( is_file( get_parent_theme_file_path( $variant['preview'] ) ), "$slug preview file exists" );
 	}
 }
-foreach ( array( 'it', 'agency', 'news' ) as $slug ) {
+foreach ( array( 'it', 'agency', 'news', 'shop' ) as $slug ) {
 	pg_assert( '' !== pixelgrid_variant( $slug )['preview'], "$slug has a preview" );
 }
 

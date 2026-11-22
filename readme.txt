@@ -6,26 +6,27 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-A block theme for IT companies, design studios and news sites, built on one pixel grid.
+A block theme for IT companies, design studios, news sites and shops, built on one pixel grid.
 
 == Description ==
 
-Pixelgrid is a block theme for IT companies, design studios and news sites. Every page sits on one pixel grid: bold headlines, full-page colour sections that change as you scroll, and photos shown through pixel icons.
+Pixelgrid is a block theme for IT companies, design studios, news sites and shops. Every page sits on one pixel grid: bold headlines, full-page colour sections that change as you scroll, and photos shown through pixel icons.
 
-Three starting points are included: IT services, which uses the theme's default design; Agency, a design studio with its own colours, the Bricolage Grotesque display face, header, footer and journal template; and News, a city newspaper with the Newsreader serif, a masthead with today's date, section fronts and related articles. Each adds its own pages and sample posts, only when you choose. More starting points come in later versions.
+Four starting points are included: IT services, which uses the theme's default design; Agency, a design studio with its own colours, the Bricolage Grotesque display face, header, footer and journal template; News, a city newspaper with the Newsreader serif, a masthead with today's date, section fronts and related articles; and Shop, a small shop for everyday things with sample products, which needs the WooCommerce plugin. Each adds its own pages and sample posts, only when you choose.
 
 Features:
 
 * Six section colours (Light, Bold, Bright, Dark, Soft, Alert), applied as Group block styles. As a visitor scrolls, the whole page fades to the colour of the section in view.
-* Pixel mosaics: give an Image block one of the "Pixel" styles and the photo is drawn through an 11 by 11 pixel icon (screen, cloud, padlock, speech bubble, chart, people, envelope, note, 404, or one that changes). Visitors can click pixels to redraw the picture.
+* Pixel mosaics: give an Image block one of the "Pixel" styles and the photo is drawn through an 11 by 11 pixel icon (screen, cloud, padlock, speech bubble, chart, people, envelope, heart, note, 404, or one that changes). Visitors can click pixels to redraw the picture.
 * A faint background grid that lights up under the cursor.
 * A small section index on the right edge, built from the headings of the colour sections on the page.
 * Ready-made section and page patterns: hero, service sections, recent work, client quote, numbers, steps, principles, team, pricing plans, questions and answers, contact and call to action.
 * Templates for the blog, single posts with a sidebar, pages, archives, search and 404, plus a "Sections, no title" page template for landing pages.
+* WooCommerce templates on the same grid: shop, product categories and tags, single product, product search, cart, checkout, order confirmation and a mini-cart. They work with every starting point, whenever WooCommerce is active.
 
 = Starter content =
 
-On a new site, a notice on the Dashboard offers to set up the pages shown in the theme preview. You can also go to Appearance, Pixelgrid setup at any time. Choose a starting point (IT services, Agency or News; more starting points come in later versions), tick what you want and click "Add starter content". Each starting point is shown with a preview.
+On a new site, a notice on the Dashboard offers to set up the pages shown in the theme preview. You can also go to Appearance, Pixelgrid setup at any time. Choose a starting point (IT services, Agency, News or Shop), tick what you want and click "Add starter content". Each starting point is shown with a preview.
 
 IT services adds:
 
@@ -45,13 +46,22 @@ News adds:
 
 "Most read" is a category you fill yourself: the theme does not count page views. Add an article to the Most read category to list it there; a few sample articles start in it. The category is not shown in the category labels on articles.
 
+Shop adds:
+
+* Pages: Home, About, Contact and Journal, plus a Shop link in the menu. The shop, cart, checkout and account pages are WooCommerce's own pages, shown with the theme's grid templates.
+* 12 sample products in four categories (Kitchen, Home, Outdoor and Tech), each with a pixel-art picture. Four are on sale and four are featured on the Home page.
+* 3 sample journal posts with images.
+* The design changes the colours, header (with product search, account link and a mini-cart), footer and the posts page template.
+
+Needs WooCommerce: the Shop starting point can only be chosen while the WooCommerce plugin is active. The theme does not install WooCommerce; the setup screen links to the plugin installer instead. Prices are plain numbers: the currency, payments and shipping are WooCommerce settings.
+
 All starting points also add:
 
-* A menu linking the new pages (for News: the five sections, About and Tips)
+* A menu linking the new pages (for News: the five sections, About and Tips; for Shop: Shop, About, Journal and Contact)
 * Optionally, the new Home page as the homepage and the blog page (Notes, Journal or Latest) as the posts page
 * Optionally, the starting point's design: its styles, header, footer and templates
 
-Nothing is added until you click the button, and nothing is downloaded: the content is built from the theme's own patterns and images. Clicking again does not create duplicates. When you apply a design, your current styles, header, footer and templates are backed up first. The IT services starting point uses the theme's default design, so applying its design does not change your Styles. The Agency design changes the colours, fonts, header, footer and blog template. The News design changes the colours and fonts (the Newsreader serif for headlines and articles), the header, the footer, and the templates for the posts page, single articles and category pages. Applying a design again only changes the styles, header, footer and templates you have not edited since setup. The same screen shows the starting point in use, lists what was added and has a "Remove starter content" button, which moves the starter pages, posts and menu to the trash, deletes the starter images, removes the starter categories and tags that are no longer used, puts your homepage setting back and restores the backed-up design. Edits you made to the design after setup are kept; if your styles are kept, the styles you had before setup can still be found in Styles, Revisions.
+Nothing is added until you click the button, and nothing is downloaded: the content is built from the theme's own patterns and images. Clicking again does not create duplicates. When you apply a design, your current styles, header, footer and templates are backed up first. The IT services starting point uses the theme's default design, so applying its design does not change your Styles. The Agency design changes the colours, fonts, header, footer and blog template. The News design changes the colours and fonts (the Newsreader serif for headlines and articles), the header, the footer, and the templates for the posts page, single articles and category pages. Applying a design again only changes the styles, header, footer and templates you have not edited since setup. The Shop design changes the colours, the header, the footer and the template for the posts page; the WooCommerce pages keep the theme's own grid templates. The same screen shows the starting point in use, lists what was added and has a "Remove starter content" button, which moves the starter pages, posts, products and menu to the trash, deletes the starter images, removes the starter categories, product categories and tags that are no longer used (including by drafts), puts your homepage setting back and restores the backed-up design. Edits you made to the design after setup are kept; if your styles are kept, the styles you had before setup can still be found in Styles, Revisions.
 
 = Setting up a page like the demo by hand =
 
@@ -62,7 +72,7 @@ Nothing is added until you click the button, and nothing is downloaded: the cont
 = Design notes and limitations =
 
 * The colour change on scroll, the pixel mosaics, the background grid and the section index need JavaScript. Without it, sections keep their own background colour and pictures show as plain black and white images.
-* Pictures in Pixel mosaics and in card images are shown in black and white by design.
+* Pictures in Pixel mosaics and in card images are shown in black and white by design. Product pictures keep their colours.
 * The theme respects the "reduce motion" setting of the visitor's device.
 * Placeholder text in the patterns, such as the email address, phone number and client names, is meant to be replaced.
 
@@ -71,6 +81,10 @@ Nothing is added until you click the button, and nothing is downloaded: the cont
 = Does this theme support any plugins? =
 
 Pixelgrid works with plugins that follow WordPress standards. For a contact form, add a form plugin and place its block in the contact page.
+
+= Does the theme work with WooCommerce? =
+
+Yes. With WooCommerce active, the shop, product, cart, checkout and account pages are styled on the theme's grid, whichever starting point you use, or none. The Shop starting point needs WooCommerce, and the theme does not install it for you. Currency, payments, shipping and taxes are WooCommerce settings, under WooCommerce, Settings.
 
 = How do I change a section's colour? =
 
@@ -88,6 +102,11 @@ Go to Appearance, Editor, Styles, Colours, Palette. Open the menu next to Theme 
 Changes apply to the whole site. Keep enough contrast between each background and its text, and between each hover colour and its text on hover.
 
 == Changelog ==
+
+= 1.6.0 =
+* Released: November 22, 2026
+
+New Shop starting point for a small shop of everyday things: Home, About, Contact and Journal pages, 12 products in four categories with pixel-art pictures, and 3 journal posts, with its own design: colours, a header with a mini-cart, footer and posts page template. It needs WooCommerce, which the theme does not install; without it the Shop is shown on the setup screen but cannot be chosen, with a link to the plugin installer. WooCommerce's shop, product, cart, checkout and order pages are now styled on the grid for every starting point, with new Pixelgrid Shop patterns and a Pixel heart mosaic. Starter content can now include products, and removing it moves them to the trash and deletes the product categories it created once nothing else uses them. Menus can link to the WooCommerce shop page, and the link is only added while that page is published. Picture mosaics now fit narrow screens, so phones no longer scroll sideways. Running setup again no longer resets a category you picked for a row on the starter Home page, and removal keeps categories and tags that drafts or scheduled posts still use. The Dashboard notice now says there are four starting points and when the Shop needs WooCommerce. The screenshot now shows the home pages of all four starting points.
 
 = 1.5.0 =
 * Released: November 21, 2026
@@ -169,10 +188,10 @@ Product pictures in assets/images (shop-01.webp to shop-12.webp)
 Copyright 2026 bitBirds Solutions. Original pixel-art product illustrations made for this theme, drawn on a 16 by 16 grid and generated by code (tools/make-products.php in the source repository).
 License: GPLv2 or later
 
-Setup screen previews in assets/images/variants (it.webp, agency.webp, news.webp)
+Setup screen previews in assets/images/variants (it.webp, agency.webp, news.webp, shop.webp)
 Copyright 2026 bitBirds Solutions. Captures of the theme's own starting points using its bundled images.
 License: GPLv2 or later
 
 Screenshot
-Copyright 2026 bitBirds Solutions. A capture of the theme using its own bundled images.
+Copyright 2026 bitBirds Solutions. A capture of the home pages of the theme's four starting points (IT services, Agency, News and Shop), using only the theme's own bundled images.
 License: GPLv2 or later

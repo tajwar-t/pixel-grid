@@ -516,16 +516,32 @@ function pixelgrid_starter_notice() {
 		return;
 	}
 	$dismiss = wp_nonce_url( admin_url( 'admin-post.php?action=pixelgrid_starter_dismiss' ), 'pixelgrid_starter_dismiss' );
-	$count   = count( pixelgrid_variants() );
+	// Count every registered starting point, including those waiting for WooCommerce.
+	$variants = pixelgrid_variants();
+	$count    = count( $variants );
+	$needs    = array();
+	foreach ( $variants as $variant ) {
+		if ( ! pixelgrid_variant_available( $variant ) ) {
+			$needs[] = $variant['label'];
+		}
+	}
 	?>
 	<div class="notice notice-info">
 		<p><strong><?php esc_html_e( 'Pixelgrid is ready.', 'pixelgrid' ); ?></strong>
 		<?php
 		printf(
 			/* translators: %d: number of starting points. */
-			esc_html( _n( 'Start from the pages shown in the theme preview. %d starting point is available. You choose what gets added.', 'Start from the pages shown in the theme previews. %d starting points are available. You choose what gets added.', $count, 'pixelgrid' ) ),
+			esc_html( _n( 'Start from the pages shown in the theme preview. There is %d starting point to choose from, and you choose what gets added.', 'Start from the pages shown in the theme previews. There are %d starting points to choose from, and you choose what gets added.', $count, 'pixelgrid' ) ),
 			(int) $count
 		);
+		if ( $needs ) {
+			echo ' ';
+			printf(
+				/* translators: %s: names of the starting points that need WooCommerce, for example Shop. */
+				esc_html( _n( '%s needs the WooCommerce plugin.', '%s need the WooCommerce plugin.', count( $needs ), 'pixelgrid' ) ),
+				esc_html( wp_sprintf( '%l', $needs ) )
+			);
+		}
 		?>
 		</p>
 		<p>

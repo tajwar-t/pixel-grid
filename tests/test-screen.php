@@ -189,4 +189,19 @@ pg_assert( ! in_array( 'Blue section: hover', $names, true ), 'old palette name 
 
 $styles = WP_Block_Styles_Registry::get_instance()->get_registered_styles_for_block( 'core/group' );
 pg_assert_same( 'Bold section', isset( $styles['tone-blue'] ) ? $styles['tone-blue']['label'] : null, 'tone-blue label is Bold section' );
+
+// The dashboard notice names all four starting points, with or without WooCommerce.
+delete_option( 'pixelgrid_starter_done' );
+delete_user_meta( get_current_user_id(), 'pixelgrid_starter_dismissed' );
+update_option( 'fresh_site', 1 );
+set_current_screen( 'dashboard' );
+ob_start();
+pixelgrid_starter_notice();
+$html = ob_get_clean();
+pg_assert( false !== strpos( $html, 'There are 4 starting points to choose from, and you choose what gets added.' ), 'notice says there are four starting points' );
+if ( class_exists( 'WooCommerce' ) ) {
+	pg_assert( false === strpos( $html, 'WooCommerce' ), 'with WooCommerce, the notice has no plugin hint' );
+} else {
+	pg_assert( false !== strpos( $html, 'Shop needs the WooCommerce plugin.' ), 'without WooCommerce, the notice says the Shop needs it' );
+}
 pg_done();

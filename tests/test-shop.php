@@ -244,7 +244,7 @@ pg_assert_same( 'journal', $pg_def['posts_page'], 'shop posts page is journal' )
 pg_assert_same( array( 'woo:shop', 'about', 'journal', 'contact' ), $pg_def['menu'], 'shop menu: shop, about, journal, contact' );
 pg_assert_same( array( 'news', 'guides' ), array_keys( $pg_def['categories'] ), 'shop categories: news, guides' );
 pg_assert_same( array( 'kitchen', 'home', 'outdoor', 'tech' ), array_keys( (array) ( $pg_def['product_categories'] ?? array() ) ), 'shop product categories: kitchen, home, outdoor, tech' );
-pg_assert_same( '', $pg_def['preview'], 'shop has no preview yet' );
+pg_assert_same( 'assets/images/variants/shop.webp', $pg_def['preview'], 'shop preview is the setup capture' );
 pg_assert( '' !== $pg_def['design_note'] && ! empty( $pg_def['content_labels']['pages'] ) && ! empty( $pg_def['content_labels']['posts'] ) && ! empty( $pg_def['content_labels']['reading'] ), 'shop has its own content labels and design note' );
 pg_assert_same( array(), pixelgrid_variant_defaults( array() )['product_categories'] ?? null, 'variant defaults include an empty product_categories' );
 

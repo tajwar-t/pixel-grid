@@ -242,5 +242,5 @@ return array(
 				. $pixelgrid_list( array( __( 'FM and DAB', 'pixelgrid' ), __( 'Rechargeable battery, about 20 hours of listening', 'pixelgrid' ), __( 'Headphone socket and telescopic aerial', 'pixelgrid' ) ) ),
 		),
 	),
-	'preview'            => '',
+	'preview'            => 'assets/images/variants/shop.webp',
 );
