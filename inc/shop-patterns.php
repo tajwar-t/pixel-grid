@@ -62,7 +62,7 @@ function pixelgrid_shop_image( $name ) {
 function pixelgrid_shop_categories() {
 	return array(
 		'kitchen' => array( _x( 'Kitchen', 'Product category', 'pixelgrid' ), 'shop-01.webp', _x( 'Mugs, teapots and bowls', 'Product category contents', 'pixelgrid' ) ),
-		'home'    => array( _x( 'Home', 'Product category', 'pixelgrid' ), 'shop-04.webp', _x( 'Lamps, clocks and vases', 'Product category contents', 'pixelgrid' ) ),
+		'home'    => array( _x( 'Home', 'Product category', 'pixelgrid' ), 'shop-05.webp', _x( 'Lamps, clocks and vases', 'Product category contents', 'pixelgrid' ) ),
 		'outdoor' => array( _x( 'Outdoor', 'Product category', 'pixelgrid' ), 'shop-07.webp', _x( 'Ferns, cans and bags', 'Product category contents', 'pixelgrid' ) ),
 		'tech'    => array( _x( 'Tech', 'Product category', 'pixelgrid' ), 'shop-10.webp', _x( 'Headphones, watches and radios', 'Product category contents', 'pixelgrid' ) ),
 	);
@@ -303,7 +303,7 @@ function pixelgrid_shop_pattern_footer() {
 }
 
 /**
- * Hero: the offer beside a product picture drawn through a pixel heart.
+ * Hero: the offer beside an abstract picture drawn through a pixel heart.
  *
  * @return string
  */
@@ -338,7 +338,7 @@ function pixelgrid_shop_pattern_hero() {
 
 <!-- wp:column -->
 <div class="wp-block-column"><!-- wp:image {"sizeSlug":"full","linkDestination":"none","className":"is-style-mosaic-heart"} -->
-<figure class="wp-block-image size-full is-style-mosaic-heart"><img src="<?php echo esc_url( pixelgrid_shop_image( 'shop-01.webp' ) ); ?>" alt="<?php echo esc_attr_x( 'A pixel-art mug seen through a pixel heart', 'Image description', 'pixelgrid' ); ?>"/></figure>
+<figure class="wp-block-image size-full is-style-mosaic-heart"><img src="<?php echo esc_url( pixelgrid_shop_image( 'shop-13.webp' ) ); ?>" alt="<?php echo esc_attr_x( 'An abstract grey picture seen through a pixel heart', 'Image description', 'pixelgrid' ); ?>"/></figure>
 <!-- /wp:image --></div>
 <!-- /wp:column --></div>
 <!-- /wp:columns --></section>
@@ -893,7 +893,7 @@ if ( ! function_exists( 'pixelgrid_register_shop_patterns' ) ) :
 			),
 			'shop-hero'          => $section(
 				__( 'Shop hero with pixel picture', 'pixelgrid' ),
-				__( 'The shop offer with two buttons, beside a product picture drawn through a pixel heart.', 'pixelgrid' ),
+				__( 'The shop offer with two buttons, beside an abstract picture drawn through a pixel heart.', 'pixelgrid' ),
 				array( __( 'hero', 'pixelgrid' ), __( 'offer', 'pixelgrid' ), __( 'mosaic', 'pixelgrid' ) ),
 				pixelgrid_shop_pattern_hero(),
 				array( 'categories' => array( 'pixelgrid-shop', 'banner' ) )

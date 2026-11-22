@@ -198,7 +198,9 @@ $pg_wcss = (string) file_get_contents( get_parent_theme_file_path( 'assets/css/w
 pg_assert( (bool) preg_match( '/\.wp-block-woocommerce-product-collection img[^{]*\{[^}]*filter: none[^}]*image-rendering: pixelated/s', $pg_wcss ), 'product collection pictures stay in colour and pixelated' );
 
 // Hero: an offer beside a mosaic of a product picture.
-pg_assert( (bool) preg_match( '/is-style-mosaic-[a-z]+"><img src="[^"]*assets\/images\/shop-0\d\.webp"/', $pg_shop['shop-hero'] ), 'shop-hero has a mosaic of a product picture' );
+pg_assert( (bool) preg_match( '/is-style-mosaic-heart"><img src="[^"]*assets\/images\/shop-13\.webp"/', $pg_shop['shop-hero'] ), 'shop-hero shows the grey plate through the pixel heart' );
+preg_match_all( '/assets\/images\/(shop-\d+\.webp)/', $pg_shop['shop-page-home'], $pg_home_imgs );
+pg_assert_same( array_values( array_unique( $pg_home_imgs[1] ) ), $pg_home_imgs[1], 'no picture repeats on the shop home page' );
 pg_assert( count( $pg_blocks_named( 'shop-hero', 'core/heading' ) ) > 0 && $pg_has( 'shop-hero', '<h1' ), 'shop-hero has the page heading' );
 pg_assert( $pg_has( 'shop-hero', esc_url( add_query_arg( 'post_type', 'product', home_url( '/' ) ) ) ), 'shop-hero links to the products' );
 
